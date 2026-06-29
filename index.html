@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    window.addEventListener('error', function(e) {
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '10px';
+      div.style.left = '10px';
+      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+      div.style.color = 'white';
+      div.style.padding = '15px';
+      div.style.zIndex = '999999';
+      div.style.fontFamily = 'monospace';
+      div.style.borderRadius = '5px';
+      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+      document.body.appendChild(div);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YAWMATIC — Think Future. Build Different.</title>
+  <meta name="description" content="YAWMATIC builds digital products, brands, and experiences that drive real impact and growth. Think Future. Build Different.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- CDNs -->
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <!-- Lenis for Smooth Scroll -->
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+  <!-- Custom Shared Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="loading">
+
+  <!-- SVG Noise Filter Overlay -->
+  <svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <!-- Loader Page transition -->
+  <div class="loader" id="page-loader">
+    <div class="loader__logo">
+      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+      <span>.</span>
+    </div>
+    <div class="loader__progress">
+      <div class="loader__progress-bar" id="loader-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+
+  <!-- Mouse Glow -->
+  <div class="mouse-glow" id="mouse-glow"></div>
+
+  <!-- Navbar Navigation -->
+  <nav class="navbar magnetic-wrap">
+    <a href="index.html" class="navbar__logo magnetic">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32">
+        <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+        <g class="logo-orbit-svg__rotator">
+          <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+        </g>
+        <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+      </svg>
+      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="index.html" class="navbar__link magnetic">Home</a></li>
+      <li><a href="about.html" class="navbar__link magnetic">About</a></li>
+      <li><a href="services.html" class="navbar__link magnetic">Services</a></li>
+      <li><a href="work.html" class="navbar__link magnetic">Work</a></li>
+      <li><a href="process.html" class="navbar__link magnetic">Process</a></li>
+    </ul>
+    <div class="magnetic-wrap">
+      <a href="contact.html" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <!-- 01. HERO SECTION -->
+  <div class="hero-pin-wrapper" id="hero">
+    <section class="hero-section">
+      <div class="grid-bg-overlay"></div>
+      
+      <!-- Orbit ring for aesthetic depth behind WebGL -->
+      <div class="hero__orbit-overlay" id="hero-orbit-overlay"></div>
+
+      <div class="hero__content">
+        <h1 class="hero__headline">
+          Build Future.<br>
+          <span class="fire">Create Impact.</span>
+        </h1>
+        <p class="hero__subtext">
+          We build digital products, brands and experiences that drive real impact and growth.
+        </p>
+        <div class="hero__ctas">
+          <div class="magnetic-wrap">
+            <a href="contact.html" class="btn btn--primary magnetic">Start A Project →</a>
+          </div>
+          <div class="magnetic-wrap">
+            <a href="work.html" class="btn btn--ghost magnetic">View Our Work</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column WebGL Canvas -->
+      <div class="hero__webgl-container">
+        <canvas class="hero__webgl-canvas" id="webgl-cube-canvas"></canvas>
+      </div>
+
+      <!-- Floating service cards inside hero pinned section -->
+      <div class="hero__cards-container" id="hero-floating-cards">
+        <!-- Card 1 -->
+        <div class="floating-card">
+          <div class="floating-card__header">
+            <svg class="floating-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+              <line x1="12" y1="22" x2="12" y2="15.5"/>
+              <polyline points="22 8.5 12 15.5 2 8.5"/>
+              <polyline points="2 15.5 12 8.5 22 15.5"/>
+              <line x1="12" y1="2" x2="12" y2="8.5"/>
+            </svg>
+            <span class="floating-card__arrow">↗</span>
+          </div>
+          <h3 class="floating-card__title">Digital Experiences</h3>
+          <p class="floating-card__desc">High performance websites built with future-focused technologies.</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="floating-card">
+          <div class="floating-card__header">
+            <svg class="floating-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="M12 6v12M6 12h12"/>
+            </svg>
+            <span class="floating-card__arrow">↗</span>
+          </div>
+          <h3 class="floating-card__title">Brand Identity</h3>
+          <p class="floating-card__desc">Crafting memorable visuals, logo systems, and premium design voices.</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="floating-card">
+          <div class="floating-card__header">
+            <svg class="floating-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <span class="floating-card__arrow">↗</span>
+          </div>
+          <h3 class="floating-card__title">Product Development</h3>
+          <p class="floating-card__desc">Scalable systems, future-ready architectures, and rapid executions.</p>
+        </div>
+      </div>
+
+      <div class="hero__scroll-explore">
+        SCROLL TO EXPLORE
+        <div class="hero__scroll-arrow"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 02. BRAND VISION -->
+  <section class="section-padding" id="vision">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item">Our Philosophy</span>
+    <h2 class="heading-large reveal-item">Think Future. <span>Build Different.</span></h2>
+    
+    <div class="vision-grid">
+      <!-- Card 1 -->
+      <div class="vision-card reveal-item">
+        <svg class="vision-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <h3 class="vision-card__title">Content</h3>
+        <p class="vision-card__desc">Delivering high-fidelity media systems that speak clearly, capturing brand voice, vision, and future ideas.</p>
+      </div>
+      <!-- Card 2 -->
+      <div class="vision-card reveal-item">
+        <svg class="vision-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          <path d="M2 12h20"/>
+        </svg>
+        <h3 class="vision-card__title">Digital</h3>
+        <p class="vision-card__desc">Structuring custom high-performance applications designed with smooth interactions and micro-animations.</p>
+      </div>
+      <!-- Card 3 -->
+      <div class="vision-card reveal-item">
+        <svg class="vision-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <h3 class="vision-card__title">Creativity</h3>
+        <p class="vision-card__desc">Pushing design boundaries by breaking standard constraints, leveraging WebGL interfaces, and visual assets.</p>
+      </div>
+      <!-- Card 4 -->
+      <div class="vision-card reveal-item">
+        <svg class="vision-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+          <polyline points="2 17 12 22 22 17"/>
+          <polyline points="2 12 12 17 22 12"/>
+        </svg>
+        <h3 class="vision-card__title">Impact</h3>
+        <p class="vision-card__desc">Fusing tech execution with clean data strategy to construct experiences that drive business results.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07. ECOSYSTEM -->
+  <section class="section-padding" id="ecosystem" style="background-color: #0b0b0c;">
+    <h2 class="heading-large reveal-item" style="text-align: center;">The Yawmatic Ecosystem</h2>
+    
+    <div class="ecosystem-container reveal-item">
+      <!-- SVG connectors for Desktop screen sizes -->
+      <svg class="ecosystem-svg" viewBox="0 0 1000 400" id="ecosystem-svg-connectors">
+        <defs>
+          <!-- Glow filter for orbits and connection lines -->
+          <filter id="orbit-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          
+          <!-- Connection line gradients -->
+          <linearGradient id="line-left-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.1"/>
+            <stop offset="50%" stop-color="#FF6A00" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="line-right-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.1"/>
+            <stop offset="50%" stop-color="#FF6A00" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0.1"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Base thin connecting lines -->
+        <path d="M 120 200 H 500" stroke="rgba(255, 90, 31, 0.15)" stroke-width="1.2" fill="none" id="ecosystem-line-left"/>
+        <path d="M 500 200 H 880" stroke="rgba(255, 90, 31, 0.15)" stroke-width="1.2" fill="none" id="ecosystem-line-right"/>
+        
+        <!-- Pulsing overlay energy lines -->
+        <path d="M 120 200 H 500" stroke="url(#line-left-grad)" stroke-width="2" fill="none" class="ecosystem-pulse-line-left"/>
+        <path d="M 500 200 H 880" stroke="url(#line-right-grad)" stroke-width="2" fill="none" class="ecosystem-pulse-line-right"/>
+
+        <!-- Orbit lines -->
+        <path id="orbit-inner-path" d="M 360 200 a 140 60 0 1 0 280 0 a 140 60 0 1 0 -280 0" fill="none" class="ecosystem-orbit"/>
+        <path id="orbit-outer-path" d="M 300 200 a 200 90 0 1 0 400 0 a 200 90 0 1 0 -400 0" fill="none" class="ecosystem-orbit" stroke-dasharray="4,4"/>
+
+        <!-- Tiny floating energy particles moving slowly around orbits -->
+        <!-- Inner Orbit Particles -->
+        <circle r="2" fill="#FFB84D" filter="url(#orbit-glow)">
+          <animateMotion dur="14s" repeatCount="indefinite" path="M 360 200 a 140 60 0 1 0 280 0 a 140 60 0 1 0 -280 0" />
+        </circle>
+        <circle r="1.5" fill="#FFD66B" filter="url(#orbit-glow)">
+          <animateMotion dur="18s" repeatCount="indefinite" path="M 360 200 a 140 60 0 1 0 280 0 a 140 60 0 1 0 -280 0" begin="-7s" />
+        </circle>
+
+        <!-- Outer Orbit Particles -->
+        <circle r="2" fill="#FFB84D" filter="url(#orbit-glow)">
+          <animateMotion dur="22s" repeatCount="indefinite" path="M 300 200 a 200 90 0 1 0 400 0 a 200 90 0 1 0 -400 0" />
+        </circle>
+        <circle r="1.5" fill="#FFD66B" filter="url(#orbit-glow)">
+          <animateMotion dur="28s" repeatCount="indefinite" path="M 300 200 a 200 90 0 1 0 400 0 a 200 90 0 1 0 -400 0" begin="-12s" />
+        </circle>
+      </svg>
+
+      <!-- Center node (YAWMATIC) -->
+      <div class="ecosystem-node ecosystem-node--center">
+        <div class="ecosystem-node__pulsar"></div>
+        <span class="ecosystem-node__title"><img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" /></span>
+        <span class="ecosystem-node__desc" style="color: var(--mist);">Core Innovation Hub</span>
+      </div>
+
+      <!-- Left node (WEBINVITE.IN) -->
+      <a href="https://webinvitein.vercel.app/" target="_blank" rel="noopener noreferrer" class="ecosystem-node ecosystem-node--left" style="text-decoration: none; color: inherit;">
+        <span class="ecosystem-node__title">WEBINVITE.IN</span>
+        <span class="ecosystem-node__desc">Website Creation Platform</span>
+      </a>
+
+      <!-- Right node (FUTURE PRODUCTS) -->
+      <div class="ecosystem-node ecosystem-node--right">
+        <span class="ecosystem-node__title">FUTURE PRODUCTS</span>
+        <span class="ecosystem-node__desc">Building Digital Solutions</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08. MOTION + TECHNOLOGY SHOWCASE -->
+  <div class="tech-showcase-wrapper" id="tech-showcase">
+    <!-- WebGL Particle Field background -->
+    <canvas class="tech-particles-canvas" id="tech-particles-canvas"></canvas>
+
+    <section class="section-padding">
+      <span class="overline reveal-item">Built with Precision</span>
+      <h2 class="heading-large reveal-item">Motion & Technology</h2>
+
+      <div class="tech-grid">
+        <!-- Card 1 -->
+        <div class="tech-card reveal-item">
+          <svg class="tech-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+          <h3 class="tech-card__title">3D Systems</h3>
+          <p class="tech-card__desc">Constructing fast WebGL engines and shaders that bring structures to life inside modern browsers.</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="tech-card reveal-item">
+          <svg class="tech-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+          </svg>
+          <h3 class="tech-card__title">Interactive Design</h3>
+          <p class="tech-card__desc">Structuring custom UI components that react smoothly to user input, scrolling, and hover events.</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="tech-card reveal-item">
+          <svg class="tech-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8V12L14 14"/>
+          </svg>
+          <h3 class="tech-card__title">Motion Experience</h3>
+          <p class="tech-card__desc">Leveraging GSAP timelines and smooth scrolling systems to synchronize visual storytelling narratives.</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="tech-card reveal-item">
+          <svg class="tech-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <h3 class="tech-card__title">Premium Execution</h3>
+          <p class="tech-card__desc">Applying clean formatting constraints, optimized layouts, and modular styling to ensure maximum load speed.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 09. SOCIAL PRESENCE -->
+  <section class="section-padding" id="socials">
+    <div class="grid-bg-overlay"></div>
+    <div style="text-align: center;">
+      <span class="overline reveal-item">Connect With Us</span>
+      <h2 class="heading-large reveal-item" style="color: var(--fire); margin-bottom: 12px;">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; position: relative; z-index: 10;">@YAWMATIC</a>
+      </h2>
+      <p class="reveal-item" style="color: var(--mist); font-size: 1.1rem; margin-bottom: 40px;">Future-focused content. Follow the journey.</p>
+    </div>
+
+    <!-- Instagram mockup cards grid -->
+    <div class="instagram-mockup-grid">
+      <!-- Post 1 -->
+      <div class="insta-card reveal-item">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <!-- Post 2 -->
+      <div class="insta-card reveal-item" style="transition-delay: 0.1s;">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <!-- Post 3 -->
+      <div class="insta-card reveal-item" style="transition-delay: 0.2s;">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <!-- Post 4 -->
+      <div class="insta-card reveal-item" style="transition-delay: 0.3s;">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <!-- Post 5 -->
+      <div class="insta-card reveal-item" style="transition-delay: 0.4s;">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+      <!-- Post 6 -->
+      <div class="insta-card reveal-item" style="transition-delay: 0.5s;">
+        <div class="insta-card__gradient-overlay"></div>
+        <div class="insta-card__inner-glow"></div>
+        <svg class="insta-card__camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="social-btn-container reveal-item">
+      <div class="magnetic-wrap">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="btn btn--primary magnetic">Follow on Instagram →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. TRUST / STATS -->
+  <section class="section-padding" id="stats" style="background-color: #0b0b0c;">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item" style="text-align: center;">Our Track Record</span>
+    <h2 class="heading-large reveal-item" style="text-align: center; margin-bottom: 60px;">Numbers of Impact</h2>
+
+    <div class="stats-grid">
+      <!-- Stat 1 -->
+      <div class="stat-card reveal-item" data-target-num="50">
+        <div class="stat-card__number" id="stat-num-1">0+</div>
+        <div class="stat-card__label">Projects Completed</div>
+      </div>
+      <!-- Stat 2 -->
+      <div class="stat-card reveal-item" data-target-num="100">
+        <div class="stat-card__number" id="stat-num-2">0%</div>
+        <div class="stat-card__label">Client Growth</div>
+      </div>
+      <!-- Stat 3 -->
+      <div class="stat-card reveal-item" data-target-num="3">
+        <div class="stat-card__number" id="stat-num-3">0</div>
+        <div class="stat-card__label">Creative Systems Built</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer__logo-col">
+        <a href="index.html" class="footer__logo magnetic">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 50px; height: 50px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <div class="footer__tagline">THINK FUTURE. BUILD DIFFERENT.</div>
+      </div>
+
+      <div class="footer__nav-col">
+        <ul class="footer__menu">
+          <li><a href="index.html" class="footer__link magnetic">Home</a></li>
+          <li><a href="about.html" class="footer__link magnetic">About</a></li>
+          <li><a href="services.html" class="footer__link magnetic">Services</a></li>
+          <li><a href="work.html" class="footer__link magnetic">Work</a></li>
+          <li><a href="process.html" class="footer__link magnetic">Process</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__socials-col">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="footer__social-btn magnetic" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11C4.483 20.455 12 20.455 12 20.455s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer__copy">© 2026 YAWMATIC. All rights reserved.</div>
+      <div class="footer__credit">THINK FUTURE. BUILD DIFFERENT.</div>
+    </div>
+  </footer>
+
+  <!-- Custom Shared JavaScript -->
+  <script src="js/main.js"></script>
+</body>
+</html>
