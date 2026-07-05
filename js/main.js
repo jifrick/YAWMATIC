@@ -314,9 +314,9 @@ function runCinematicLoader() {
   const executeSequence = () => {
     const targetWidth = loaderWordmark.offsetWidth || 156;
     
-    // Set initial states
-    gsap.set(loaderOrbitRing, { strokeDasharray: 75.4, strokeDashoffset: 75.4 });
-    gsap.set(loaderOrbitRotator, { rotation: 0, transformOrigin: '16px 16px' });
+    // Set initial states and rotate the ring to match the dot's starting top-right offset (-45deg)
+    gsap.set(loaderOrbitRing, { strokeDasharray: 75.4, strokeDashoffset: 75.4, transformOrigin: '50% 50%', rotation: -45 });
+    gsap.set(loaderOrbitRotator, { rotation: 0, transformOrigin: '50% 50%' });
     gsap.set(loaderLogoY, { opacity: 0 });
     gsap.set(loaderWordmarkWrapper, { width: 0 });
     gsap.set(loaderWordmarkShine, { left: '-100%' });
@@ -327,39 +327,39 @@ function runCinematicLoader() {
       }
     });
 
-    // 1. Draw Orbit Ring and Rotate Dot (takes 1.4s)
+    // 1. Draw Orbit Ring and Rotate Dot in perfect lockstep (1.2s duration)
     tl.to(loaderOrbitRing, {
       strokeDashoffset: 0,
-      duration: 1.4,
+      duration: 1.2,
       ease: 'power3.inOut'
     }, 0);
 
     tl.to(loaderOrbitRotator, {
       rotation: 360,
-      duration: 1.4,
+      duration: 1.2,
       ease: 'power3.inOut'
     }, 0);
 
-    // 2. Y logo fades in as orbit completes (at 0.9s)
+    // 2. Y logo fades in as orbit completes (starts at 0.8s)
     tl.to(loaderLogoY, {
       opacity: 1,
-      duration: 0.6,
+      duration: 0.5,
       ease: 'power2.out'
-    }, 0.9);
+    }, 0.8);
 
-    // 3. YAWMATIC wordmark revealed from left to right (at 1.2s)
+    // 3. YAWMATIC wordmark revealed from left to right (starts at 1.1s)
     tl.to(loaderWordmarkWrapper, {
       width: targetWidth,
-      duration: 1.0,
-      ease: 'power2.inOut'
-    }, 1.2);
+      duration: 0.8,
+      ease: 'power3.inOut'
+    }, 1.1);
 
-    // 4. Soft orange energy pulse travels across the logo (at 1.7s)
+    // 4. Soft orange energy pulse travels across the logo (starts at 1.5s)
     tl.to(loaderWordmarkShine, {
       left: '200%',
-      duration: 0.9,
+      duration: 0.7,
       ease: 'power2.inOut'
-    }, 1.7);
+    }, 1.5);
   };
 
   if (loaderWordmark.complete) {
@@ -412,6 +412,7 @@ function runCinematicLoader() {
       }
     });
 
+    // Fly and scale loader logo container to target navbar position
     transitionTl.to(loaderLogoContainer, {
       x: deltaX,
       y: deltaY,
@@ -420,11 +421,25 @@ function runCinematicLoader() {
       ease: 'power3.inOut'
     }, 0);
 
+    // Fade out page loader cover background
     transitionTl.to(loader, {
       opacity: 0,
       duration: 0.8,
       ease: 'power2.inOut'
     }, 0.2);
+
+    // Cross-fade: smoothly transition visibility from loader logo to navbar logo at the end of the flight (last 0.25s)
+    transitionTl.to(navLogo, {
+      opacity: 1,
+      duration: 0.25,
+      ease: 'power2.out'
+    }, 0.75);
+
+    transitionTl.to(loaderLogoContainer, {
+      opacity: 0,
+      duration: 0.25,
+      ease: 'power2.out'
+    }, 0.75);
   }
 }
 
