@@ -77,17 +77,11 @@ function pageTransition(url) {
       opacity: 1,
       y: 0,
       filter: 'blur(0px)',
-      duration: 0.5,
-      ease: 'power3.out',
+      duration: 0.35,
+      ease: 'power2.out',
       onComplete: () => {
-        gsap.to(progressBar, {
-          width: '100%',
-          duration: 0.3,
-          ease: 'power1.inOut',
-          onComplete: () => {
-            window.location.href = url;
-          }
-        });
+        progressBar.style.width = '100%';
+        window.location.href = url;
       }
     });
   } else {
@@ -218,63 +212,54 @@ window.addEventListener('load', () => {
   const progressBar = document.getElementById('loader-progress-bar');
   const loader = document.getElementById('page-loader');
   
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += Math.random() * 15;
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(interval);
-      
-      // Complete load animation
-      gsap.to(progressBar, {
-        width: '100%',
-        duration: 0.3,
-        onComplete: () => {
-          gsap.to(loader, {
-            opacity: 0,
-            y: -100,
-            filter: 'blur(10px)',
-            duration: 0.8,
-            ease: 'power3.inOut',
-            onComplete: () => {
-              loader.style.display = 'none';
-              document.body.classList.remove('loading');
-              
-              // Conditional initializations based on elements present on the active page
-              if (document.getElementById('horizontal-scroll-container')) {
-                initHorizontalScroll();
-              }
-              if (document.getElementById('about-webgl-canvas')) {
-                initAboutWebGL();
-              }
-              if (document.querySelector('.timeline-container')) {
-                initTimelineScroll();
-              }
-              if (document.getElementById('tech-particles-canvas')) {
-                // Initialized via ScrollTrigger automatically, but can trigger check
-              }
-              if (document.querySelector('.stat-card')) {
-                initStatsCounter();
-              }
-              
-              // Refresh ScrollTrigger to recalculate bounds with body scroll active
-              ScrollTrigger.refresh();
-              
-              // Delayed check in case page heights shifted during scroll unlocking
-              setTimeout(() => {
-                ScrollTrigger.refresh();
-              }, 100);
-              
-              // Trigger initial enter animations
-              initEnterAnimations();
-            }
-          });
+  if (progressBar) {
+    progressBar.style.width = '100%';
+  }
+
+  if (loader) {
+    gsap.to(loader, {
+      opacity: 0,
+      y: -100,
+      filter: 'blur(10px)',
+      duration: 0.5,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        loader.style.display = 'none';
+        document.body.classList.remove('loading');
+        
+        // Conditional initializations based on elements present on the active page
+        if (document.getElementById('horizontal-scroll-container')) {
+          initHorizontalScroll();
         }
-      });
-    } else {
-      progressBar.style.width = progress + '%';
-    }
-  }, 50);
+        if (document.getElementById('about-webgl-canvas')) {
+          initAboutWebGL();
+        }
+        if (document.querySelector('.timeline-container')) {
+          initTimelineScroll();
+        }
+        if (document.getElementById('tech-particles-canvas')) {
+          // Initialized via ScrollTrigger automatically, but can trigger check
+        }
+        if (document.querySelector('.stat-card')) {
+          initStatsCounter();
+        }
+        
+        // Refresh ScrollTrigger to recalculate bounds with body scroll active
+        ScrollTrigger.refresh();
+        
+        // Delayed check in case page heights shifted during scroll unlocking
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 100);
+        
+        // Trigger initial enter animations
+        initEnterAnimations();
+      }
+    });
+  } else {
+    document.body.classList.remove('loading');
+    initEnterAnimations();
+  }
 });
 
 /* ----------------------------------------------------
