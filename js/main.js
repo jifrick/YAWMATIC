@@ -73,7 +73,15 @@ function pageTransition(url) {
     loader.style.display = 'flex';
     if (loaderLogo) loaderLogo.style.opacity = '0';
     
-    gsap.set(loader, { opacity: 0, y: 100, filter: 'blur(10px)' });
+    gsap.set(loader, { 
+      opacity: 0, 
+      y: 100, 
+      filter: 'blur(10px)',
+      backgroundColor: '#0F0F10'
+    });
+    gsap.set('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas', {
+      clearProps: 'opacity'
+    });
     
     gsap.to(loader, {
       opacity: 1,
@@ -412,6 +420,7 @@ function triggerSiteTransition() {
       if (navLogo) gsap.set(navLogo, { opacity: 1 });
       if (loaderLogo) loaderLogo.style.opacity = '0';
       loader.style.display = 'none';
+      loader.style.backgroundColor = '';
       document.body.classList.remove('loading');
       
       ScrollTrigger.refresh();
@@ -439,53 +448,61 @@ function triggerSiteTransition() {
       x: deltaX,
       y: deltaY,
       scale: scale,
-      duration: 1.4,
-      ease: 'power4.inOut'
+      duration: 0.85,
+      ease: 'power3.inOut'
     }, 0);
   }
 
-  transitionTl.to(loader, {
+  // Fade out loader visual overlays (grain, glow, particles)
+  transitionTl.to('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas', {
     opacity: 0,
-    duration: 1.2,
+    duration: 0.65,
+    ease: 'power2.inOut'
+  }, 0.1);
+
+  // Dissolve the loader background color to transparent to keep the logo visible during flight
+  transitionTl.to(loader, {
+    backgroundColor: 'rgba(15, 15, 16, 0)',
+    duration: 0.75,
     ease: 'power3.inOut'
-  }, 0.2);
+  }, 0.1);
 
   transitionTl.from('.navbar__menu li, .navbar .btn', {
     opacity: 0,
     y: -15,
-    stagger: 0.06,
-    duration: 0.8,
+    stagger: 0.04,
+    duration: 0.6,
     ease: 'power3.out'
-  }, 0.6);
+  }, 0.35);
 
   if (document.querySelector('.hero__headline')) {
     transitionTl.from('.hero__headline', {
       opacity: 0,
       y: 40,
-      duration: 1.2,
+      duration: 0.8,
       ease: 'power4.out'
-    }, 0.4);
+    }, 0.25);
 
     transitionTl.from('.hero__subtext', {
       opacity: 0,
       y: 20,
-      duration: 1.0,
+      duration: 0.7,
       ease: 'power3.out'
-    }, 0.6);
+    }, 0.35);
 
     transitionTl.from('.hero__ctas', {
       opacity: 0,
       y: 15,
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power3.out'
-    }, 0.8);
+    }, 0.45);
 
     transitionTl.from('.hero__webgl-container, .hero__orbit-overlay', {
       opacity: 0,
       scale: 0.95,
-      duration: 1.5,
+      duration: 1.0,
       ease: 'power2.out'
-    }, 0.2);
+    }, 0.1);
   }
 
   const activeSection = document.querySelector('section, .featured-work-container');
@@ -493,9 +510,9 @@ function triggerSiteTransition() {
     transitionTl.from(activeSection, {
       opacity: 0,
       y: 35,
-      duration: 1.2,
+      duration: 0.8,
       ease: 'power3.out'
-    }, 0.3);
+    }, 0.2);
   }
 
   if (document.getElementById('horizontal-scroll-container')) {
