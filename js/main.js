@@ -10,16 +10,36 @@ const isMobile = window.innerWidth <= 768;
    ACTIVE PAGE HIGH LIGHTING
    ---------------------------------------------------- */
 function highlightActiveLink() {
-  const path = window.location.pathname;
-  let page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+  let path = window.location.pathname;
   
-  // Default to index.html if we are at root directory
-  if (page === '') page = 'index.html';
+  // Clean URL: if pathname ends with .html, replace it in the browser history
+  const htmlToClean = {
+    '/index.html': '/',
+    '/about.html': '/about',
+    '/services.html': '/services',
+    '/work.html': '/work',
+    '/process.html': '/process',
+    '/contact.html': '/contact'
+  };
+
+  for (const [htmlFile, cleanRoute] of Object.entries(htmlToClean)) {
+    if (path === htmlFile || path.endsWith(htmlFile)) {
+      window.history.replaceState(null, '', cleanRoute);
+      path = cleanRoute;
+      break;
+    }
+  }
+
+  // Normalize path for comparison (handling default root / empty path)
+  if (path === '' || path === '/index.html') path = '/';
+  if (path.endsWith('/') && path.length > 1) path = path.slice(0, -1);
 
   const menuLinks = document.querySelectorAll('.navbar__link');
   menuLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === page) {
+    let href = link.getAttribute('href');
+    if (href === '') href = '/';
+    
+    if (href === path) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');
@@ -29,8 +49,10 @@ function highlightActiveLink() {
   // Highlight contact button if on contact page
   const contactBtn = document.querySelector('.navbar .btn');
   if (contactBtn) {
-    const href = contactBtn.getAttribute('href');
-    if (href === page) {
+    let href = contactBtn.getAttribute('href');
+    if (href === '') href = '/';
+    
+    if (href === path) {
       contactBtn.classList.remove('btn--ghost');
       contactBtn.classList.add('btn--primary');
     } else {
@@ -79,17 +101,32 @@ document.addEventListener('click', (e) => {
   if (!anchor) return;
   
   const href = anchor.getAttribute('href');
-  
-  // Intercept clicks on internal HTML files
-  if (href && 
-      !href.startsWith('#') && 
+  if (!href) return;
+
+  // Mapping clean URLs to actual .html files under the hood
+  const routes = {
+    '/': '/index.html',
+    '/about': '/about.html',
+    '/services': '/services.html',
+    '/work': '/work.html',
+    '/process': '/process.html',
+    '/contact': '/contact.html'
+  };
+
+  // Intercept clicks on internal clean routes or .html files
+  if (!href.startsWith('#') && 
       !href.startsWith('mailto:') && 
       !href.startsWith('tel:') && 
       anchor.target !== '_blank' && 
-      !href.startsWith('http') && 
-      href.includes('.html')) {
-    e.preventDefault();
-    pageTransition(href);
+      !href.startsWith('http')) {
+        
+    if (routes.hasOwnProperty(href)) {
+      e.preventDefault();
+      pageTransition(routes[href]);
+    } else if (href.includes('.html')) {
+      e.preventDefault();
+      pageTransition(href);
+    }
   }
 });
 
