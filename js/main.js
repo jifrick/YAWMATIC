@@ -67,33 +67,19 @@ function highlightActiveLink() {
    ---------------------------------------------------- */
 function pageTransition(url) {
   const loader = document.getElementById('page-loader');
-  const loaderLogoContainer = document.getElementById('loader-logo-container');
+  const loaderLogo = document.getElementById('loader-logo-svg');
   
   if (loader) {
     loader.style.display = 'flex';
-    // Clear transforms on loader logo so it starts centered on the transition screen
-    if (loaderLogoContainer) {
-      gsap.set(loaderLogoContainer, { x: 0, y: 0, scale: 1 });
-      const loaderOrbitRing = document.getElementById('loader-orbit-ring');
-      const loaderOrbitRotator = document.getElementById('loader-orbit-rotator');
-      const loaderLogoY = document.querySelector('#loader-logo-container image');
-      const loaderWordmarkWrapper = document.getElementById('loader-wordmark-wrapper');
-      
-      if (loaderOrbitRing) gsap.set(loaderOrbitRing, { strokeDashoffset: 0 });
-      if (loaderOrbitRotator) gsap.set(loaderOrbitRotator, { rotation: 360 });
-      if (loaderLogoY) gsap.set(loaderLogoY, { opacity: 1 });
-      if (loaderWordmarkWrapper) {
-        const loaderWordmark = document.getElementById('loader-logo-wordmark');
-        const targetWidth = loaderWordmark ? (loaderWordmark.offsetWidth || 156) : 156;
-        gsap.set(loaderWordmarkWrapper, { width: targetWidth });
-      }
-    }
+    if (loaderLogo) loaderLogo.style.opacity = '0';
+    
+    gsap.set(loader, { opacity: 0, y: 100, filter: 'blur(10px)' });
     
     gsap.to(loader, {
       opacity: 1,
       y: 0,
       filter: 'blur(0px)',
-      duration: 0.35,
+      duration: 0.45,
       ease: 'power2.out',
       onComplete: () => {
         window.location.href = url;
@@ -214,296 +200,295 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 /* ----------------------------------------------------
-   PAGE LOADER / INITIALIZER
+   LOADER PARTICLES SIMULATION
    ---------------------------------------------------- */
-/* ----------------------------------------------------
-   CINEMATIC LOADER LOGIC
-   ---------------------------------------------------- */
-let loaderParticlesActive = true;
+let loaderParticles = [];
+let loaderCanvas, loaderCtx, loaderAnimationId;
 
 function initLoaderParticles() {
-  const canvas = document.getElementById('loader-particles');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+  loaderCanvas = document.getElementById('loader-particles-canvas');
+  if (!loaderCanvas) return;
   
-  let animationFrameId;
-  let particles = [];
-  const particleCount = 40;
-  
-  const resizeCanvas = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  };
-  
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-  
-  // Initialize particles
+  loaderCtx = loaderCanvas.getContext('2d');
+  resizeLoaderCanvas();
+  window.addEventListener('resize', resizeLoaderCanvas);
+
+  const particleCount = 25;
+  loaderParticles = [];
   for (let i = 0; i < particleCount; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 2.0 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.15,
-      speedY: -Math.random() * 0.3 - 0.08, // slowly float up
-      alpha: Math.random() * 0.3 + 0.05
+    loaderParticles.push({
+      x: Math.random() * loaderCanvas.width,
+      y: Math.random() * loaderCanvas.height,
+      radius: 1 + Math.random() * 2,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15,
+      opacity: 0.1 + Math.random() * 0.25
     });
   }
-  
-  function animate() {
-    if (!loaderParticlesActive) {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resizeCanvas);
-      return;
-    }
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    particles.forEach(p => {
-      p.y += p.speedY;
-      p.x += p.speedX;
-      
-      // Float up and recycle at bottom
-      if (p.y < -10) {
-        p.y = canvas.height + 10;
-        p.x = Math.random() * canvas.width;
-      }
-      if (p.x < -10 || p.x > canvas.width + 10) {
-        p.x = Math.random() * canvas.width;
-      }
-      
-      // Draw particle
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 90, 31, ${p.alpha})`;
-      ctx.fill();
-    });
-    
-    animationFrameId = requestAnimationFrame(animate);
-  }
-  
-  animate();
+
+  animateLoaderParticles();
 }
 
-function runCinematicLoader() {
-  const loader = document.getElementById('page-loader');
-  const loaderLogoContainer = document.getElementById('loader-logo-container');
-  const loaderOrbitRing = document.getElementById('loader-orbit-ring');
-  const loaderOrbitRotator = document.getElementById('loader-orbit-rotator');
-  const loaderLogoY = document.querySelector('#loader-logo-container image');
-  const loaderWordmarkWrapper = document.getElementById('loader-wordmark-wrapper');
-  const loaderWordmark = document.getElementById('loader-logo-wordmark');
-  const loaderWordmarkShine = document.getElementById('loader-wordmark-shine');
+function resizeLoaderCanvas() {
+  if (loaderCanvas) {
+    loaderCanvas.width = window.innerWidth;
+    loaderCanvas.height = window.innerHeight;
+  }
+}
+
+function animateLoaderParticles() {
+  if (!loaderCanvas || !loaderCtx) return;
+  loaderCtx.clearRect(0, 0, loaderCanvas.width, loaderCanvas.height);
   
+  loaderParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+
+    if (p.x < 0 || p.x > loaderCanvas.width) p.vx *= -1;
+    if (p.y < 0 || p.y > loaderCanvas.height) p.vy *= -1;
+
+    loaderCtx.beginPath();
+    loaderCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    loaderCtx.fillStyle = `rgba(255, 90, 31, ${p.opacity})`;
+    loaderCtx.shadowBlur = 4;
+    loaderCtx.shadowColor = '#FF5A1F';
+    loaderCtx.fill();
+  });
+
+  loaderCtx.shadowBlur = 0;
+  loaderAnimationId = requestAnimationFrame(animateLoaderParticles);
+}
+
+function stopLoaderParticles() {
+  window.removeEventListener('resize', resizeLoaderCanvas);
+  if (loaderAnimationId) {
+    cancelAnimationFrame(loaderAnimationId);
+  }
+}
+
+/* ----------------------------------------------------
+   PAGE LOADER / INITIALIZER & SITE ENTRANCE
+   ---------------------------------------------------- */
+let pageLoaded = false;
+let loaderTimelineComplete = false;
+
+document.addEventListener('DOMContentLoaded', () => {
   const navLogo = document.querySelector('.navbar__logo');
-  
-  if (!loader || !loaderLogoContainer || !loaderOrbitRing || !loaderOrbitRotator || !loaderLogoY || !loaderWordmarkWrapper || !loaderWordmark || !navLogo) {
-    // Fallback if elements are missing
-    document.body.classList.remove('loading');
-    initEnterAnimations();
-    return;
+  if (navLogo) {
+    gsap.set(navLogo, { opacity: 0 });
   }
-
-  // Lock scrolling initially
-  document.body.classList.add('loading');
   initLoaderParticles();
+  runLoaderTimeline();
+});
 
-  // Hide the navbar logo during intro so we can transition into it
-  gsap.set(navLogo, { opacity: 0 });
-
-  const executeSequence = () => {
-    const targetWidth = loaderWordmark.offsetWidth || 156;
-    
-    // Set initial states and rotate the ring to match the dot's starting top-right offset (-45deg)
-    gsap.set(loaderOrbitRing, { strokeDasharray: 75.4, strokeDashoffset: 75.4, transformOrigin: '50% 50%', rotation: -45 });
-    gsap.set(loaderOrbitRotator, { rotation: 0, transformOrigin: '50% 50%' });
-    gsap.set(loaderLogoY, { opacity: 0 });
-    gsap.set(loaderWordmarkWrapper, { width: 0 });
-    gsap.set(loaderWordmarkShine, { left: '-100%' });
-    
-    const tl = gsap.timeline({
-      onComplete: () => {
-        transitionLogoToNavbar();
-      }
-    });
-
-    // 1. Draw Orbit Ring and Rotate Dot in perfect lockstep (1.2s duration)
-    tl.to(loaderOrbitRing, {
-      strokeDashoffset: 0,
-      duration: 1.2,
-      ease: 'power3.inOut'
-    }, 0);
-
-    tl.to(loaderOrbitRotator, {
-      rotation: 360,
-      duration: 1.2,
-      ease: 'power3.inOut'
-    }, 0);
-
-    // 2. Y logo fades in as orbit completes (starts at 0.8s)
-    tl.to(loaderLogoY, {
-      opacity: 1,
-      duration: 0.5,
-      ease: 'power2.out'
-    }, 0.8);
-
-    // 3. YAWMATIC wordmark revealed from left to right (starts at 1.1s)
-    tl.to(loaderWordmarkWrapper, {
-      width: targetWidth,
-      duration: 0.8,
-      ease: 'power3.inOut'
-    }, 1.1);
-
-    // 4. Soft orange energy pulse travels across the logo (starts at 1.5s)
-    tl.to(loaderWordmarkShine, {
-      left: '200%',
-      duration: 0.7,
-      ease: 'power2.inOut'
-    }, 1.5);
-  };
-
-  if (loaderWordmark.complete) {
-    executeSequence();
-  } else {
-    loaderWordmark.addEventListener('load', executeSequence);
+// Fallback logic
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  const navLogo = document.querySelector('.navbar__logo');
+  if (navLogo && navLogo.style.opacity !== '0') {
+    gsap.set(navLogo, { opacity: 0 });
+    initLoaderParticles();
+    runLoaderTimeline();
   }
+}
 
-  function transitionLogoToNavbar() {
-    const startRect = loaderLogoContainer.getBoundingClientRect();
-    const endRect = navLogo.getBoundingClientRect();
+window.addEventListener('load', () => {
+  pageLoaded = true;
+  if (loaderTimelineComplete) {
+    triggerSiteTransition();
+  }
+});
 
-    const scale = endRect.width / startRect.width;
+let loaderTl;
 
-    const startCenterX = startRect.left + startRect.width / 2;
-    const startCenterY = startRect.top + startRect.height / 2;
-    const endCenterX = endRect.left + endRect.width / 2;
-    const endCenterY = endRect.top + endRect.height / 2;
+function runLoaderTimeline() {
+  const path = document.getElementById('loader-orbit-path');
+  const dot = document.getElementById('loader-orbit-dot');
+  const monogram = document.getElementById('loader-y-monogram');
+  const clipRect = document.getElementById('clipRect');
+  const pulse = document.getElementById('loader-pulse-rect');
+  
+  if (!path || !dot) return;
 
-    const deltaX = endCenterX - startCenterX;
-    const deltaY = endCenterY - startCenterY;
+  const pathLength = path.getTotalLength();
+  
+  gsap.set(path, { strokeDasharray: pathLength, strokeDashoffset: pathLength });
+  gsap.set(dot, { opacity: 0 });
+  gsap.set(monogram, { opacity: 0, scale: 0.7, filter: 'blur(8px)' });
+  gsap.set(clipRect, { attr: { width: 0 } });
+  gsap.set(pulse, { opacity: 0, x: -150 });
 
-    // Clean up body loader state to allow scrolling
-    document.body.classList.remove('loading');
-
-    // Trigger enter animations for home page content slightly early
-    initEnterAnimations();
-
-    // Conditional initializations based on elements present on the active page
-    if (document.getElementById('horizontal-scroll-container')) {
-      initHorizontalScroll();
-    }
-    if (document.getElementById('about-webgl-canvas')) {
-      initAboutWebGL();
-    }
-    if (document.querySelector('.timeline-container')) {
-      initTimelineScroll();
-    }
-    if (document.querySelector('.stat-card')) {
-      initStatsCounter();
-    }
-
-    const transitionTl = gsap.timeline({
-      onComplete: () => {
-        gsap.set(navLogo, { opacity: 1 });
-        loaderParticlesActive = false;
-        gsap.set(loader, { display: 'none' });
-        ScrollTrigger.refresh();
-        setTimeout(() => ScrollTrigger.refresh(), 100);
+  loaderTl = gsap.timeline({
+    onComplete: () => {
+      loaderTimelineComplete = true;
+      if (pageLoaded) {
+        triggerSiteTransition();
       }
-    });
+    }
+  });
 
-    // Fly and scale loader logo container to target navbar position
-    transitionTl.to(loaderLogoContainer, {
+  loaderTl.set(dot, { opacity: 1 }, 0.5);
+  
+  loaderTl.to(path, {
+    strokeDashoffset: 0,
+    duration: 1.8,
+    ease: 'power3.inOut'
+  }, 0.5);
+
+  loaderTl.to({ val: 0 }, {
+    val: 1,
+    duration: 1.8,
+    ease: 'power3.inOut',
+    onUpdate: function() {
+      const progress = this.targets()[0].val;
+      const point = path.getPointAtLength(progress * pathLength);
+      dot.setAttribute('cx', point.x);
+      dot.setAttribute('cy', point.y);
+    }
+  }, 0.5);
+
+  loaderTl.to(monogram, {
+    opacity: 1,
+    scale: 1,
+    filter: 'blur(0px)',
+    duration: 1.0,
+    ease: 'power2.out'
+  }, 1.2);
+
+  loaderTl.to(clipRect, {
+    attr: { width: 230 },
+    duration: 1.0,
+    ease: 'power3.inOut'
+  }, 1.8);
+
+  loaderTl.to(pulse, {
+    x: 420,
+    opacity: 0.6,
+    duration: 1.0,
+    ease: 'power2.inOut'
+  }, 2.2);
+
+  loaderTl.to(pulse, {
+    opacity: 0,
+    duration: 0.4,
+    ease: 'power2.out'
+  }, 2.8);
+}
+
+function triggerSiteTransition() {
+  stopLoaderParticles();
+  highlightActiveLink();
+  
+  const loader = document.getElementById('page-loader');
+  const loaderLogo = document.getElementById('loader-logo-svg');
+  const navLogo = document.querySelector('.navbar__logo');
+  const navbar = document.querySelector('.navbar');
+  
+  if (!loader) return;
+
+  const transitionTl = gsap.timeline({
+    onComplete: () => {
+      if (navLogo) gsap.set(navLogo, { opacity: 1 });
+      if (loaderLogo) loaderLogo.style.opacity = '0';
+      loader.style.display = 'none';
+      document.body.classList.remove('loading');
+      
+      ScrollTrigger.refresh();
+      setTimeout(() => ScrollTrigger.refresh(), 100);
+    }
+  });
+
+  gsap.set(navbar, { opacity: 1, y: 0 });
+  if (navLogo) gsap.set(navLogo, { opacity: 0 });
+
+  if (loaderLogo && navLogo) {
+    const loaderRect = loaderLogo.getBoundingClientRect();
+    const navRect = navLogo.getBoundingClientRect();
+    
+    const scale = navRect.height / loaderRect.height;
+    const loaderCenterX = loaderRect.left + loaderRect.width / 2;
+    const loaderCenterY = loaderRect.top + loaderRect.height / 2;
+    const navCenterX = navRect.left + navRect.width / 2;
+    const navCenterY = navRect.top + navRect.height / 2;
+    
+    const deltaX = navCenterX - loaderCenterX;
+    const deltaY = navCenterY - loaderCenterY;
+
+    transitionTl.to(loaderLogo, {
       x: deltaX,
       y: deltaY,
       scale: scale,
-      duration: 1.0,
-      ease: 'power3.inOut'
+      duration: 1.4,
+      ease: 'power4.inOut'
     }, 0);
+  }
 
-    // Fade out page loader cover background
-    transitionTl.to(loader, {
+  transitionTl.to(loader, {
+    opacity: 0,
+    duration: 1.2,
+    ease: 'power3.inOut'
+  }, 0.2);
+
+  transitionTl.from('.navbar__menu li, .navbar .btn', {
+    opacity: 0,
+    y: -15,
+    stagger: 0.06,
+    duration: 0.8,
+    ease: 'power3.out'
+  }, 0.6);
+
+  if (document.querySelector('.hero__headline')) {
+    transitionTl.from('.hero__headline', {
       opacity: 0,
+      y: 40,
+      duration: 1.2,
+      ease: 'power4.out'
+    }, 0.4);
+
+    transitionTl.from('.hero__subtext', {
+      opacity: 0,
+      y: 20,
+      duration: 1.0,
+      ease: 'power3.out'
+    }, 0.6);
+
+    transitionTl.from('.hero__ctas', {
+      opacity: 0,
+      y: 15,
       duration: 0.8,
-      ease: 'power2.inOut'
+      ease: 'power3.out'
+    }, 0.8);
+
+    transitionTl.from('.hero__webgl-container, .hero__orbit-overlay', {
+      opacity: 0,
+      scale: 0.95,
+      duration: 1.5,
+      ease: 'power2.out'
     }, 0.2);
+  }
 
-    // Cross-fade: smoothly transition visibility from loader logo to navbar logo at the end of the flight (last 0.25s)
-    transitionTl.to(navLogo, {
-      opacity: 1,
-      duration: 0.25,
-      ease: 'power2.out'
-    }, 0.75);
-
-    transitionTl.to(loaderLogoContainer, {
+  const activeSection = document.querySelector('section, .featured-work-container');
+  if (activeSection && activeSection.id !== 'hero') {
+    transitionTl.from(activeSection, {
       opacity: 0,
-      duration: 0.25,
-      ease: 'power2.out'
-    }, 0.75);
+      y: 35,
+      duration: 1.2,
+      ease: 'power3.out'
+    }, 0.3);
+  }
+
+  if (document.getElementById('horizontal-scroll-container')) {
+    initHorizontalScroll();
+  }
+  if (document.getElementById('about-webgl-canvas')) {
+    initAboutWebGL();
+  }
+  if (document.querySelector('.timeline-container')) {
+    initTimelineScroll();
+  }
+  if (document.querySelector('.stat-card')) {
+    initStatsCounter();
   }
 }
-
-function runFastLoader() {
-  const loader = document.getElementById('page-loader');
-  const navLogo = document.querySelector('.navbar__logo');
-  
-  document.body.classList.remove('loading');
-  gsap.set(navLogo, { opacity: 1 });
-  
-  if (loader) {
-    gsap.to(loader, {
-      opacity: 0,
-      duration: 0.5,
-      ease: 'power2.out',
-      onComplete: () => {
-        loader.style.display = 'none';
-        loaderParticlesActive = false;
-        
-        // Conditional initializations based on elements present on the active page
-        if (document.getElementById('horizontal-scroll-container')) {
-          initHorizontalScroll();
-        }
-        if (document.getElementById('about-webgl-canvas')) {
-          initAboutWebGL();
-        }
-        if (document.querySelector('.timeline-container')) {
-          initTimelineScroll();
-        }
-        if (document.querySelector('.stat-card')) {
-          initStatsCounter();
-        }
-        
-        ScrollTrigger.refresh();
-        setTimeout(() => ScrollTrigger.refresh(), 100);
-        
-        initEnterAnimations();
-      }
-    });
-  } else {
-    initEnterAnimations();
-  }
-}
-
-/* ----------------------------------------------------
-   PAGE INITIALIZER
-   ---------------------------------------------------- */
-window.addEventListener('load', () => {
-  highlightActiveLink();
-  
-  // Initialize Hero WebGL Scene immediately on load if on Home
-  if (document.getElementById('webgl-cube-canvas')) {
-    initHeroWebGL();
-  }
-
-  const hasSeenIntro = sessionStorage.getItem('yawmatic-intro-seen');
-  
-  if (hasSeenIntro) {
-    runFastLoader();
-  } else {
-    runCinematicLoader();
-    sessionStorage.setItem('yawmatic-intro-seen', 'true');
-  }
-});
 
 /* ----------------------------------------------------
    CUSTOM CURSOR
@@ -653,24 +638,13 @@ if (revealItems.length > 0) {
    INITIAL ENTER ANIMATIONS
    ---------------------------------------------------- */
 function initEnterAnimations() {
-  // Stagger show menu items and contact button
-  gsap.from('.navbar__menu li', {
-    y: -15,
+  // Navbar slide-down
+  gsap.from('.navbar', {
+    y: -50,
     opacity: 0,
-    duration: 0.8,
-    stagger: 0.08,
-    ease: 'power2.out'
+    duration: 1,
+    ease: 'power3.out'
   });
-
-  const contactBtn = document.querySelector('.navbar .btn');
-  if (contactBtn) {
-    gsap.from(contactBtn, {
-      opacity: 0,
-      duration: 0.8,
-      ease: 'power2.out',
-      delay: 0.4
-    });
-  }
 
   // Hero Content items reveal (if present)
   if (document.querySelector('.hero__headline')) {
@@ -679,7 +653,7 @@ function initEnterAnimations() {
       y: 50,
       duration: 1.2,
       ease: 'power4.out',
-      delay: 0.1
+      delay: 0.2
     });
 
     gsap.from('.hero__subtext', {
@@ -687,7 +661,7 @@ function initEnterAnimations() {
       y: 30,
       duration: 1,
       ease: 'power3.out',
-      delay: 0.3
+      delay: 0.4
     });
 
     gsap.from('.hero__ctas', {
@@ -695,17 +669,8 @@ function initEnterAnimations() {
       y: 20,
       duration: 0.8,
       ease: 'power3.out',
-      delay: 0.5
+      delay: 0.6
     });
-
-    const gridOverlay = document.querySelector('.grid-bg-overlay');
-    if (gridOverlay) {
-      gsap.from(gridOverlay, {
-        opacity: 0,
-        duration: 1.5,
-        ease: 'power2.out'
-      });
-    }
   }
 }
 

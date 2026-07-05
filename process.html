@@ -51,21 +51,56 @@
 
   <!-- Loader Page transition -->
   <div class="loader" id="page-loader">
-    <canvas id="loader-particles" class="loader-particles-canvas"></canvas>
-    <div class="loader__logo-container" id="loader-logo-container">
-      <div class="loader__logo-graphic">
-        <svg class="logo-orbit-svg" id="loader-orbit-svg" viewBox="0 0 32 32">
-          <circle class="logo-orbit-svg__ring" id="loader-orbit-ring" cx="16" cy="16" r="12" />
-          <g class="logo-orbit-svg__rotator" id="loader-orbit-rotator">
-            <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
-          </g>
-          <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
-        </svg>
-      </div>
-      <div class="loader__wordmark-wrapper" id="loader-wordmark-wrapper">
-        <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" id="loader-logo-wordmark" />
-        <div class="loader__wordmark-shine" id="loader-wordmark-shine"></div>
-      </div>
+    <div class="loader__grain"></div>
+    <div class="loader__glow"></div>
+    <canvas class="loader__particles-canvas" id="loader-particles-canvas"></canvas>
+    
+    <div class="loader__logo-container">
+      <svg class="loader__logo-svg" viewBox="0 0 420 200" id="loader-logo-svg">
+        <defs>
+          <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#FF6A00" stop-opacity="1"/>
+          </linearGradient>
+          
+          <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0"/>
+            <stop offset="30%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#F2F2F2" stop-opacity="1"/>
+            <stop offset="70%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0"/>
+          </linearGradient>
+          
+          <clipPath id="wordmarkClip">
+            <rect id="clipRect" x="160" y="50" width="0" height="100" />
+          </clipPath>
+          
+          <filter id="bloomFilter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- Circular orbit path starting at 12 o'clock -->
+        <path id="loader-orbit-path" d="M 100,60 A 40,40 0 1,1 100,140 A 40,40 0 1,1 100,60" stroke="url(#orbitGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        
+        <!-- Orbit dot -->
+        <circle id="loader-orbit-dot" cx="100" cy="60" r="4.5" fill="#FF5A1F" filter="url(#bloomFilter)"/>
+
+        <!-- Y Monogram -->
+        <image id="loader-y-monogram" href="logo_y_only.png" x="84" y="81" width="32" height="38" style="opacity: 0; filter: blur(8px); transform: scale(0.7); transform-origin: 100px 100px;"/>
+
+        <!-- Clipped Wordmark -->
+        <g clip-path="url(#wordmarkClip)">
+          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44"/>
+        </g>
+
+        <!-- Sweep Pulse Overlay -->
+        <rect id="loader-pulse-rect" x="-150" y="50" width="150" height="100" fill="url(#pulseGrad)" style="mix-blend-mode: screen; pointer-events: none; opacity: 0;"/>
+      </svg>
     </div>
   </div>
 
