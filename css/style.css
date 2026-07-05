@@ -127,47 +127,80 @@ button {
   left: 0;
   width: 100%;
   height: 100vh;
-  background-color: var(--ink);
+  background-color: #000000;
   z-index: 99999;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.loader__logo {
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--volt);
-  letter-spacing: 2px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.loader__logo span {
-  color: var(--fire);
-}
-
-.loader__progress {
-  width: 150px;
-  height: 2px;
-  background-color: rgba(255, 255, 255, 0.1);
-  position: relative;
   overflow: hidden;
-  border-radius: 2px;
 }
 
-.loader__progress-bar {
+.loader-particles-canvas {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
   height: 100%;
-  width: 0%;
-  background-color: var(--fire);
-  box-shadow: 0 0 10px var(--glow);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.loader__logo-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+  transform-origin: center center;
+}
+
+.loader__logo-graphic {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader__logo-graphic .logo-orbit-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Specific overrides for loader orbit SVG */
+#loader-orbit-ring {
+  stroke-dasharray: 75.4;
+  stroke-dashoffset: 75.4;
+  stroke: var(--fire);
+  stroke-width: 1.2px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.loader__wordmark-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 0px; /* Animated via JS */
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.loader__wordmark-wrapper .logo-wordmark-img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  display: block;
+}
+
+.loader__wordmark-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 80px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 90, 31, 0.4), transparent);
+  pointer-events: none;
 }
 
 /* Global Grid Background pattern */

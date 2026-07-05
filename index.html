@@ -51,12 +51,21 @@
 
   <!-- Loader Page transition -->
   <div class="loader" id="page-loader">
-    <div class="loader__logo">
-      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
-      <span>.</span>
-    </div>
-    <div class="loader__progress">
-      <div class="loader__progress-bar" id="loader-progress-bar"></div>
+    <canvas id="loader-particles" class="loader-particles-canvas"></canvas>
+    <div class="loader__logo-container" id="loader-logo-container">
+      <div class="loader__logo-graphic">
+        <svg class="logo-orbit-svg" id="loader-orbit-svg" viewBox="0 0 32 32">
+          <circle class="logo-orbit-svg__ring" id="loader-orbit-ring" cx="16" cy="16" r="12" />
+          <g class="logo-orbit-svg__rotator" id="loader-orbit-rotator">
+            <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+          </g>
+          <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+        </svg>
+      </div>
+      <div class="loader__wordmark-wrapper" id="loader-wordmark-wrapper">
+        <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" id="loader-logo-wordmark" />
+        <div class="loader__wordmark-shine" id="loader-wordmark-shine"></div>
+      </div>
     </div>
   </div>
 

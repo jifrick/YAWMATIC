@@ -67,11 +67,27 @@ function highlightActiveLink() {
    ---------------------------------------------------- */
 function pageTransition(url) {
   const loader = document.getElementById('page-loader');
-  const progressBar = document.getElementById('loader-progress-bar');
-  if (loader && progressBar) {
+  const loaderLogoContainer = document.getElementById('loader-logo-container');
+  
+  if (loader) {
     loader.style.display = 'flex';
-    gsap.set(loader, { opacity: 0, y: 100, filter: 'blur(10px)' });
-    gsap.set(progressBar, { width: '0%' });
+    // Clear transforms on loader logo so it starts centered on the transition screen
+    if (loaderLogoContainer) {
+      gsap.set(loaderLogoContainer, { x: 0, y: 0, scale: 1 });
+      const loaderOrbitRing = document.getElementById('loader-orbit-ring');
+      const loaderOrbitRotator = document.getElementById('loader-orbit-rotator');
+      const loaderLogoY = document.querySelector('#loader-logo-container image');
+      const loaderWordmarkWrapper = document.getElementById('loader-wordmark-wrapper');
+      
+      if (loaderOrbitRing) gsap.set(loaderOrbitRing, { strokeDashoffset: 0 });
+      if (loaderOrbitRotator) gsap.set(loaderOrbitRotator, { rotation: 360 });
+      if (loaderLogoY) gsap.set(loaderLogoY, { opacity: 1 });
+      if (loaderWordmarkWrapper) {
+        const loaderWordmark = document.getElementById('loader-logo-wordmark');
+        const targetWidth = loaderWordmark ? (loaderWordmark.offsetWidth || 156) : 156;
+        gsap.set(loaderWordmarkWrapper, { width: targetWidth });
+      }
+    }
     
     gsap.to(loader, {
       opacity: 1,
@@ -80,7 +96,6 @@ function pageTransition(url) {
       duration: 0.35,
       ease: 'power2.out',
       onComplete: () => {
-        progressBar.style.width = '100%';
         window.location.href = url;
       }
     });
@@ -201,31 +216,233 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 /* ----------------------------------------------------
    PAGE LOADER / INITIALIZER
    ---------------------------------------------------- */
-window.addEventListener('load', () => {
-  highlightActiveLink();
-  
-  // Initialize Hero WebGL Scene immediately on load if on Home
-  if (document.getElementById('webgl-cube-canvas')) {
-    initHeroWebGL();
-  }
+/* ----------------------------------------------------
+   CINEMATIC LOADER LOGIC
+   ---------------------------------------------------- */
+let loaderParticlesActive = true;
 
-  const progressBar = document.getElementById('loader-progress-bar');
+function initLoaderParticles() {
+  const canvas = document.getElementById('loader-particles');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  let animationFrameId;
+  let particles = [];
+  const particleCount = 40;
+  
+  const resizeCanvas = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  
+  // Initialize particles
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2.0 + 0.5,
+      speedX: (Math.random() - 0.5) * 0.15,
+      speedY: -Math.random() * 0.3 - 0.08, // slowly float up
+      alpha: Math.random() * 0.3 + 0.05
+    });
+  }
+  
+  function animate() {
+    if (!loaderParticlesActive) {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+      return;
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    particles.forEach(p => {
+      p.y += p.speedY;
+      p.x += p.speedX;
+      
+      // Float up and recycle at bottom
+      if (p.y < -10) {
+        p.y = canvas.height + 10;
+        p.x = Math.random() * canvas.width;
+      }
+      if (p.x < -10 || p.x > canvas.width + 10) {
+        p.x = Math.random() * canvas.width;
+      }
+      
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 90, 31, ${p.alpha})`;
+      ctx.fill();
+    });
+    
+    animationFrameId = requestAnimationFrame(animate);
+  }
+  
+  animate();
+}
+
+function runCinematicLoader() {
   const loader = document.getElementById('page-loader');
+  const loaderLogoContainer = document.getElementById('loader-logo-container');
+  const loaderOrbitRing = document.getElementById('loader-orbit-ring');
+  const loaderOrbitRotator = document.getElementById('loader-orbit-rotator');
+  const loaderLogoY = document.querySelector('#loader-logo-container image');
+  const loaderWordmarkWrapper = document.getElementById('loader-wordmark-wrapper');
+  const loaderWordmark = document.getElementById('loader-logo-wordmark');
+  const loaderWordmarkShine = document.getElementById('loader-wordmark-shine');
   
-  if (progressBar) {
-    progressBar.style.width = '100%';
+  const navLogo = document.querySelector('.navbar__logo');
+  
+  if (!loader || !loaderLogoContainer || !loaderOrbitRing || !loaderOrbitRotator || !loaderLogoY || !loaderWordmarkWrapper || !loaderWordmark || !navLogo) {
+    // Fallback if elements are missing
+    document.body.classList.remove('loading');
+    initEnterAnimations();
+    return;
   }
 
+  // Lock scrolling initially
+  document.body.classList.add('loading');
+  initLoaderParticles();
+
+  // Hide the navbar logo during intro so we can transition into it
+  gsap.set(navLogo, { opacity: 0 });
+
+  const executeSequence = () => {
+    const targetWidth = loaderWordmark.offsetWidth || 156;
+    
+    // Set initial states
+    gsap.set(loaderOrbitRing, { strokeDasharray: 75.4, strokeDashoffset: 75.4 });
+    gsap.set(loaderOrbitRotator, { rotation: 0, transformOrigin: '16px 16px' });
+    gsap.set(loaderLogoY, { opacity: 0 });
+    gsap.set(loaderWordmarkWrapper, { width: 0 });
+    gsap.set(loaderWordmarkShine, { left: '-100%' });
+    
+    const tl = gsap.timeline({
+      onComplete: () => {
+        transitionLogoToNavbar();
+      }
+    });
+
+    // 1. Draw Orbit Ring and Rotate Dot (takes 1.4s)
+    tl.to(loaderOrbitRing, {
+      strokeDashoffset: 0,
+      duration: 1.4,
+      ease: 'power3.inOut'
+    }, 0);
+
+    tl.to(loaderOrbitRotator, {
+      rotation: 360,
+      duration: 1.4,
+      ease: 'power3.inOut'
+    }, 0);
+
+    // 2. Y logo fades in as orbit completes (at 0.9s)
+    tl.to(loaderLogoY, {
+      opacity: 1,
+      duration: 0.6,
+      ease: 'power2.out'
+    }, 0.9);
+
+    // 3. YAWMATIC wordmark revealed from left to right (at 1.2s)
+    tl.to(loaderWordmarkWrapper, {
+      width: targetWidth,
+      duration: 1.0,
+      ease: 'power2.inOut'
+    }, 1.2);
+
+    // 4. Soft orange energy pulse travels across the logo (at 1.7s)
+    tl.to(loaderWordmarkShine, {
+      left: '200%',
+      duration: 0.9,
+      ease: 'power2.inOut'
+    }, 1.7);
+  };
+
+  if (loaderWordmark.complete) {
+    executeSequence();
+  } else {
+    loaderWordmark.addEventListener('load', executeSequence);
+  }
+
+  function transitionLogoToNavbar() {
+    const startRect = loaderLogoContainer.getBoundingClientRect();
+    const endRect = navLogo.getBoundingClientRect();
+
+    const scale = endRect.width / startRect.width;
+
+    const startCenterX = startRect.left + startRect.width / 2;
+    const startCenterY = startRect.top + startRect.height / 2;
+    const endCenterX = endRect.left + endRect.width / 2;
+    const endCenterY = endRect.top + endRect.height / 2;
+
+    const deltaX = endCenterX - startCenterX;
+    const deltaY = endCenterY - startCenterY;
+
+    // Clean up body loader state to allow scrolling
+    document.body.classList.remove('loading');
+
+    // Trigger enter animations for home page content slightly early
+    initEnterAnimations();
+
+    // Conditional initializations based on elements present on the active page
+    if (document.getElementById('horizontal-scroll-container')) {
+      initHorizontalScroll();
+    }
+    if (document.getElementById('about-webgl-canvas')) {
+      initAboutWebGL();
+    }
+    if (document.querySelector('.timeline-container')) {
+      initTimelineScroll();
+    }
+    if (document.querySelector('.stat-card')) {
+      initStatsCounter();
+    }
+
+    const transitionTl = gsap.timeline({
+      onComplete: () => {
+        gsap.set(navLogo, { opacity: 1 });
+        loaderParticlesActive = false;
+        gsap.set(loader, { display: 'none' });
+        ScrollTrigger.refresh();
+        setTimeout(() => ScrollTrigger.refresh(), 100);
+      }
+    });
+
+    transitionTl.to(loaderLogoContainer, {
+      x: deltaX,
+      y: deltaY,
+      scale: scale,
+      duration: 1.0,
+      ease: 'power3.inOut'
+    }, 0);
+
+    transitionTl.to(loader, {
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.inOut'
+    }, 0.2);
+  }
+}
+
+function runFastLoader() {
+  const loader = document.getElementById('page-loader');
+  const navLogo = document.querySelector('.navbar__logo');
+  
+  document.body.classList.remove('loading');
+  gsap.set(navLogo, { opacity: 1 });
+  
   if (loader) {
     gsap.to(loader, {
       opacity: 0,
-      y: -100,
-      filter: 'blur(10px)',
       duration: 0.5,
-      ease: 'power3.inOut',
+      ease: 'power2.out',
       onComplete: () => {
         loader.style.display = 'none';
-        document.body.classList.remove('loading');
+        loaderParticlesActive = false;
         
         // Conditional initializations based on elements present on the active page
         if (document.getElementById('horizontal-scroll-container')) {
@@ -237,28 +454,39 @@ window.addEventListener('load', () => {
         if (document.querySelector('.timeline-container')) {
           initTimelineScroll();
         }
-        if (document.getElementById('tech-particles-canvas')) {
-          // Initialized via ScrollTrigger automatically, but can trigger check
-        }
         if (document.querySelector('.stat-card')) {
           initStatsCounter();
         }
         
-        // Refresh ScrollTrigger to recalculate bounds with body scroll active
         ScrollTrigger.refresh();
+        setTimeout(() => ScrollTrigger.refresh(), 100);
         
-        // Delayed check in case page heights shifted during scroll unlocking
-        setTimeout(() => {
-          ScrollTrigger.refresh();
-        }, 100);
-        
-        // Trigger initial enter animations
         initEnterAnimations();
       }
     });
   } else {
-    document.body.classList.remove('loading');
     initEnterAnimations();
+  }
+}
+
+/* ----------------------------------------------------
+   PAGE INITIALIZER
+   ---------------------------------------------------- */
+window.addEventListener('load', () => {
+  highlightActiveLink();
+  
+  // Initialize Hero WebGL Scene immediately on load if on Home
+  if (document.getElementById('webgl-cube-canvas')) {
+    initHeroWebGL();
+  }
+
+  const hasSeenIntro = sessionStorage.getItem('yawmatic-intro-seen');
+  
+  if (hasSeenIntro) {
+    runFastLoader();
+  } else {
+    runCinematicLoader();
+    sessionStorage.setItem('yawmatic-intro-seen', 'true');
   }
 });
 
@@ -410,13 +638,24 @@ if (revealItems.length > 0) {
    INITIAL ENTER ANIMATIONS
    ---------------------------------------------------- */
 function initEnterAnimations() {
-  // Navbar slide-down
-  gsap.from('.navbar', {
-    y: -50,
+  // Stagger show menu items and contact button
+  gsap.from('.navbar__menu li', {
+    y: -15,
     opacity: 0,
-    duration: 1,
-    ease: 'power3.out'
+    duration: 0.8,
+    stagger: 0.08,
+    ease: 'power2.out'
   });
+
+  const contactBtn = document.querySelector('.navbar .btn');
+  if (contactBtn) {
+    gsap.from(contactBtn, {
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.out',
+      delay: 0.4
+    });
+  }
 
   // Hero Content items reveal (if present)
   if (document.querySelector('.hero__headline')) {
@@ -425,7 +664,7 @@ function initEnterAnimations() {
       y: 50,
       duration: 1.2,
       ease: 'power4.out',
-      delay: 0.2
+      delay: 0.1
     });
 
     gsap.from('.hero__subtext', {
@@ -433,7 +672,7 @@ function initEnterAnimations() {
       y: 30,
       duration: 1,
       ease: 'power3.out',
-      delay: 0.4
+      delay: 0.3
     });
 
     gsap.from('.hero__ctas', {
@@ -441,8 +680,17 @@ function initEnterAnimations() {
       y: 20,
       duration: 0.8,
       ease: 'power3.out',
-      delay: 0.6
+      delay: 0.5
     });
+
+    const gridOverlay = document.querySelector('.grid-bg-overlay');
+    if (gridOverlay) {
+      gsap.from(gridOverlay, {
+        opacity: 0,
+        duration: 1.5,
+        ease: 'power2.out'
+      });
+    }
   }
 }
 
