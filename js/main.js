@@ -293,6 +293,9 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
 
 window.addEventListener('load', () => {
   pageLoaded = true;
+  if (document.getElementById('webgl-cube-canvas')) {
+    initHeroWebGL();
+  }
   if (loaderTimelineComplete) {
     triggerSiteTransition();
   }
