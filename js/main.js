@@ -326,8 +326,10 @@ function runLoaderTimeline() {
     }
   });
 
+  // Step 1: Orange dot appears
   loaderTl.set(dot, { opacity: 1 }, 0.5);
   
+  // Step 2 & 3: Orbit starts drawing progressively (0.5s to 2.3s)
   loaderTl.to(path, {
     strokeDashoffset: 0,
     duration: 1.8,
@@ -346,6 +348,7 @@ function runLoaderTimeline() {
     }
   }, 0.5);
 
+  // Step 4: Y monogram fades into center (1.2s to 2.2s) while orbit is completing
   loaderTl.to(monogram, {
     opacity: 1,
     scale: 1,
@@ -354,24 +357,34 @@ function runLoaderTimeline() {
     ease: 'power2.out'
   }, 1.2);
 
+  // Step 7: Staged wordmark reveal (only after orbit completes at 2.3s)
+  // Phase 1: Reveal "YAW" (width from 0 to 90)
+  loaderTl.to(clipRect, {
+    attr: { width: 90 },
+    duration: 0.6,
+    ease: 'power3.out'
+  }, 2.3);
+
+  // Phase 2: Reveal "MATIC" (width from 90 to 230)
   loaderTl.to(clipRect, {
     attr: { width: 230 },
-    duration: 1.0,
-    ease: 'power3.inOut'
-  }, 1.8);
+    duration: 0.7,
+    ease: 'power2.out'
+  }, 2.9);
 
+  // Step 5: Energy pulse travels across the logo (2.5s to 3.5s)
   loaderTl.to(pulse, {
     x: 420,
     opacity: 0.6,
     duration: 1.0,
     ease: 'power2.inOut'
-  }, 2.2);
+  }, 2.5);
 
   loaderTl.to(pulse, {
     opacity: 0,
     duration: 0.4,
     ease: 'power2.out'
-  }, 2.8);
+  }, 3.1);
 }
 
 function triggerSiteTransition() {
