@@ -221,6 +221,242 @@
     </div>
   </section>
 
+  <!-- 03. ABOUT YAWMATIC -->
+  <section class="section-padding" id="about" style="background-color: #0b0b0c; min-height: 80vh; display: flex; align-items: center;">
+    <div class="about-split" style="width: 100%;">
+      <div class="about__left">
+        <!-- Word-by-word reveal text -->
+        <h2 class="about__reveal-text" id="about-reveal-text">
+          Building future-focused digital experiences, content systems and impactful creative execution.
+        </h2>
+      </div>
+      <div class="about__right reveal-item">
+        <div class="about-webgl-container" id="about-interactive-logo">
+          <!-- Luxury noise overlay specific to the energy field column -->
+          <div class="about-noise-overlay"></div>
+          <!-- WebGL canvas for the Three.js 3D energy field -->
+          <canvas id="about-webgl-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04. CAPABILITIES -->
+  <section class="section-padding" id="capabilities" style="min-height: 80vh; display: flex; align-items: center; padding-bottom: 120px;">
+    <div class="grid-bg-overlay"></div>
+    <div class="capabilities-wrapper">
+      <span class="overline reveal-item">What We Do</span>
+      <h2 class="heading-large reveal-item">Our Capabilities</h2>
+
+      <div class="capabilities-grid">
+        <!-- Cap 1 -->
+        <div class="capability-card reveal-item">
+          <span class="capability-card__number">01</span>
+          <svg class="capability-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <h3 class="capability-card__title">Content Creation</h3>
+          <p class="capability-card__desc">Premium copy, copy direction, and structured asset collections tailored to connect brands with digital audiences.</p>
+        </div>
+        <!-- Cap 2 -->
+        <div class="capability-card reveal-item">
+          <span class="capability-card__number">02</span>
+          <svg class="capability-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7a2 2 0 0 0-2.45-1.45L2 12v6l21-6V7zM2 12h21M2 15h21M2 18h21"/>
+            <rect x="2" y="6" width="20" height="12" rx="2" ry="2"/>
+          </svg>
+          <h3 class="capability-card__title">Video Editing</h3>
+          <p class="capability-card__desc">Cinematic, rapid-paced storytelling designed to capture immediate attention across modern media systems.</p>
+        </div>
+        <!-- Cap 3 -->
+        <div class="capability-card reveal-item">
+          <span class="capability-card__number">03</span>
+          <svg class="capability-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <h3 class="capability-card__title">Website Design</h3>
+          <p class="capability-card__desc">Sleek WebGL layouts, high-performance interactions, and smooth experiences built with strict design principles.</p>
+        </div>
+        <!-- Cap 4 -->
+        <div class="capability-card reveal-item">
+          <span class="capability-card__number">04</span>
+          <svg class="capability-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <h3 class="capability-card__title">Brand Identity</h3>
+          <p class="capability-card__desc">Visual voice guidelines, corporate logos, structural systems, and visual assets constructed to scale anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05. FEATURED WORK (HORIZONTAL SCROLL) -->
+  <div class="featured-work-container" id="work" style="">
+    <div class="horizontal-scroll-container" id="horizontal-scroll-container">
+      
+      <!-- Showcase header card -->
+      <div class="featured-work__header-card">
+        <span class="overline">Our Work</span>
+        <h2 class="heading-large">Featured<br>Projects</h2>
+        <p style="color: var(--mist); line-height: 1.6; margin-top: 10px;">
+          Scroll horizontally to explore our latest digital executions, platforms, and identity packages.
+        </p>
+      </div>
+
+      <!-- Project 1 -->
+      <a href="https://webinvitein.vercel.app/" target="_blank" rel="noopener noreferrer" class="work-card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="work-card__glow-corner"></div>
+        <div>
+          <span class="work-card__category">Digital Platform</span>
+          <h3 class="work-card__title">WEBINVITE.IN</h3>
+        </div>
+        <p class="work-card__desc">
+          A fully interactive, premium web experience platform designed for digital event management and immersive visual invites.
+        </p>
+        <div class="work-card__footer">
+          <ul class="work-card__tags">
+            <li class="work-card__tag">WebGL</li>
+            <li class="work-card__tag">UX/UI</li>
+            <li class="work-card__tag">SaaS</li>
+          </ul>
+          <span class="work-card__link magnetic">
+            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- Project 2 -->
+      <div class="work-card">
+        <div class="work-card__glow-corner"></div>
+        <div>
+          <span class="work-card__category">Brand Systems</span>
+          <h3 class="work-card__title">Identity & Voice</h3>
+        </div>
+        <p class="work-card__desc">
+          Structuring visual guidelines and scalable design layouts for modern enterprise branding across physical and web applications.
+        </p>
+        <div class="work-card__footer">
+          <ul class="work-card__tags">
+            <li class="work-card__tag">Branding</li>
+            <li class="work-card__tag">Vector</li>
+            <li class="work-card__tag">Guidelines</li>
+          </ul>
+          <a href="#" class="work-card__link magnetic">
+            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Project 3 -->
+      <div class="work-card">
+        <div class="work-card__glow-corner"></div>
+        <div>
+          <span class="work-card__category">Web Experiences</span>
+          <h3 class="work-card__title">Interactive Systems</h3>
+        </div>
+        <p class="work-card__desc">
+          Custom web configurations, canvas particle systems, and 3D product showrooms built for global distribution.
+        </p>
+        <div class="work-card__footer">
+          <ul class="work-card__tags">
+            <li class="work-card__tag">Three.js</li>
+            <li class="work-card__tag">Custom Shader</li>
+            <li class="work-card__tag">Creative Dev</li>
+          </ul>
+          <a href="#" class="work-card__link magnetic">
+            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Project 4 -->
+      <div class="work-card">
+        <div class="work-card__glow-corner"></div>
+        <div>
+          <span class="work-card__category">Motion Design</span>
+          <h3 class="work-card__title">Creative Visuals</h3>
+        </div>
+        <p class="work-card__desc">
+          Constructing short form motion assets, custom vector animations, and creative typography overlays.
+        </p>
+        <div class="work-card__footer">
+          <ul class="work-card__tags">
+            <li class="work-card__tag">GSAP</li>
+            <li class="work-card__tag">Cinema4D</li>
+            <li class="work-card__tag">Video Systems</li>
+          </ul>
+          <a href="#" class="work-card__link magnetic">
+            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 06. PROCESS EXPERIENCE -->
+  <section class="section-padding" id="process" style="min-height: 85vh; padding-bottom: 120px;">
+    <span class="overline reveal-item">How We Work</span>
+    <h2 class="heading-large reveal-item">Process Experience</h2>
+
+    <div class="timeline-container">
+      <!-- Vertical progress timeline line -->
+      <div class="timeline-line-track">
+        <div class="timeline-line-fill" id="timeline-line-fill"></div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="timeline-step reveal-item" data-step="0">
+        <div class="timeline-step__marker"></div>
+        <div class="timeline-step__header">
+          <span class="timeline-step__number">01</span>
+          <h3 class="timeline-step__title">THINK</h3>
+        </div>
+        <p class="timeline-step__content">
+          Developing strategy, aligning requirements, and establishing direction. We layout structured concept paths and set performance milestones.
+        </p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="timeline-step reveal-item" data-step="1">
+        <div class="timeline-step__marker"></div>
+        <div class="timeline-step__header">
+          <span class="timeline-step__number">02</span>
+          <h3 class="timeline-step__title">CREATE</h3>
+        </div>
+        <p class="timeline-step__content">
+          Designing visuals, refining UX paths, establishing design systems, and generating custom art collections tailored to the brand footprint.
+        </p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="timeline-step reveal-item" data-step="2">
+        <div class="timeline-step__marker"></div>
+        <div class="timeline-step__header">
+          <span class="timeline-step__number">03</span>
+          <h3 class="timeline-step__title">BUILD</h3>
+        </div>
+        <p class="timeline-step__content">
+          Transforming visuals into structured codebases. Developing standard-compliant WebGL architectures and interactive layouts with responsive mechanics.
+        </p>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="timeline-step reveal-item" data-step="3">
+        <div class="timeline-step__marker"></div>
+        <div class="timeline-step__header">
+          <span class="timeline-step__number">04</span>
+          <h3 class="timeline-step__title">IMPACT</h3>
+        </div>
+        <p class="timeline-step__content">
+          Deploying sites, monitoring performance metrics, executing launch plans, and implementing search engine optimization guidelines to fuel scale.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- 07. ECOSYSTEM -->
   <section class="section-padding" id="ecosystem" style="background-color: #0b0b0c;">
     <h2 class="heading-large reveal-item" style="text-align: center;">The Yawmatic Ecosystem</h2>
@@ -454,6 +690,25 @@
         <div class="stat-card__number" id="stat-num-3">0</div>
         <div class="stat-card__label">Creative Systems Built</div>
       </div>
+    </div>
+  </section>
+
+  <!-- 11. CONTACT EXPERIENCE -->
+  <section class="contact-section" id="contact" style="height: 80vh; min-height: 500px;">
+    <div class="contact-glow-bg"></div>
+    
+    <h2 class="contact-headline">
+      Ready to Build<br>
+      <span class="orange">Different?</span>
+    </h2>
+    <p class="contact-subtext">
+      Let's create something that matters. Reach out to start your project.
+    </p>
+
+    <div class="magnetic-wrap">
+      <a href="mailto:hello@yawmatic.com?subject=Let's%20Build%20Something%20Great&body=Hi%20YAWMATIC%20Team,%0A%0AI'm%20interested%20in%20working%20with%20you%20on%20a%20new%20project.%0A%0AHere%20are%20some%20initial%20details:%0A-%20Project%20Type:%20%0A-%20Estimated%20Timeline:%20%0A-%20Budget%20Range:%20%0A%0ALooking%20forward%20to%20connecting!%0A%0ABest%20regards,%0A[Your%20Name]" class="btn btn--primary pulse-glow contact-btn magnetic" style="font-size: 1.2rem; padding: 20px 48px;">
+        LET'S BUILD →
+      </a>
     </div>
   </section>
 
