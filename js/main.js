@@ -313,7 +313,12 @@ function runLoaderTimeline() {
   
   gsap.set(path, { strokeDasharray: pathLength, strokeDashoffset: pathLength });
   gsap.set(dot, { opacity: 0 });
-  gsap.set(monogram, { opacity: 0, scale: 0.7, filter: 'blur(8px)' });
+  gsap.set(monogram, { 
+    opacity: 0, 
+    scale: 0.7, 
+    transformOrigin: "50% 50%", 
+    filter: 'blur(8px)' 
+  });
   gsap.set(clipRect, { attr: { width: 0 } });
   gsap.set(pulse, { opacity: 0, x: -150 });
 
