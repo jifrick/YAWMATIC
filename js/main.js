@@ -293,6 +293,7 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
 
 window.addEventListener('load', () => {
   pageLoaded = true;
+  // Initialize Three.js WebGL hero scene if canvas exists on load
   if (document.getElementById('webgl-cube-canvas')) {
     initHeroWebGL();
   }
