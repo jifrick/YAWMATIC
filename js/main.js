@@ -459,6 +459,18 @@ function initEnterAnimations() {
       delay: 0.6
     });
   }
+
+  // Work page card stagger slide-in (if present)
+  if (document.querySelector('.work-card')) {
+    gsap.from('.work-card', {
+      opacity: 0,
+      x: 100,
+      stagger: 0.15,
+      duration: 1.2,
+      ease: 'power4.out',
+      delay: 0.3
+    });
+  }
 }
 
 /* ----------------------------------------------------
