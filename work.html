@@ -38,6 +38,34 @@
 
   <!-- Custom Shared Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- Prevent flash of unstyled content and enforce full-screen loader immediately -->
+  <style>
+    body.loading {
+      overflow: hidden !important;
+    }
+    body.loading #page-loader {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #090909 !important;
+      z-index: 999999999 !important;
+      display: flex !important;
+    }
+    body.loading .navbar,
+    body.loading .hero-pin-wrapper,
+    body.loading section,
+    body.loading .featured-work-container,
+    body.loading footer,
+    body.loading .custom-cursor-dot,
+    body.loading .custom-cursor-ring,
+    body.loading .mouse-glow {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+  </style>
 </head>
 <body class="loading">
 
@@ -50,7 +78,7 @@
   </svg>
 
   <!-- Loader Page transition -->
-  <div class="loader" id="page-loader">
+  <div class="loader" id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #090909; z-index: 999999999; display: flex;">
     <div class="loader__grain"></div>
     <div class="loader__glow"></div>
     <canvas class="loader__particles-canvas" id="loader-particles-canvas"></canvas>
@@ -95,7 +123,7 @@
 
         <!-- Clipped Wordmark -->
         <g clip-path="url(#wordmarkClip)">
-          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44"/>
+          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44" style="opacity: 0;"/>
         </g>
 
         <!-- Sweep Pulse Overlay -->

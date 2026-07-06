@@ -77,7 +77,7 @@ function pageTransition(url) {
       opacity: 0, 
       y: 100, 
       filter: 'blur(10px)',
-      backgroundColor: '#0F0F10'
+      backgroundColor: '#090909'
     });
     gsap.set('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas', {
       clearProps: 'opacity'
@@ -318,6 +318,7 @@ function runLoaderTimeline() {
   const monogram = document.getElementById('loader-y-monogram');
   const clipRect = document.getElementById('clipRect');
   const pulse = document.getElementById('loader-pulse-rect');
+  const wordmark = document.getElementById('loader-wordmark');
   
   if (!path || !dot) return;
 
@@ -331,6 +332,9 @@ function runLoaderTimeline() {
     transformOrigin: "50% 50%", 
     filter: 'blur(8px)' 
   });
+  if (wordmark) {
+    gsap.set(wordmark, { opacity: 0 });
+  }
   gsap.set(clipRect, { attr: { width: 0 } });
   gsap.set(pulse, { opacity: 0, x: -150 });
 
@@ -375,6 +379,10 @@ function runLoaderTimeline() {
   }, 1.2);
 
   // Step 7: Staged wordmark reveal (only after orbit completes at 2.3s)
+  if (wordmark) {
+    loaderTl.set(wordmark, { opacity: 1 }, 2.3);
+  }
+
   // Phase 1: Reveal "YAW" (width from 0 to 90)
   loaderTl.to(clipRect, {
     attr: { width: 90 },
@@ -405,6 +413,7 @@ function runLoaderTimeline() {
 }
 
 function triggerSiteTransition() {
+  document.body.classList.remove('loading');
   stopLoaderParticles();
   highlightActiveLink();
   
@@ -421,7 +430,6 @@ function triggerSiteTransition() {
       if (loaderLogo) loaderLogo.style.opacity = '0';
       loader.style.display = 'none';
       loader.style.backgroundColor = '';
-      document.body.classList.remove('loading');
       
       ScrollTrigger.refresh();
       setTimeout(() => ScrollTrigger.refresh(), 100);
@@ -444,12 +452,20 @@ function triggerSiteTransition() {
     const deltaX = navCenterX - loaderCenterX;
     const deltaY = navCenterY - loaderCenterY;
 
+    // Move logo to its navbar position
     transitionTl.to(loaderLogo, {
       x: deltaX,
       y: deltaY,
-      scale: scale,
       duration: 0.85,
       ease: 'power3.inOut'
+    }, 0);
+
+    // Smoothly scale down during flight and expand back to final size upon placing
+    transitionTl.to(loaderLogo, {
+      keyframes: [
+        { scale: scale * 0.5, duration: 0.4, ease: 'power2.inOut' },
+        { scale: scale, duration: 0.45, ease: 'back.out(1.5)' }
+      ]
     }, 0);
   }
 
@@ -462,7 +478,7 @@ function triggerSiteTransition() {
 
   // Dissolve the loader background color to transparent to keep the logo visible during flight
   transitionTl.to(loader, {
-    backgroundColor: 'rgba(15, 15, 16, 0)',
+    backgroundColor: 'rgba(9, 9, 9, 0)',
     duration: 0.75,
     ease: 'power3.inOut'
   }, 0.1);
