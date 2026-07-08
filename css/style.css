@@ -379,6 +379,10 @@ button {
   gap: 6px;
 }
 
+.navbar__logo .logo-wordmark-img {
+  display: none !important;
+}
+
 .navbar__logo-symbol {
   width: 24px;
   height: 24px;
@@ -1954,8 +1958,8 @@ button {
 
 /* Small Rotating Orbit Animation on Y symbol */
 .logo-orbit-svg {
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
 }
 
 .logo-orbit-svg__ring {

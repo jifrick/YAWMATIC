@@ -469,8 +469,8 @@ function triggerSiteTransition() {
     }, 0);
   }
 
-  // Fade out loader visual overlays (grain, glow, particles)
-  transitionTl.to('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas', {
+  // Fade out loader visual overlays (grain, glow, particles, wordmark)
+  transitionTl.to('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas, #loader-wordmark', {
     opacity: 0,
     duration: 0.65,
     ease: 'power2.inOut'
