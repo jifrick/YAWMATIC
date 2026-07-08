@@ -783,6 +783,14 @@ button {
   color: var(--volt);
 }
 
+.about__desc {
+  margin-top: 32px;
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  line-height: 1.7;
+  color: var(--mist);
+  max-width: 580px;
+}
+
 .about__reveal-text span {
   opacity: 0.2;
   display: inline-block;
