@@ -371,12 +371,12 @@ button {
 .navbar__logo {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   letter-spacing: 1px;
   color: var(--volt);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .navbar__logo-symbol {
@@ -1954,8 +1954,8 @@ button {
 
 /* Small Rotating Orbit Animation on Y symbol */
 .logo-orbit-svg {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
 }
 
 .logo-orbit-svg__ring {
