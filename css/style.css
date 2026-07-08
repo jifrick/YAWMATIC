@@ -787,7 +787,6 @@ button {
   opacity: 0.2;
   display: inline-block;
   margin-right: 8px;
-  transition: opacity 0.1s linear;
 }
 
 .about__reveal-text span.active {

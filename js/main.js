@@ -1269,7 +1269,7 @@ if (splitTextContainer) {
     });
     aboutSpans.forEach((span) => {
       scrollTl.to(span, {
-        className: span.className + ' active',
+        opacity: 1,
         duration: 0.1
       });
     });
