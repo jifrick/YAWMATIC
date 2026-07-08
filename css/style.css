@@ -791,6 +791,19 @@ button {
   max-width: 580px;
 }
 
+.text-orange {
+  color: var(--fire);
+}
+
+.text-volt {
+  color: var(--volt);
+}
+
+.text-glow {
+  color: var(--fire);
+  text-shadow: 0 0 8px rgba(255, 90, 31, 0.4);
+}
+
 .about__reveal-text span {
   opacity: 0.2;
   display: inline-block;
