@@ -12,21 +12,33 @@ const isMobile = window.innerWidth <= 768;
 function highlightActiveLink() {
   let path = window.location.pathname;
   
-  // Clean URL: if pathname ends with .html, replace it in the browser history
-  const htmlToClean = {
-    '/index.html': '/',
-    '/about.html': '/about',
-    '/services.html': '/services',
-    '/work.html': '/work',
-    '/process.html': '/process',
-    '/contact.html': '/contact'
-  };
+  // Restore clean URL from sessionStorage if navigated via transition
+  const sessionRoute = sessionStorage.getItem('currentCleanRoute');
+  if (sessionRoute) {
+    window.history.replaceState(null, '', sessionRoute);
+    path = sessionRoute;
+    sessionStorage.removeItem('currentCleanRoute');
+  } else {
+    // Clean URL: if pathname ends with .html, replace it in the browser history
+    const htmlToClean = {
+      '/index.html': '/',
+      '/about.html': '/about',
+      '/services.html': '/services',
+      '/work.html': '/work',
+      '/process.html': '/process',
+      '/contact.html': '/contact',
+      '/creators.html': '/creators',
+      '/creators-browse.html': '/creators/browse',
+      '/creators-apply.html': '/creators/apply',
+      '/admin.html': '/admin'
+    };
 
-  for (const [htmlFile, cleanRoute] of Object.entries(htmlToClean)) {
-    if (path === htmlFile || path.endsWith(htmlFile)) {
-      window.history.replaceState(null, '', cleanRoute);
-      path = cleanRoute;
-      break;
+    for (const [htmlFile, cleanRoute] of Object.entries(htmlToClean)) {
+      if (path === htmlFile || path.endsWith(htmlFile)) {
+        window.history.replaceState(null, '', cleanRoute);
+        path = cleanRoute;
+        break;
+      }
     }
   }
 
@@ -34,12 +46,15 @@ function highlightActiveLink() {
   if (path === '' || path === '/index.html') path = '/';
   if (path.endsWith('/') && path.length > 1) path = path.slice(0, -1);
 
-  const menuLinks = document.querySelectorAll('.navbar__link');
+  const menuLinks = document.querySelectorAll('.navbar__menu .navbar__link, .footer__menu .footer__link');
   menuLinks.forEach(link => {
     let href = link.getAttribute('href');
     if (href === '') href = '/';
     
-    if (href === path) {
+    // Highlight Creators link on subpaths too
+    if (href === '/creators' && path.startsWith('/creators')) {
+      link.classList.add('active');
+    } else if (href === path) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');
@@ -106,16 +121,6 @@ document.addEventListener('click', (e) => {
   const href = anchor.getAttribute('href');
   if (!href) return;
 
-  // Mapping clean URLs to actual .html files under the hood
-  const routes = {
-    '/': '/index.html',
-    '/about': '/about.html',
-    '/services': '/services.html',
-    '/work': '/work.html',
-    '/process': '/process.html',
-    '/contact': '/contact.html'
-  };
-
   // Intercept clicks on internal clean routes or .html files
   if (!href.startsWith('#') && 
       !href.startsWith('mailto:') && 
@@ -123,12 +128,45 @@ document.addEventListener('click', (e) => {
       anchor.target !== '_blank' && 
       !href.startsWith('http')) {
         
+    const routes = {
+      '/': '/index.html',
+      '/about': '/about.html',
+      '/services': '/services.html',
+      '/work': '/work.html',
+      '/process': '/process.html',
+      '/contact': '/contact.html',
+      '/creators': '/creators.html',
+      '/creators/browse': '/creators-browse.html',
+      '/creators/apply': '/creators-apply.html',
+      '/creators/success-stories': '/creators-browse.html'
+    };
+
+    let targetUrl = null;
+    
     if (routes.hasOwnProperty(href)) {
-      e.preventDefault();
-      pageTransition(routes[href]);
+      targetUrl = routes[href];
+    } else if (href.startsWith('/creators/')) {
+      const slug = href.substring(10);
+      const categories = [
+        'photography', 'videography', 'drone-operator', 'video-editor', 'motion-designer',
+        'graphic-designer', 'brand-designer', 'ui-ux-designer', 'web-designer', '3d-artist',
+        'content-creator', 'social-media-manager', 'copywriter', 'ai-creative-specialist'
+      ];
+      if (categories.includes(slug)) {
+        targetUrl = '/creators-category.html';
+      } else {
+        targetUrl = '/creators-profile.html';
+      }
+    } else if (href.startsWith('/admin')) {
+      targetUrl = '/admin.html';
     } else if (href.includes('.html')) {
+      targetUrl = href;
+    }
+
+    if (targetUrl) {
       e.preventDefault();
-      pageTransition(href);
+      sessionStorage.setItem('currentCleanRoute', href);
+      pageTransition(targetUrl);
     }
   }
 });
@@ -469,8 +507,8 @@ function triggerSiteTransition() {
     }, 0);
   }
 
-  // Fade out loader visual overlays (grain, glow, particles, wordmark)
-  transitionTl.to('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas, #loader-wordmark', {
+  // Fade out loader visual overlays (grain, glow, particles)
+  transitionTl.to('#page-loader .loader__grain, #page-loader .loader__glow, #page-loader #loader-particles-canvas', {
     opacity: 0,
     duration: 0.65,
     ease: 'power2.inOut'

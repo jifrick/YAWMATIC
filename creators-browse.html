@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    window.addEventListener('error', function(e) {
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '10px';
+      div.style.left = '10px';
+      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+      div.style.color = 'white';
+      div.style.padding = '15px';
+      div.style.zIndex = '999999';
+      div.style.fontFamily = 'monospace';
+      div.style.borderRadius = '5px';
+      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+      document.body.appendChild(div);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Collective Creators — YAWMATIC</title>
+  <meta name="description" content="Search and filter through YAWMATIC's vetted collective of photography, videography, branding, and development creators.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+  <!-- Custom Shared Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body.loading {
+      overflow: hidden !important;
+    }
+    body.loading #page-loader {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #090909 !important;
+      z-index: 999999999 !important;
+      display: flex !important;
+    }
+    body.loading .navbar,
+    body.loading section,
+    body.loading footer,
+    body.loading .custom-cursor-dot,
+    body.loading .custom-cursor-ring,
+    body.loading .mouse-glow {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* Browse Page Layout */
+    .browse-container {
+      display: flex;
+      gap: 40px;
+      margin-top: 50px;
+      position: relative;
+    }
+    @media(max-width: 900px) {
+      .browse-container { flex-direction: column; }
+    }
+
+    /* Filter Sidebar */
+    .filter-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 120px;
+      height: calc(100vh - 160px);
+      overflow-y: auto;
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 30px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    @media(max-width: 900px) {
+      .filter-sidebar {
+        width: 100%;
+        position: static;
+        height: auto;
+        padding: 24px;
+      }
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 20px;
+    }
+    .filter-group:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .filter-group__title {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+      letter-spacing: 1px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--mist);
+      cursor: none;
+      user-select: none;
+    }
+    .checkbox-input {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--glass-border);
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: none;
+      transition: var(--transition-fast);
+    }
+    .checkbox-input:checked {
+      background: var(--fire);
+      border-color: var(--fire);
+    }
+    .checkbox-input:checked::after {
+      content: '✓';
+      color: var(--volt);
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .select-input {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      color: var(--volt);
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: none;
+      font-family: var(--font-body);
+      transition: var(--transition-fast);
+      width: 100%;
+    }
+    .select-input:focus {
+      border-color: var(--fire);
+    }
+    
+    /* Toggle switch */
+    .toggle-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: none;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.08);
+      transition: .4s;
+      border-radius: 34px;
+      border: 1px solid var(--glass-border);
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--mist);
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--fire);
+      border-color: var(--fire);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+      background-color: var(--volt);
+    }
+
+    /* Content Area */
+    .browse-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .search-sort-bar {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      padding: 16px 24px;
+      border-radius: 6px;
+    }
+    @media(max-width: 600px) {
+      .search-sort-bar { flex-direction: column; align-items: stretch; }
+    }
+    .search-input-wrap {
+      position: relative;
+      flex-grow: 1;
+      max-width: 480px;
+    }
+    .search-field {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      padding: 12px 16px 12px 42px;
+      border-radius: 4px;
+      color: var(--volt);
+      font-size: 0.95rem;
+      outline: none;
+      font-family: var(--font-body);
+      transition: var(--transition-fast);
+    }
+    .search-field:focus {
+      border-color: var(--fire);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--mist);
+      pointer-events: none;
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Sort dropdown */
+    .sort-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .sort-label {
+      font-size: 0.85rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--mist);
+      letter-spacing: 0.5px;
+    }
+    .sort-select {
+      width: 180px;
+    }
+
+    /* Creators Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    @media (max-width: 1200px) {
+      .results-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .results-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 40px;
+      background: var(--card-bg);
+      border: 1px dashed var(--glass-border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .empty-state__icon {
+      color: var(--fire);
+      width: 64px;
+      height: 64px;
+      opacity: 0.6;
+    }
+    .empty-state__title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .empty-state__desc {
+      color: var(--mist);
+      font-size: 0.95rem;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+
+    /* Pagination */
+    .pagination-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .page-indicator {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--mist);
+    }
+
+    /* Re-use creator-card styles from hub */
+    .creator-card {
+      width: 100%; /* Fill grid cell */
+    }
+    .creator-card__image-wrap {
+      height: 280px; /* shorter in browse */
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <!-- SVG Noise Filter Overlay -->
+  <svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <!-- Loader Page transition -->
+  <div class="loader" id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #090909; z-index: 999999999; display: flex;">
+    <div class="loader__grain"></div>
+    <div class="loader__glow"></div>
+    <canvas class="loader__particles-canvas" id="loader-particles-canvas"></canvas>
+    
+    <div class="loader__logo-container">
+      <svg class="loader__logo-svg" viewBox="0 0 420 200" id="loader-logo-svg">
+        <defs>
+          <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#FF6A00" stop-opacity="1"/>
+          </linearGradient>
+          
+          <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0"/>
+            <stop offset="30%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#F2F2F2" stop-opacity="1"/>
+            <stop offset="70%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0"/>
+          </linearGradient>
+          
+          <clipPath id="wordmarkClip">
+            <rect id="clipRect" x="160" y="50" width="0" height="100" />
+          </clipPath>
+          
+          <filter id="bloomFilter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <path id="loader-orbit-path" d="M 100,60 A 40,40 0 1,1 100,140 A 40,40 0 1,1 100,60 A 40,40 0 0,1 128.28,71.72" stroke="url(#orbitGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle id="loader-orbit-dot" cx="100" cy="60" r="4.5" fill="#FF5A1F" filter="url(#bloomFilter)"/>
+        <image id="loader-y-monogram" href="logo_y_only.png" x="84" y="81" width="32" height="38" style="opacity: 0; filter: blur(8px);"/>
+        
+        <g clip-path="url(#wordmarkClip)">
+          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44" style="opacity: 0;"/>
+        </g>
+        <rect id="loader-pulse-rect" x="-150" y="50" width="150" height="100" fill="url(#pulseGrad)" style="mix-blend-mode: screen; pointer-events: none; opacity: 0;"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+
+  <!-- Mouse Glow -->
+  <div class="mouse-glow" id="mouse-glow"></div>
+
+  <!-- Navbar Navigation -->
+  <nav class="navbar magnetic-wrap">
+    <a href="/" class="navbar__logo magnetic">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32">
+        <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+        <g class="logo-orbit-svg__rotator">
+          <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+        </g>
+        <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+      </svg>
+      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="/" class="navbar__link magnetic">Home</a></li>
+      <li><a href="/about" class="navbar__link magnetic">About</a></li>
+      <li><a href="/services" class="navbar__link magnetic">Services</a></li>
+      <li><a href="/work" class="navbar__link magnetic">Work</a></li>
+      <li><a href="/process" class="navbar__link magnetic">Process</a></li>
+      <li><a href="/creators" class="navbar__link magnetic active">Creators</a></li>
+    </ul>
+    <div class="magnetic-wrap">
+      <a href="/contact" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <!-- BROWSE HUB CONTAINER -->
+  <section class="section-padding" style="padding-top: 160px; min-height: 100vh;">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item">Collective Directory</span>
+    <h1 class="heading-large reveal-item">Explore Vetted Creators</h1>
+    
+    <div class="browse-container">
+      
+      <!-- Sticky Filter Sidebar -->
+      <aside class="filter-sidebar reveal-item">
+        
+        <!-- Categories Filter -->
+        <div class="filter-group">
+          <span class="filter-group__title">Craft / Categories</span>
+          <div id="category-checkboxes-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+            <!-- Seeded dynamically -->
+            <span style="color: var(--mist); font-size: 0.85rem;">Loading categories...</span>
+          </div>
+        </div>
+
+        <!-- City Filter -->
+        <div class="filter-group">
+          <span class="filter-group__title">Location</span>
+          <select id="filter-city" class="select-input">
+            <option value="">All Locations</option>
+            <!-- Seeded dynamically -->
+          </select>
+        </div>
+
+        <!-- Availability Filter -->
+        <div class="filter-group">
+          <span class="filter-group__title">Availability</span>
+          <select id="filter-availability" class="select-input">
+            <option value="">Any Status</option>
+            <option value="available">Available Now</option>
+            <option value="limited">Limited Spots</option>
+            <option value="booked">Fully Booked</option>
+          </select>
+        </div>
+
+        <!-- Experience Range -->
+        <div class="filter-group">
+          <span class="filter-group__title">Minimum Experience</span>
+          <select id="filter-experience" class="select-input">
+            <option value="">Any Experience</option>
+            <option value="3">3+ Years</option>
+            <option value="5">5+ Years</option>
+            <option value="8">8+ Years</option>
+            <option value="10">10+ Years</option>
+          </select>
+        </div>
+
+        <!-- Verified Toggle -->
+        <div class="filter-group">
+          <div class="toggle-wrap">
+            <span class="filter-group__title" style="margin: 0;">Verified Vetted Only</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="filter-verified">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="btn-reset-filters" class="btn btn--ghost" style="width: 100%; justify-content: center; padding: 12px 0; font-size: 0.85rem;">
+          Clear Filters
+        </button>
+
+      </aside>
+
+      <!-- Main Directory Content -->
+      <main class="browse-content reveal-item">
+        
+        <!-- Search & Sort Top Bar -->
+        <div class="search-sort-bar">
+          <div class="search-input-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-creators" class="search-field" placeholder="Search by name, skills, bio, or equipment...">
+          </div>
+
+          <div class="sort-wrap">
+            <span class="sort-label">Sort By</span>
+            <select id="sort-select" class="select-input sort-select">
+              <option value="featured">Featured Vetted</option>
+              <option value="newest">Newest Network Addition</option>
+              <option value="experience">Most Experienced</option>
+              <option value="rating">Top Rated</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Creators Grid -->
+        <div id="directory-grid" class="results-grid">
+          <!-- Loaded dynamically -->
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="empty-state" class="empty-state" style="display: none;">
+          <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          <h3 class="empty-state__title">No Creators Found</h3>
+          <p class="empty-state__desc">
+            We couldn't find any approved creators matching those search parameters. Try clearing your filters or broadening your search keywords.
+          </p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination-controls" class="pagination-wrap">
+          <button id="btn-prev-page" class="btn btn--ghost" style="padding: 10px 24px; font-size: 0.85rem;">
+            ← Previous
+          </button>
+          <span id="page-indicator" class="page-indicator">Page 1 of 1</span>
+          <button id="btn-next-page" class="btn btn--ghost" style="padding: 10px 24px; font-size: 0.85rem;">
+            Next →
+          </button>
+        </div>
+
+      </main>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer__logo-col">
+        <a href="/" class="footer__logo magnetic">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 50px; height: 50px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <div class="footer__tagline">THINK FUTURE. BUILD DIFFERENT.</div>
+      </div>
+
+      <div class="footer__nav-col">
+        <ul class="footer__menu">
+          <li><a href="/" class="footer__link magnetic">Home</a></li>
+          <li><a href="/about" class="footer__link magnetic">About</a></li>
+          <li><a href="/services" class="footer__link magnetic">Services</a></li>
+          <li><a href="/work" class="footer__link magnetic">Work</a></li>
+          <li><a href="/process" class="footer__link magnetic">Process</a></li>
+          <li><a href="/creators" class="footer__link magnetic active">Creators</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__socials-col">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="footer__social-btn magnetic" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11C4.483 20.455 12 20.455 12 20.455s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer__copy">© 2026 YAWMATIC. All rights reserved.</div>
+      <div class="footer__credit">THINK FUTURE. BUILD DIFFERENT.</div>
+    </div>
+  </footer>
+
+  <!-- Custom Shared JavaScript -->
+  <script src="js/main.js"></script>
+
+  <!-- Page-specific dynamic search logic -->
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    const itemsPerPage = 6;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Parse initial query params (e.g. if loaded via /creators/browse?city=Kochi)
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialCity = urlParams.get('city') || '';
+      const initialCategory = urlParams.get('category') || '';
+
+      // Initialize Filter Inputs with URL Params
+      if (initialCity) {
+        document.getElementById('filter-city').value = initialCity;
+      }
+
+      // 1. Fetch Categories for checkbox filter
+      fetch('/api/categories')
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('category-checkboxes-container');
+          container.innerHTML = '';
+          
+          data.forEach(cat => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label magnetic';
+            
+            const checkedAttr = (initialCategory === cat.slug) ? 'checked' : '';
+            
+            label.innerHTML = `
+              <input type="checkbox" value="${cat.slug}" class="checkbox-input category-checkbox" ${checkedAttr}>
+              ${cat.name}
+            `;
+            container.appendChild(label);
+          });
+
+          // Wire up event listeners to checkboxes
+          document.querySelectorAll('.category-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+              currentPage = 1;
+              fetchResults();
+            });
+          });
+        });
+
+      // 2. Fetch Locations for selector filter
+      fetch('/api/locations')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('filter-city');
+          data.forEach(loc => {
+            const opt = document.createElement('option');
+            opt.value = loc.city;
+            opt.textContent = `${loc.city}, ${loc.country}`;
+            if (initialCity === loc.city) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          });
+        });
+
+      // 3. Setup event listeners for other filters & search
+      document.getElementById('filter-city').addEventListener('change', () => { currentPage = 1; fetchResults(); });
+      document.getElementById('filter-availability').addEventListener('change', () => { currentPage = 1; fetchResults(); });
+      document.getElementById('filter-experience').addEventListener('change', () => { currentPage = 1; fetchResults(); });
+      document.getElementById('filter-verified').addEventListener('change', () => { currentPage = 1; fetchResults(); });
+      document.getElementById('sort-select').addEventListener('change', () => { currentPage = 1; fetchResults(); });
+
+      // Debounce search input
+      let searchTimeout;
+      document.getElementById('search-creators').addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          currentPage = 1;
+          fetchResults();
+        }, 350);
+      });
+
+      // Reset Button
+      document.getElementById('btn-reset-filters').addEventListener('click', () => {
+        document.getElementById('search-creators').value = '';
+        document.getElementById('filter-city').value = '';
+        document.getElementById('filter-availability').value = '';
+        document.getElementById('filter-experience').value = '';
+        document.getElementById('filter-verified').checked = false;
+        document.querySelectorAll('.category-checkbox').forEach(cb => cb.checked = false);
+        
+        currentPage = 1;
+        fetchResults();
+      });
+
+      // Pagination Events
+      document.getElementById('btn-prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          fetchResults();
+          scrollToTop();
+        }
+      });
+
+      document.getElementById('btn-next-page').addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          fetchResults();
+          scrollToTop();
+        }
+      });
+
+      // Initial Fetch
+      fetchResults();
+    });
+
+    function scrollToTop() {
+      if (typeof lenis !== 'undefined' && lenis) {
+        lenis.scrollTo('#directory-grid', { offset: -200 });
+      } else {
+        document.getElementById('directory-grid').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function fetchResults() {
+      const search = document.getElementById('search-creators').value;
+      const city = document.getElementById('filter-city').value;
+      const availability = document.getElementById('filter-availability').value;
+      const experience = document.getElementById('filter-experience').value;
+      const verified = document.getElementById('filter-verified').checked;
+      const sort = document.getElementById('sort-select').value;
+      
+      // Get selected categories
+      const selectedCats = [];
+      document.querySelectorAll('.category-checkbox:checked').forEach(cb => {
+        selectedCats.push(cb.value);
+      });
+
+      // Build Query URL
+      let queryUrl = `/api/creators?page=${currentPage}&limit=${itemsPerPage}`;
+      if (search) queryUrl += `&search=${encodeURIComponent(search)}`;
+      if (city) queryUrl += `&city=${encodeURIComponent(city)}`;
+      if (availability) queryUrl += `&availability=${encodeURIComponent(availability)}`;
+      if (experience) queryUrl += `&experience_min=${experience}`;
+      if (verified) queryUrl += `&verified_only=true`;
+      if (sort) queryUrl += `&sort=${sort}`;
+      if (selectedCats.length > 0) queryUrl += `&category=${selectedCats.join(',')}`;
+
+      // Update Browser Address Bar for SEO & Shareability
+      const cleanParams = new URLSearchParams();
+      if (search) cleanParams.set('q', search);
+      if (city) cleanParams.set('city', city);
+      if (selectedCats.length > 0) cleanParams.set('category', selectedCats.join(','));
+      const paramStr = cleanParams.toString();
+      window.history.replaceState(null, '', `/creators/browse${paramStr ? '?' + paramStr : ''}`);
+
+      // Perform request
+      fetch(queryUrl)
+        .then(res => res.json())
+        .then(data => {
+          const grid = document.getElementById('directory-grid');
+          const emptyState = document.getElementById('empty-state');
+          grid.innerHTML = '';
+
+          totalPages = data.totalPages || 1;
+          
+          if (!data.creators || data.creators.length === 0) {
+            grid.style.display = 'none';
+            emptyState.style.display = 'flex';
+            document.getElementById('pagination-controls').style.display = 'none';
+            return;
+          }
+
+          grid.style.display = 'grid';
+          emptyState.style.display = 'none';
+          document.getElementById('pagination-controls').style.display = 'flex';
+
+          data.creators.forEach(c => {
+            const card = document.createElement('a');
+            card.href = `/creators/${c.slug}`;
+            card.className = 'creator-card reveal-item';
+            
+            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+
+            card.innerHTML = `
+              <div class="creator-card__image-wrap">
+                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <div class="creator-card__badge-row">
+                  <div class="availability-pill">
+                    <span class="availability-dot ${c.availability}"></span>
+                    ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
+                  </div>
+                  ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
+                </div>
+              </div>
+              <div class="creator-card__details">
+                <div class="creator-card__meta">
+                  <span style="text-transform: uppercase;">${primaryCat}</span>
+                  <span>${c.city}</span>
+                </div>
+                <h3 class="creator-card__name">${c.full_name}</h3>
+                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <div class="creator-card__footer">
+                  <div class="creator-card__socials">
+                    ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
+                    ${c.portfolio_url || c.behance ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>` : ''}
+                  </div>
+                  <span class="creator-card__cta">View Profile →</span>
+                </div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          // Update Pagination UI
+          document.getElementById('page-indicator').textContent = `Page ${currentPage} of ${totalPages}`;
+          document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+          document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+
+          // Re-trigger scroll animations for cards
+          if (typeof ScrollTrigger !== 'undefined') {
+            setTimeout(() => ScrollTrigger.refresh(), 100);
+          }
+        });
+    }
+  </script>
+</body>
+</html>

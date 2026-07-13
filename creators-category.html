@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    window.addEventListener('error', function(e) {
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '10px';
+      div.style.left = '10px';
+      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+      div.style.color = 'white';
+      div.style.padding = '15px';
+      div.style.zIndex = '999999';
+      div.style.fontFamily = 'monospace';
+      div.style.borderRadius = '5px';
+      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+      document.body.appendChild(div);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curated Creators — YAWMATIC</title>
+  <meta name="description" content="Explore vetted creators in our exclusive network.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+  <!-- Custom Shared Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body.loading {
+      overflow: hidden !important;
+    }
+    body.loading #page-loader {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #090909 !important;
+      z-index: 999999999 !important;
+      display: flex !important;
+    }
+    body.loading .navbar,
+    body.loading section,
+    body.loading footer,
+    body.loading .custom-cursor-dot,
+    body.loading .custom-cursor-ring,
+    body.loading .mouse-glow {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* Category Layout */
+    .category-header {
+      text-align: center;
+      padding-top: 160px;
+      padding-bottom: 60px;
+      position: relative;
+    }
+    .category-header__icon-wrap {
+      color: var(--fire);
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 20px auto;
+    }
+    .category-header__count {
+      font-size: 0.95rem;
+      color: var(--mist);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    /* Results */
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 20px;
+      margin-bottom: 60px;
+    }
+    @media (max-width: 900px) {
+      .category-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .category-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 30px;
+      background: var(--card-bg);
+      border: 1px dashed var(--glass-border);
+      border-radius: 6px;
+      max-width: 500px;
+      margin: 20px auto 80px auto;
+    }
+
+    /* Re-use creator-card styles from hub */
+    .creator-card {
+      width: 100%;
+    }
+    .creator-card__image-wrap {
+      height: 320px;
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <!-- SVG Noise Filter Overlay -->
+  <svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <!-- Loader Page transition -->
+  <div class="loader" id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #090909; z-index: 999999999; display: flex;">
+    <div class="loader__grain"></div>
+    <div class="loader__glow"></div>
+    <canvas class="loader__particles-canvas" id="loader-particles-canvas"></canvas>
+    
+    <div class="loader__logo-container">
+      <svg class="loader__logo-svg" viewBox="0 0 420 200" id="loader-logo-svg">
+        <defs>
+          <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#FF6A00" stop-opacity="1"/>
+          </linearGradient>
+          
+          <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0"/>
+            <stop offset="30%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#F2F2F2" stop-opacity="1"/>
+            <stop offset="70%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0"/>
+          </linearGradient>
+          
+          <clipPath id="wordmarkClip">
+            <rect id="clipRect" x="160" y="50" width="0" height="100" />
+          </clipPath>
+          
+          <filter id="bloomFilter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <path id="loader-orbit-path" d="M 100,60 A 40,40 0 1,1 100,140 A 40,40 0 1,1 100,60 A 40,40 0 0,1 128.28,71.72" stroke="url(#orbitGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle id="loader-orbit-dot" cx="100" cy="60" r="4.5" fill="#FF5A1F" filter="url(#bloomFilter)"/>
+        <image id="loader-y-monogram" href="logo_y_only.png" x="84" y="81" width="32" height="38" style="opacity: 0; filter: blur(8px);"/>
+        
+        <g clip-path="url(#wordmarkClip)">
+          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44" style="opacity: 0;"/>
+        </g>
+        <rect id="loader-pulse-rect" x="-150" y="50" width="150" height="100" fill="url(#pulseGrad)" style="mix-blend-mode: screen; pointer-events: none; opacity: 0;"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+
+  <!-- Mouse Glow -->
+  <div class="mouse-glow" id="mouse-glow"></div>
+
+  <!-- Navbar Navigation -->
+  <nav class="navbar magnetic-wrap">
+    <a href="/" class="navbar__logo magnetic">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32">
+        <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+        <g class="logo-orbit-svg__rotator">
+          <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+        </g>
+        <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+      </svg>
+      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="/" class="navbar__link magnetic">Home</a></li>
+      <li><a href="/about" class="navbar__link magnetic">About</a></li>
+      <li><a href="/services" class="navbar__link magnetic">Services</a></li>
+      <li><a href="/work" class="navbar__link magnetic">Work</a></li>
+      <li><a href="/process" class="navbar__link magnetic">Process</a></li>
+      <li><a href="/creators" class="navbar__link magnetic active">Creators</a></li>
+    </ul>
+    <div class="magnetic-wrap">
+      <a href="/contact" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <!-- CATEGORY HUB HERO -->
+  <section class="section-padding" style="min-height: 100vh;">
+    <div class="grid-bg-overlay"></div>
+    
+    <div class="category-header">
+      <div class="category-header__icon-wrap" id="category-icon">
+        <svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>
+      </div>
+      <span class="category-header__count" id="category-creator-count">Curating Talent</span>
+      <h1 class="heading-large reveal-item" id="category-title" style="margin-top: 15px; margin-bottom: 20px;">
+        TALENTVERTICAL
+      </h1>
+      <p class="reveal-item" id="category-description" style="color: var(--mist); max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        Exploring vetted professionals in this creative vertical, curated by YAWMATIC for extraordinary client project execution.
+      </p>
+    </div>
+
+    <!-- Grid of creators in category -->
+    <div id="category-creators-grid" class="category-grid">
+      <!-- Dynamic list -->
+    </div>
+
+    <!-- Empty state -->
+    <div id="category-empty" class="empty-state" style="display: none;">
+      <h3 class="empty-state__title">Vetting In Progress</h3>
+      <p class="empty-state__desc" style="margin-top: 8px;">
+        We are currently reviewing applications for this category. Check back soon for approved professionals or apply to join!
+      </p>
+      <div class="magnetic-wrap" style="margin-top: 12px;">
+        <a href="/creators/apply" class="btn btn--primary magnetic">Become a Creator</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer__logo-col">
+        <a href="/" class="footer__logo magnetic">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 50px; height: 50px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <div class="footer__tagline">THINK FUTURE. BUILD DIFFERENT.</div>
+      </div>
+
+      <div class="footer__nav-col">
+        <ul class="footer__menu">
+          <li><a href="/" class="footer__link magnetic">Home</a></li>
+          <li><a href="/about" class="footer__link magnetic">About</a></li>
+          <li><a href="/services" class="footer__link magnetic">Services</a></li>
+          <li><a href="/work" class="footer__link magnetic">Work</a></li>
+          <li><a href="/process" class="footer__link magnetic">Process</a></li>
+          <li><a href="/creators" class="footer__link magnetic active">Creators</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__socials-col">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="footer__social-btn magnetic" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11C4.483 20.455 12 20.455 12 20.455s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer__copy">© 2026 YAWMATIC. All rights reserved.</div>
+      <div class="footer__credit">THINK FUTURE. BUILD DIFFERENT.</div>
+    </div>
+  </footer>
+
+  <!-- Custom Shared JavaScript -->
+  <script src="/js/main.js"></script>
+
+  <!-- Category Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Get Category Slug from URL
+      const pathParts = window.location.pathname.split('/');
+      const categorySlug = pathParts[pathParts.length - 1] || 'photography';
+      
+      // Update SEO title
+      document.title = `${categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Creators — YAWMATIC`;
+
+      // 2. Fetch Category detail for header
+      fetch('/api/categories')
+        .then(res => res.json())
+        .then(data => {
+          const cat = data.find(c => c.slug === categorySlug);
+          if (cat) {
+            document.getElementById('category-title').textContent = `${cat.name} Creators`;
+            document.getElementById('category-creator-count').textContent = `Curating ${cat.creator_count} Vetted Professionals`;
+            document.getElementById('category-description').textContent = `Explore our hand-picked network of ${cat.name.toLowerCase()} experts ready to execute high-end agency briefs.`;
+            
+            // Set icon
+            const iconWrap = document.getElementById('category-icon');
+            let svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>`;
+            if (cat.icon === 'camera') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
+            } else if (cat.icon === 'video' || cat.icon === 'film') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
+            } else if (cat.icon === 'navigation') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>`;
+            } else if (cat.icon === 'activity' || cat.icon === 'cpu' || cat.icon === 'box') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`;
+            } else if (cat.icon === 'pen-tool' || cat.icon === 'edit-3') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+            } else if (cat.icon === 'layers' || cat.icon === 'layout') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+            } else if (cat.icon === 'globe') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+            } else if (cat.icon === 'instagram') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>`;
+            }
+            iconWrap.innerHTML = svgIcon;
+          }
+        });
+
+      // 3. Fetch Matching Creators
+      fetch(`/api/creators?category=${categorySlug}&limit=50`)
+        .then(res => res.json())
+        .then(data => {
+          const grid = document.getElementById('category-creators-grid');
+          const empty = document.getElementById('category-empty');
+          grid.innerHTML = '';
+
+          if (!data.creators || data.creators.length === 0) {
+            grid.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+          }
+
+          grid.style.display = 'grid';
+          empty.style.display = 'none';
+
+          data.creators.forEach(c => {
+            const card = document.createElement('a');
+            card.href = `/creators/${c.slug}`;
+            card.className = 'creator-card reveal-item';
+            
+            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+
+            card.innerHTML = `
+              <div class="creator-card__image-wrap">
+                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <div class="creator-card__badge-row">
+                  <div class="availability-pill">
+                    <span class="availability-dot ${c.availability}"></span>
+                    ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
+                  </div>
+                  ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
+                </div>
+              </div>
+              <div class="creator-card__details">
+                <div class="creator-card__meta">
+                  <span style="text-transform: uppercase;">${primaryCat}</span>
+                  <span>${c.city}</span>
+                </div>
+                <h3 class="creator-card__name">${c.full_name}</h3>
+                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <div class="creator-card__footer">
+                  <div class="creator-card__socials">
+                    ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
+                    ${c.portfolio_url || c.behance ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>` : ''}
+                  </div>
+                  <span class="creator-card__cta">View Profile →</span>
+                </div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          // Refresh ScrollTrigger
+          if (typeof ScrollTrigger !== 'undefined') {
+            setTimeout(() => ScrollTrigger.refresh(), 100);
+          }
+        });
+    });
+  </script>
+</body>
+</html>

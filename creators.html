@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    window.addEventListener('error', function(e) {
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '10px';
+      div.style.left = '10px';
+      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+      div.style.color = 'white';
+      div.style.padding = '15px';
+      div.style.zIndex = '999999';
+      div.style.fontFamily = 'monospace';
+      div.style.borderRadius = '5px';
+      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+      document.body.appendChild(div);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YAWMATIC Collective — Premium Creative Talent Network</title>
+  <meta name="description" content="An exclusive, vetted network of photographers, filmmakers, designers, and creative professionals curated by YAWMATIC.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+  <!-- Custom Shared Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body.loading {
+      overflow: hidden !important;
+    }
+    body.loading #page-loader {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #090909 !important;
+      z-index: 999999999 !important;
+      display: flex !important;
+    }
+    body.loading .navbar,
+    body.loading section,
+    body.loading footer,
+    body.loading .custom-cursor-dot,
+    body.loading .custom-cursor-ring,
+    body.loading .mouse-glow {
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* Creators Page Specific Styles */
+    .creators-hero {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding-top: 160px;
+      position: relative;
+    }
+    .creators-hero__headline {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 0.95;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      letter-spacing: -2px;
+    }
+    .creators-hero__subtext {
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      color: var(--mist);
+      max-width: 680px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .creators-hero__ctas {
+      display: flex;
+      gap: 20px;
+      z-index: 2;
+    }
+
+    /* Horizontal scroll featured creators */
+    .featured-creators-container {
+      position: relative;
+      width: 100%;
+      background-color: #0b0b0c;
+      overflow: hidden;
+    }
+    .horizontal-scroll-creators {
+      display: flex;
+      width: max-content;
+      padding: 100px 8%;
+      align-items: center;
+      gap: 40px;
+    }
+    .featured-creators__header {
+      width: 420px;
+      flex-shrink: 0;
+    }
+    .creator-card {
+      width: 320px;
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition-medium);
+      flex-shrink: 0;
+      cursor: none;
+      position: relative;
+    }
+    .creator-card:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(255, 90, 31, 0.12);
+    }
+    .creator-card__image-wrap {
+      width: 100%;
+      height: 380px;
+      overflow: hidden;
+      position: relative;
+    }
+    .creator-card__image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%);
+      transition: var(--transition-slow);
+    }
+    .creator-card:hover .creator-card__image {
+      filter: grayscale(0%);
+      scale: 1.05;
+    }
+    .creator-card__badge-row {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .availability-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .availability-dot.available { background-color: #00E676; box-shadow: 0 0 8px #00E676; }
+    .availability-dot.limited { background-color: #FFD600; box-shadow: 0 0 8px #FFD600; }
+    .availability-dot.booked { background-color: #FF1744; box-shadow: 0 0 8px #FF1744; }
+    
+    .availability-pill {
+      background: rgba(15, 15, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      color: var(--volt);
+    }
+    .verified-badge {
+      background: var(--fire);
+      color: var(--volt);
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(255, 90, 31, 0.3);
+    }
+    .creator-card__details {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .creator-card__meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--mist);
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+    .creator-card__name {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .creator-card__intro {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--mist);
+      margin-bottom: 8px;
+    }
+    .creator-card__footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
+      margin-top: auto;
+    }
+    .creator-card__socials {
+      display: flex;
+      gap: 12px;
+    }
+    .creator-card__social-link {
+      color: var(--mist);
+      font-size: 1.1rem;
+      transition: var(--transition-fast);
+    }
+    .creator-card__social-link:hover {
+      color: var(--fire);
+    }
+    .creator-card__cta {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--fire);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Category Grid Tiles */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 50px;
+    }
+    .category-tile {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: var(--transition-medium);
+      position: relative;
+      overflow: hidden;
+    }
+    .category-tile::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3px;
+      width: 100%;
+      background-color: var(--fire);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s var(--ease-premium);
+    }
+    .category-tile:hover::before {
+      transform: scaleX(1);
+    }
+    .category-tile:hover {
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 10px 25px rgba(255, 90, 31, 0.08);
+      transform: translateY(-4px);
+    }
+    .category-tile__icon-wrap {
+      color: var(--fire);
+      width: 32px;
+      height: 32px;
+    }
+    .category-tile__name {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .category-tile__count {
+      font-size: 0.85rem;
+      color: var(--mist);
+    }
+
+    /* Location Tiles */
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 50px;
+    }
+    @media(max-width: 900px) {
+      .locations-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media(max-width: 500px) {
+      .locations-grid { grid-template-columns: 1fr; }
+    }
+    .location-tile {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 40px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: var(--transition-medium);
+    }
+    .location-tile:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(255, 90, 31, 0.08);
+    }
+    .location-tile__city {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+      letter-spacing: 0.5px;
+    }
+    .location-tile__country {
+      font-size: 0.85rem;
+      color: var(--mist);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .location-tile__count {
+      font-size: 0.8rem;
+      color: var(--fire);
+      font-family: var(--font-display);
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    /* Success Stories Cards */
+    .stories-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 50px;
+    }
+    @media (max-width: 900px) {
+      .stories-grid { grid-template-columns: 1fr; }
+    }
+    .story-card {
+      background: #0b0b0c;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: var(--transition-medium);
+    }
+    .story-card:hover {
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 12px 30px rgba(255, 90, 31, 0.1);
+    }
+    .story-card__overline {
+      font-size: 0.75rem;
+      color: var(--fire);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .story-card__title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .story-card__quote {
+      font-size: 1rem;
+      font-style: italic;
+      line-height: 1.6;
+      color: var(--volt);
+      border-left: 2px solid var(--fire);
+      padding-left: 15px;
+      margin: 10px 0;
+    }
+    .story-card__body {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--mist);
+    }
+    .story-card__footer {
+      font-size: 0.8rem;
+      color: var(--mist);
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Become a Creator Section */
+    .join-section {
+      background: linear-gradient(180deg, var(--ink) 0%, #0b0b0c 100%);
+      text-align: center;
+      position: relative;
+    }
+    .join-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin: 60px 0 50px 0;
+    }
+    @media(max-width: 768px) {
+      .join-steps { grid-template-columns: 1fr; }
+    }
+    .step-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .step-card__number {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--fire);
+      border: 1px solid rgba(255, 90, 31, 0.2);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 90, 31, 0.05);
+    }
+    .step-card__title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .step-card__desc {
+      font-size: 0.9rem;
+      color: var(--mist);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+
+    /* FAQ Accordion */
+    .faq-container {
+      max-width: 800px;
+      margin: 50px auto 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .faq-item {
+      border: 1px solid var(--glass-border);
+      background: var(--card-bg);
+      border-radius: 4px;
+      overflow: hidden;
+      transition: var(--transition-fast);
+    }
+    .faq-item:hover, .faq-item.active {
+      border-color: var(--glass-border-hover);
+    }
+    .faq-header {
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
+    .faq-icon {
+      font-size: 1.2rem;
+      color: var(--fire);
+      transition: transform 0.3s ease;
+    }
+    .faq-item.active .faq-icon {
+      transform: rotate(45deg);
+    }
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s var(--ease-premium);
+    }
+    .faq-content-inner {
+      padding: 0 24px 24px 24px;
+      font-size: 0.95rem;
+      color: var(--mist);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <!-- SVG Noise Filter Overlay -->
+  <svg class="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <!-- Loader Page transition -->
+  <div class="loader" id="page-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #090909; z-index: 999999999; display: flex;">
+    <div class="loader__grain"></div>
+    <div class="loader__glow"></div>
+    <canvas class="loader__particles-canvas" id="loader-particles-canvas"></canvas>
+    
+    <div class="loader__logo-container">
+      <svg class="loader__logo-svg" viewBox="0 0 420 200" id="loader-logo-svg">
+        <defs>
+          <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#FF6A00" stop-opacity="1"/>
+          </linearGradient>
+          
+          <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0"/>
+            <stop offset="30%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#F2F2F2" stop-opacity="1"/>
+            <stop offset="70%" stop-color="#FF6A00" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0"/>
+          </linearGradient>
+          
+          <clipPath id="wordmarkClip">
+            <rect id="clipRect" x="160" y="50" width="0" height="100" />
+          </clipPath>
+          
+          <filter id="bloomFilter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <path id="loader-orbit-path" d="M 100,60 A 40,40 0 1,1 100,140 A 40,40 0 1,1 100,60 A 40,40 0 0,1 128.28,71.72" stroke="url(#orbitGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle id="loader-orbit-dot" cx="100" cy="60" r="4.5" fill="#FF5A1F" filter="url(#bloomFilter)"/>
+        <image id="loader-y-monogram" href="logo_y_only.png" x="84" y="81" width="32" height="38" style="opacity: 0; filter: blur(8px);"/>
+        
+        <g clip-path="url(#wordmarkClip)">
+          <image id="loader-wordmark" href="logo_dark_theme.png" x="160" y="78" width="220" height="44" style="opacity: 0;"/>
+        </g>
+        <rect id="loader-pulse-rect" x="-150" y="50" width="150" height="100" fill="url(#pulseGrad)" style="mix-blend-mode: screen; pointer-events: none; opacity: 0;"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot"></div>
+  <div class="custom-cursor-ring" id="cursor-ring"></div>
+
+  <!-- Mouse Glow -->
+  <div class="mouse-glow" id="mouse-glow"></div>
+
+  <!-- Navbar Navigation -->
+  <nav class="navbar magnetic-wrap">
+    <a href="/" class="navbar__logo magnetic">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32">
+        <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+        <g class="logo-orbit-svg__rotator">
+          <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+        </g>
+        <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+      </svg>
+      <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="/" class="navbar__link magnetic">Home</a></li>
+      <li><a href="/about" class="navbar__link magnetic">About</a></li>
+      <li><a href="/services" class="navbar__link magnetic">Services</a></li>
+      <li><a href="/work" class="navbar__link magnetic">Work</a></li>
+      <li><a href="/process" class="navbar__link magnetic">Process</a></li>
+      <li><a href="/creators" class="navbar__link magnetic active">Creators</a></li>
+    </ul>
+    <div class="magnetic-wrap">
+      <a href="/contact" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <!-- 1. HERO SECTION -->
+  <section class="section-padding creators-hero" id="hero">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item">YAWMATIC Collective</span>
+    <h1 class="creators-hero__headline reveal-item">
+      The Creative Network<br>
+      <span>Behind Extraordinary Work.</span>
+    </h1>
+    <p class="creators-hero__subtext reveal-item">
+      Discover photographers, filmmakers, designers, editors, and creators carefully selected by YAWMATIC. Whether you're a client searching for talent or a creator looking for opportunities, this is where creativity connects with real projects.
+    </p>
+    <div class="creators-hero__ctas reveal-item">
+      <div class="magnetic-wrap">
+        <a href="/creators/apply" class="btn btn--primary magnetic">Become a Creator</a>
+      </div>
+      <div class="magnetic-wrap">
+        <a href="/creators/browse" class="btn btn--ghost magnetic">Explore Creators</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FEATURED CREATORS (HORIZONTAL SCROLL) -->
+  <div class="featured-creators-container" id="featured-creators-section">
+    <div class="horizontal-scroll-creators" id="creators-scroll-container">
+      
+      <div class="featured-creators__header">
+        <span class="overline">Vetted Talent</span>
+        <h2 class="heading-large">Featured<br>Creators</h2>
+        <p style="color: var(--mist); line-height: 1.6; margin-top: 10px;">
+          Scroll horizontally to see hand-picked professionals who produce flagship results on client projects.
+        </p>
+      </div>
+
+      <!-- Seeded dynamically via client-side fetch -->
+      <div id="featured-creators-grid" style="display: flex; gap: 40px;">
+        <!-- Loading state -->
+        <div style="font-family: var(--font-display); color: var(--mist); letter-spacing: 1px;">LOADING SELECT CREATORS...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3. CATEGORIES -->
+  <section class="section-padding" id="categories">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item font-display">Talent Spheres</span>
+    <h2 class="heading-large reveal-item">Browse By Category</h2>
+    
+    <div class="categories-grid" id="categories-grid-container">
+      <!-- Loaded dynamically -->
+    </div>
+  </section>
+
+  <!-- 4. LOCATIONS -->
+  <section class="section-padding" id="locations" style="background-color: #0b0b0c;">
+    <span class="overline reveal-item">Global Footprint</span>
+    <h2 class="heading-large reveal-item">Our Locations</h2>
+    
+    <div class="locations-grid" id="locations-grid-container">
+      <!-- Loaded dynamically -->
+    </div>
+  </section>
+
+  <!-- 5. SUCCESS STORIES -->
+  <section class="section-padding" id="success-stories">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item">Case Studies</span>
+    <h2 class="heading-large reveal-item">Collective Success</h2>
+    
+    <div class="stories-grid">
+      <!-- Story 1 -->
+      <div class="story-card reveal-item">
+        <span class="story-card__overline">Aman Luxury Resorts</span>
+        <h3 class="story-card__title">Hospitality Visual Campaign</h3>
+        <p class="story-card__quote">"The aerial and architectural visual asset collection completely transformed our Munnar launch campaign."</p>
+        <p class="story-card__body">
+          Aman Resorts needed to convey the serene mist and structure of their Munnar luxury rooms. YAWMATIC assigned Amal Krishna (Photo & Drone).
+        </p>
+        <div class="story-card__footer">
+          <span>Assigned: 1 Creator</span>
+          <span style="color: var(--fire)">+42% Bookings</span>
+        </div>
+      </div>
+      
+      <!-- Story 2 -->
+      <div class="story-card reveal-item" style="transition-delay: 0.1s;">
+        <span class="story-card__overline">WEBINVITE.IN</span>
+        <h3 class="story-card__title">Platform Interface Redesign</h3>
+        <p class="story-card__quote">"A masterful execution of whitespace, responsive components, and clean branding."</p>
+        <p class="story-card__body">
+          The event hosting SaaS portal needed a visual upgrade. YAWMATIC assigned Priya Sharma (UI/UX) & Sara Cherian (Brand Design) to collaborate.
+        </p>
+        <div class="story-card__footer">
+          <span>Assigned: 2 Creators</span>
+          <span style="color: var(--fire)">180k Users Onboarded</span>
+        </div>
+      </div>
+
+      <!-- Story 3 -->
+      <div class="story-card reveal-item" style="transition-delay: 0.2s;">
+        <span class="story-card__overline">Vanguard Towers Dubai</span>
+        <h3 class="story-card__title">3D CGI Product Speculation</h3>
+        <p class="story-card__quote">"Surreal CGI loops that helped sell out the entire tower pre-launch."</p>
+        <p class="story-card__body">
+          A luxury real estate project needed high-end 3D visual loops for Dubai showroom panels. YAWMATIC assigned Marcus Vance (3D Artist).
+        </p>
+        <div class="story-card__footer">
+          <span>Assigned: 1 Creator</span>
+          <span style="color: var(--fire)">100% Units Sold</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. BECOME A CREATOR TEASER -->
+  <section class="section-padding join-section" id="become-creator">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item">Network Entrance</span>
+    <h2 class="heading-large reveal-item">Become a Vetted Creator</h2>
+    <p class="reveal-item" style="color: var(--mist); max-width: 600px; margin: 0 auto; line-height: 1.6;">
+      We match exceptional creative talent with premier client projects. Access high-budget campaigns, professional project coordination, and timely payments.
+    </p>
+
+    <div class="join-steps reveal-item">
+      <div class="step-card">
+        <div class="step-card__number">1</div>
+        <h3 class="step-card__title">Apply Online</h3>
+        <p class="step-card__desc">Submit your portfolio, equipment details, and professional experience.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-card__number">2</div>
+        <h3 class="step-card__title">Get Reviewed</h3>
+        <p class="step-card__desc">Our design board evaluates your work quality and craft dedication.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-card__number">3</div>
+        <h3 class="step-card__title">Get Discovered</h3>
+        <p class="step-card__desc">Approved profiles join the network and get assigned to premium agency client projects.</p>
+      </div>
+    </div>
+
+    <div class="magnetic-wrap reveal-item">
+      <a href="/creators/apply" class="btn btn--primary magnetic">Submit Application</a>
+    </div>
+  </section>
+
+  <!-- 7. FAQ ACCORDION -->
+  <section class="section-padding" id="faq">
+    <div class="grid-bg-overlay"></div>
+    <span class="overline reveal-item" style="text-align: center;">Got Questions?</span>
+    <h2 class="heading-large reveal-item" style="text-align: center;">Frequently Asked</h2>
+    
+    <div class="faq-container reveal-item">
+      <div class="faq-item">
+        <div class="faq-header">
+          How does the application process work?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            You complete the application form, providing your online portfolio and craft specifics. Our internal board reviews every single submission personally. If your skills match YAWMATIC's visual standard, we approve your profile, list you on the browse catalog, and contact you when a matching project begins.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          Do I need to be a full-time freelancer?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            No. We support full-time, part-time, project-based, and limited availability. You specify your current availability level on your profile, which we update dynamically as your schedule shifts.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          How are projects assigned?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            YAWMATIC takes in client inquiries, scope, budget, and location requirements. We then match and assign one or more vetted creators internally. YAWMATIC acts as the project coordinator and client point of contact, ensuring you can focus entirely on executing your craft.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          How does payment work?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            YAWMATIC billing handles client invoicing directly. Vetted creators are paid securely and directly upon project milestone completions, independent of when the client pays the agency. We respect creative rates and value craft stability.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          Can I decline a project?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            Absolutely. Joining the Collective does not lock you into any exclusivity terms. If we pitch a project assignment to you, you are free to decline it based on scheduling conflicts, budget misalignments, or lack of interest.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          Is there a fee to join?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-content">
+          <div class="faq-content-inner">
+            No. YAWMATIC Collective is completely free to apply and join. We do not take cuts or membership dues from creators. We monetize through agency retainers and client project delivery scopes.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer__logo-col">
+        <a href="/" class="footer__logo magnetic">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 50px; height: 50px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <div class="footer__tagline">THINK FUTURE. BUILD DIFFERENT.</div>
+      </div>
+
+      <div class="footer__nav-col">
+        <ul class="footer__menu">
+          <li><a href="/" class="footer__link magnetic">Home</a></li>
+          <li><a href="/about" class="footer__link magnetic">About</a></li>
+          <li><a href="/services" class="footer__link magnetic">Services</a></li>
+          <li><a href="/work" class="footer__link magnetic">Work</a></li>
+          <li><a href="/process" class="footer__link magnetic">Process</a></li>
+          <li><a href="/creators" class="footer__link magnetic active">Creators</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__socials-col">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="footer__social-btn magnetic" aria-label="Instagram">
+          <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11C4.483 20.455 12 20.455 12 20.455s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <a href="#" class="footer__social-btn magnetic" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer__copy">© 2026 YAWMATIC. All rights reserved.</div>
+      <div class="footer__credit">THINK FUTURE. BUILD DIFFERENT.</div>
+    </div>
+  </footer>
+
+  <!-- Custom Shared JavaScript -->
+  <script src="js/main.js"></script>
+
+  <!-- Page-specific logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Fetch Featured Creators for horizontal scroll
+      fetch('/api/creators?featured=true&limit=8')
+        .then(res => res.json())
+        .then(data => {
+          const grid = document.getElementById('featured-creators-grid');
+          grid.innerHTML = ''; // clear loading state
+          
+          if (!data.creators || data.creators.length === 0) {
+            grid.innerHTML = '<div style="font-family: var(--font-display); color: var(--mist);">VETTED NETWORK IS SEEDING...</div>';
+            return;
+          }
+
+          data.creators.forEach(c => {
+            const card = document.createElement('a');
+            card.href = `/creators/${c.slug}`;
+            card.className = 'creator-card reveal-item';
+            
+            // Format category names beautifully
+            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+            
+            card.innerHTML = `
+              <div class="creator-card__image-wrap">
+                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <div class="creator-card__badge-row">
+                  <div class="availability-pill">
+                    <span class="availability-dot ${c.availability}"></span>
+                    ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
+                  </div>
+                  ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
+                </div>
+              </div>
+              <div class="creator-card__details">
+                <div class="creator-card__meta">
+                  <span style="text-transform: uppercase;">${primaryCat}</span>
+                  <span>${c.city}</span>
+                </div>
+                <h3 class="creator-card__name">${c.full_name}</h3>
+                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <div class="creator-card__footer">
+                  <div class="creator-card__socials">
+                    ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
+                    ${c.portfolio_url || c.behance ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>` : ''}
+                  </div>
+                  <span class="creator-card__cta">View Profile →</span>
+                </div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          // Re-trigger scroll trigger calculations after injecting DOM elements
+          setTimeout(() => {
+            if (typeof ScrollTrigger !== 'undefined') {
+              ScrollTrigger.refresh();
+              initCreatorsHorizontalScroll();
+            }
+          }, 100);
+        });
+
+      // 2. Fetch Categories
+      fetch('/api/categories')
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('categories-grid-container');
+          container.innerHTML = '';
+          
+          data.forEach(cat => {
+            const tile = document.createElement('a');
+            tile.href = `/creators/${cat.slug}`;
+            tile.className = 'category-tile reveal-item';
+            
+            // Map icon string to a simple SVG icon
+            let svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>`;
+            if (cat.icon === 'camera') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
+            } else if (cat.icon === 'video' || cat.icon === 'film') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
+            } else if (cat.icon === 'navigation') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>`;
+            } else if (cat.icon === 'activity' || cat.icon === 'cpu' || cat.icon === 'box') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`;
+            } else if (cat.icon === 'pen-tool' || cat.icon === 'edit-3') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+            } else if (cat.icon === 'layers' || cat.icon === 'layout') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+            } else if (cat.icon === 'globe') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+            } else if (cat.icon === 'instagram') {
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>`;
+            }
+            
+            tile.innerHTML = `
+              <div class="category-tile__icon-wrap">${svgIcon}</div>
+              <h3 class="category-tile__name">${cat.name}</h3>
+              <span class="category-tile__count">${cat.creator_count} creators</span>
+            `;
+            container.appendChild(tile);
+          });
+        });
+
+      // 3. Fetch Locations
+      fetch('/api/locations')
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('locations-grid-container');
+          container.innerHTML = '';
+          data.forEach(loc => {
+            const tile = document.createElement('a');
+            tile.href = `/creators/browse?city=${encodeURIComponent(loc.city)}`;
+            tile.className = 'location-tile reveal-item';
+            tile.innerHTML = `
+              <div class="location-tile__city">${loc.city}</div>
+              <div class="location-tile__country">${loc.country}</div>
+              <div class="location-tile__count">${loc.creator_count} Active Creators</div>
+            `;
+            container.appendChild(tile);
+          });
+        });
+
+      // 4. FAQ accordion interaction
+      const faqItems = document.querySelectorAll('.faq-item');
+      faqItems.forEach(item => {
+        const header = item.querySelector('.faq-header');
+        const content = item.querySelector('.faq-content');
+        
+        header.addEventListener('click', () => {
+          const isActive = item.classList.contains('active');
+          
+          // Close all FAQ items
+          faqItems.forEach(i => {
+            i.classList.remove('active');
+            i.querySelector('.faq-content').style.maxHeight = '0px';
+          });
+          
+          if (!isActive) {
+            item.classList.add('active');
+            content.style.maxHeight = content.scrollHeight + 'px';
+          }
+        });
+      });
+    });
+
+    // 5. Featured creators horizontal scroll timeline
+    function initCreatorsHorizontalScroll() {
+      const container = document.getElementById('creators-scroll-container');
+      if (!container) return;
+
+      const existingTrigger = ScrollTrigger.getById('creators-scroll-trigger');
+      if (existingTrigger) {
+        existingTrigger.kill(true);
+      }
+
+      gsap.to(container, {
+        x: () => -(container.scrollWidth - window.innerWidth),
+        ease: 'none',
+        scrollTrigger: {
+          id: 'creators-scroll-trigger',
+          trigger: '#featured-creators-section',
+          start: 'top top',
+          end: () => "+=" + (container.scrollWidth - window.innerWidth),
+          pin: true,
+          pinSpacing: true,
+          anticipatePin: 1,
+          scrub: true,
+          invalidateOnRefresh: true
+        }
+      });
+    }
+  </script>
+</body>
+</html>
