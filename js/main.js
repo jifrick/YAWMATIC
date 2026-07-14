@@ -7,6 +7,21 @@ gsap.registerPlugin(ScrollTrigger);
 const isMobile = window.innerWidth <= 768;
 
 /* ----------------------------------------------------
+   INTERNAL NAVIGATION DETECTION
+   Skip loader when navigating between pages inside the site.
+   sessionStorage persists across nav clicks but clears on
+   tab close. F5 / hard refresh does NOT set this flag.
+   ---------------------------------------------------- */
+const isInternalNavigation = sessionStorage.getItem('skipLoader') === '1';
+if (isInternalNavigation) {
+  sessionStorage.removeItem('skipLoader');
+  // Immediately unhide content — do not wait for DOMContentLoaded
+  document.body.classList.remove('loading');
+  const _loader = document.getElementById('page-loader');
+  if (_loader) _loader.style.display = 'none';
+}
+
+/* ----------------------------------------------------
    ACTIVE PAGE HIGH LIGHTING
    ---------------------------------------------------- */
 function highlightActiveLink() {
@@ -166,6 +181,7 @@ document.addEventListener('click', (e) => {
     if (targetUrl) {
       e.preventDefault();
       sessionStorage.setItem('currentCleanRoute', href);
+      sessionStorage.setItem('skipLoader', '1'); // signal next page to skip loader
       window.location.href = targetUrl;
     }
   }
@@ -319,6 +335,13 @@ let pageLoaded = false;
 let loaderTimelineComplete = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (isInternalNavigation) {
+    // Internal nav: loader already hidden above — just set nav logo visible
+    const navLogo = document.querySelector('.navbar__logo');
+    if (navLogo) gsap.set(navLogo, { opacity: 1 });
+    highlightActiveLink();
+    return; // skip loader init entirely
+  }
   const navLogo = document.querySelector('.navbar__logo');
   if (navLogo) {
     gsap.set(navLogo, { opacity: 0 });
@@ -328,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fallback logic
-if (document.readyState === 'interactive' || document.readyState === 'complete') {
+if (!isInternalNavigation && (document.readyState === 'interactive' || document.readyState === 'complete')) {
   const navLogo = document.querySelector('.navbar__logo');
   if (navLogo && navLogo.style.opacity !== '0') {
     gsap.set(navLogo, { opacity: 0 });
@@ -339,10 +362,29 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
 
 window.addEventListener('load', () => {
   pageLoaded = true;
-  // Initialize Three.js WebGL hero scene if canvas exists on load
   if (document.getElementById('webgl-cube-canvas')) {
     initHeroWebGL();
   }
+
+  if (isInternalNavigation) {
+    // Internal nav: skip loader transition, initialize page features directly
+    highlightActiveLink();
+    if (document.getElementById('horizontal-scroll-container')) initHorizontalScroll();
+    if (document.getElementById('about-webgl-canvas')) initAboutWebGL();
+    if (document.querySelector('.timeline-container')) initTimelineScroll();
+    if (document.querySelector('.stat-card')) initStatsCounter();
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+      document.querySelectorAll('.reveal-item').forEach(item => {
+        const rect = item.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.92) {
+          gsap.to(item, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', clearProps: 'transform', overwrite: 'auto' });
+        }
+      });
+    }, 150);
+    return;
+  }
+
   if (loaderTimelineComplete) {
     triggerSiteTransition();
   }
