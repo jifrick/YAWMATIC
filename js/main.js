@@ -358,7 +358,13 @@ function runLoaderTimeline() {
   const pulse = document.getElementById('loader-pulse-rect');
   const wordmark = document.getElementById('loader-wordmark');
   
-  if (!path || !dot) return;
+  if (!path || !dot) {
+    // Loader SVG not in DOM yet (React SPA case) — mark complete immediately
+    // so triggerSiteTransition() fires via the window.load handler
+    loaderTimelineComplete = true;
+    if (pageLoaded) triggerSiteTransition();
+    return;
+  }
 
   const pathLength = path.getTotalLength();
   
