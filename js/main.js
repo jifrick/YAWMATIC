@@ -469,8 +469,25 @@ function triggerSiteTransition() {
       loader.style.display = 'none';
       loader.style.backgroundColor = '';
       
+      // Refresh ScrollTrigger after DOM settles, then fire any items already in viewport
       ScrollTrigger.refresh();
-      setTimeout(() => ScrollTrigger.refresh(), 100);
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+        // Manually trigger onEnter for all reveal-items already visible in viewport
+        document.querySelectorAll('.reveal-item').forEach(item => {
+          const rect = item.getBoundingClientRect();
+          if (rect.top < window.innerHeight * 0.92) {
+            gsap.to(item, {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              ease: 'power3.out',
+              clearProps: 'transform',
+              overwrite: 'auto'
+            });
+          }
+        });
+      }, 150);
     }
   });
 
@@ -709,20 +726,23 @@ if (magneticElements.length > 0) {
    ---------------------------------------------------- */
 const revealItems = document.querySelectorAll('.reveal-item');
 if (revealItems.length > 0) {
-  gsap.set(revealItems, { y: 40 });
-  
+  // Set initial hidden state via GSAP (overrides CSS opacity:0)
+  gsap.set(revealItems, { opacity: 0, y: 40 });
+
   revealItems.forEach(item => {
-    gsap.to(item, {
-      scrollTrigger: {
-        trigger: item,
-        start: 'top 85%',
-        toggleActions: 'play none none none'
-      },
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: 'power3.out',
-      clearProps: 'transform'
+    ScrollTrigger.create({
+      trigger: item,
+      start: 'top 88%',
+      once: true,
+      onEnter: () => {
+        gsap.to(item, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          clearProps: 'transform'
+        });
+      }
     });
   });
 }
