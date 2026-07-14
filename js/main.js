@@ -166,7 +166,7 @@ document.addEventListener('click', (e) => {
     if (targetUrl) {
       e.preventDefault();
       sessionStorage.setItem('currentCleanRoute', href);
-      pageTransition(targetUrl);
+      window.location.href = targetUrl;
     }
   }
 });
