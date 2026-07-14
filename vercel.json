@@ -1,0 +1,29 @@
+{
+  "rewrites": [
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/services", "destination": "/services.html" },
+    { "source": "/work", "destination": "/work.html" },
+    { "source": "/process", "destination": "/process.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/creators", "destination": "/creators.html" },
+    { "source": "/creators/browse", "destination": "/creators-browse.html" },
+    { "source": "/creators/apply", "destination": "/creators-apply.html" },
+    { "source": "/creators/photography", "destination": "/creators-category.html" },
+    { "source": "/creators/videography", "destination": "/creators-category.html" },
+    { "source": "/creators/drone-operator", "destination": "/creators-category.html" },
+    { "source": "/creators/video-editor", "destination": "/creators-category.html" },
+    { "source": "/creators/motion-designer", "destination": "/creators-category.html" },
+    { "source": "/creators/graphic-designer", "destination": "/creators-category.html" },
+    { "source": "/creators/brand-designer", "destination": "/creators-category.html" },
+    { "source": "/creators/ui-ux-designer", "destination": "/creators-category.html" },
+    { "source": "/creators/web-designer", "destination": "/creators-category.html" },
+    { "source": "/creators/3d-artist", "destination": "/creators-category.html" },
+    { "source": "/creators/content-creator", "destination": "/creators-category.html" },
+    { "source": "/creators/social-media-manager", "destination": "/creators-category.html" },
+    { "source": "/creators/copywriter", "destination": "/creators-category.html" },
+    { "source": "/creators/ai-creative-specialist", "destination": "/creators-category.html" },
+    { "source": "/creators/:slug", "destination": "/creators-profile.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin/:path*", "destination": "/admin.html" }
+  ]
+}
