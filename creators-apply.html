@@ -36,6 +36,9 @@
   <!-- Custom Shared Stylesheet -->
   <link rel="stylesheet" href="/css/style.css">
 
+  <!-- intl-tel-input: international phone input with flags -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/css/intlTelInput.css">
+
   <style>
     body.loading {
       overflow: hidden !important;
@@ -376,8 +379,126 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="app-phone">Phone Number</label>
-            <input type="tel" id="app-phone" class="form-control" placeholder="+91 98765 43210" required>
+            <div class="iti-wrap">
+              <input type="tel" id="app-phone" class="form-control" placeholder="98765 43210" required autocomplete="tel">
+            </div>
           </div>
+
+          <style>
+            /* ── intl-tel-input YAWMATIC dark theme ─────────────────────── */
+            .iti-wrap {
+              position: relative;
+              display: block;
+            }
+            .iti-wrap .iti {
+              width: 100%;
+              display: block;
+            }
+            /* Make the iti container full-width */
+            .iti-wrap .iti--allow-dropdown {
+              width: 100%;
+            }
+            /* Style the text input to match .form-control exactly */
+            .iti-wrap #app-phone {
+              width: 100%;
+              padding-left: 56px; /* make room for the flag button */
+            }
+            /* Flag button (left side) */
+            .iti__flag-container {
+              left: 0;
+            }
+            .iti__selected-dial-code {
+              color: var(--mist);
+              font-family: var(--font-body);
+              font-size: 0.9rem;
+            }
+            .iti__selected-flag {
+              background: transparent;
+              border-right: 1px solid var(--glass-border);
+              padding: 0 8px;
+              height: 100%;
+              outline: none;
+            }
+            .iti__selected-flag:hover,
+            .iti__selected-flag:focus {
+              background: rgba(255,255,255,0.04);
+            }
+            /* Dropdown panel */
+            .iti__dropdown-content {
+              background: #111113;
+              border: 1px solid var(--glass-border);
+              border-radius: 4px;
+              box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+              font-family: var(--font-body);
+            }
+            /* Search input inside dropdown */
+            .iti__search-input {
+              background: rgba(255,255,255,0.04);
+              border: 1px solid var(--glass-border);
+              border-radius: 4px;
+              color: var(--volt);
+              font-family: var(--font-body);
+              font-size: 0.9rem;
+              padding: 8px 12px;
+              width: 100%;
+              outline: none;
+              box-sizing: border-box;
+            }
+            .iti__search-input:focus {
+              border-color: var(--fire);
+            }
+            .iti__search-input::placeholder {
+              color: var(--mist);
+            }
+            /* Country list items */
+            .iti__country-list {
+              background: transparent;
+              max-height: 220px;
+              overflow-y: auto;
+              scrollbar-width: thin;
+              scrollbar-color: rgba(255,90,31,0.3) transparent;
+            }
+            .iti__country {
+              color: var(--mist);
+              font-size: 0.9rem;
+              padding: 8px 12px;
+              transition: background 0.15s;
+            }
+            .iti__country:hover,
+            .iti__country.iti__highlight {
+              background: rgba(255,90,31,0.08);
+              color: var(--volt);
+            }
+            .iti__country.iti__active {
+              color: var(--fire);
+              background: rgba(255,90,31,0.05);
+            }
+            .iti__country-name {
+              color: inherit;
+            }
+            .iti__dial-code {
+              color: rgba(255,255,255,0.35);
+              font-size: 0.82rem;
+            }
+            /* Divider */
+            .iti__divider {
+              border-bottom: 1px solid var(--glass-border);
+              margin: 4px 0;
+            }
+            /* Arrow chevron colour */
+            .iti__arrow {
+              border-top-color: var(--mist);
+            }
+            .iti__arrow--up {
+              border-bottom-color: var(--fire);
+              border-top-color: transparent;
+            }
+            /* Focus state on the input when iti is active */
+            .iti-wrap #app-phone:focus {
+              border-color: var(--fire);
+              background: rgba(255, 255, 255, 0.04);
+            }
+          </style>
           <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div>
               <label class="form-label" for="app-city">City</label>
@@ -539,6 +660,27 @@
   <!-- Custom Shared JavaScript -->
   <script src="/js/main.js"></script>
 
+  <!-- intl-tel-input JS -->
+  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInputWithUtils.js"></script>
+
+  <script>
+    // Initialise intl-tel-input on the phone field, default to India (+91)
+    let iti;
+    document.addEventListener('DOMContentLoaded', () => {
+      const phoneInput = document.getElementById('app-phone');
+      if (phoneInput && window.intlTelInput) {
+        iti = window.intlTelInput(phoneInput, {
+          initialCountry: 'in',
+          separateDialCode: true,
+          strictMode: false,
+          loadUtilsOnInit: false,
+          countrySearch: true,
+          i18n: { searchPlaceholder: 'Search country…' }
+        });
+      }
+    });
+  </script>
+
   <!-- Multi-step Form Script -->
   <script>
     let currentStep = 1;
@@ -683,10 +825,14 @@
       const equipment = document.getElementById('app-equipment').value.split(',').map(s => s.trim()).filter(Boolean);
       const languages = document.getElementById('app-languages').value.split(',').map(s => s.trim()).filter(Boolean);
 
+      // Get E.164 phone number from intl-tel-input, fallback to raw value
+      const rawPhone = document.getElementById('app-phone').value;
+      const phoneE164 = (iti && rawPhone) ? iti.getNumber() : rawPhone;
+
       const payload = {
         fullName: document.getElementById('app-fullName').value,
         email: document.getElementById('app-email').value,
-        phone: document.getElementById('app-phone').value,
+        phone: phoneE164,
         city: document.getElementById('app-city').value,
         country: document.getElementById('app-country').value,
         categories,
