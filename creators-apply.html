@@ -687,22 +687,34 @@
     const totalSteps = 4;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Fetch Categories to display checkbox grid in step 2
-      fetch('/api/categories')
-        .then(res => res.json())
-        .then(data => {
-          const container = document.getElementById('category-checkbox-grid');
-          container.innerHTML = '';
-          data.forEach(cat => {
-            const label = document.createElement('label');
-            label.className = 'checkbox-label magnetic';
-            label.innerHTML = `
-              <input type="checkbox" value="${cat.slug}" class="checkbox-input app-category">
-              ${cat.name}
-            `;
-            container.appendChild(label);
-          });
-        });
+      // 1. Build category checkboxes from static list (no API needed)
+      const CATEGORIES = [
+        { slug: 'photography',          name: 'Photography' },
+        { slug: 'videography',          name: 'Videography' },
+        { slug: 'drone-operator',       name: 'Drone Operator' },
+        { slug: 'video-editor',         name: 'Video Editor' },
+        { slug: 'motion-designer',      name: 'Motion Designer' },
+        { slug: 'graphic-designer',     name: 'Graphic Designer' },
+        { slug: 'brand-designer',       name: 'Brand Designer' },
+        { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
+        { slug: 'web-designer',         name: 'Web Designer' },
+        { slug: '3d-artist',            name: '3D Artist' },
+        { slug: 'content-creator',      name: 'Content Creator' },
+        { slug: 'social-media-manager', name: 'Social Media Manager' },
+        { slug: 'copywriter',           name: 'Copywriter' },
+        { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
+      ];
+
+      const container = document.getElementById('category-checkbox-grid');
+      CATEGORIES.forEach(cat => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-label magnetic';
+        label.innerHTML = `
+          <input type="checkbox" value="${cat.slug}" class="checkbox-input app-category">
+          ${cat.name}
+        `;
+        container.appendChild(label);
+      });
 
       // 2. Button navigation
       const btnNext = document.getElementById('btn-next');
