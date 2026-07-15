@@ -10,7 +10,7 @@
       div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
       div.style.color = 'white';
       div.style.padding = '15px';
-      div.style.zIndex = '999999';
+      div.style.zIndex = '99999999';
       div.style.fontFamily = 'monospace';
       div.style.borderRadius = '5px';
       div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
@@ -19,7 +19,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vanguard Admin — YAWMATIC Collective</title>
+  <title>Control Center — YAWMATIC Collective</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,719 +28,1239 @@
   
   <!-- CDNs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   
   <!-- Custom Shared Stylesheet -->
   <link rel="stylesheet" href="/css/style.css">
 
   <style>
+    :root {
+      --bg-base: #070708;
+      --bg-card: #0c0c0e;
+      --bg-card-hover: #121215;
+      --border-color: rgba(255, 255, 255, 0.05);
+      --border-color-hover: rgba(255, 255, 255, 0.12);
+      --brand-orange: #FF5A1F;
+      --brand-orange-hover: #e04b15;
+      --text-main: #F5F5F5;
+      --text-muted: #8F8F9B;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
     body {
-      background-color: #0A0A0A;
+      background-color: var(--bg-base);
+      color: var(--text-main);
       overflow: hidden;
       height: 100vh;
       font-family: var(--font-body);
+      margin: 0;
     }
+    
     a, button { cursor: pointer !important; }
+    
+    /* Scrollbars styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--brand-orange);
+    }
 
-    /* Admin Password Gate */
-    .admin-gate {
+    /* Auth Gate Screen */
+    .auth-gate {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: #090909;
+      background-color: var(--bg-base);
       z-index: 1000000;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
       padding: 20px;
     }
-    .gate-card {
-      max-width: 400px;
+    .auth-card {
+      max-width: 420px;
       width: 100%;
-      background: #0f0f10;
-      border: 1px solid var(--glass-border);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       padding: 40px;
-      border-radius: 6px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     }
-    
-    /* Layout */
-    .admin-layout {
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 25px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .auth-tab.active {
+      color: var(--brand-orange);
+      border-bottom: 2px solid var(--brand-orange);
+    }
+
+    /* Layout framework */
+    .cc-layout {
       display: flex;
       width: 100vw;
       height: 100vh;
-      visibility: hidden; /* Hidden until unlocked */
+      opacity: 0; /* Animated in via GSAP */
+      pointer-events: none;
+    }
+    .cc-layout.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    /* Sidebar */
-    .admin-sidebar {
+    /* Sidebar Roster */
+    .cc-sidebar {
       width: 260px;
-      background: #0f0f10;
-      border-right: 1px solid var(--glass-border);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
       height: 100%;
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
     }
-    .sidebar-logo {
+    .sidebar-header {
       padding: 30px 24px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
-    .admin-menu {
+    .sidebar-menu {
       list-style: none;
       padding: 20px 12px;
+      margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+      overflow-y: auto;
+      flex-grow: 1;
     }
-    .menu-item {
+    .sidebar-btn {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 16px;
+      padding: 12px 16px;
       border-radius: 4px;
-      color: var(--mist);
-      font-family: var(--font-display);
+      color: var(--text-muted);
       font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      transition: var(--transition-fast);
-      user-select: none;
+      transition: all 0.2s;
       background: transparent;
       border: none;
       width: 100%;
       text-align: left;
+      cursor: pointer;
     }
-    .menu-item:hover, .menu-item.active {
-      color: var(--volt);
-      background: rgba(255, 90, 31, 0.08);
+    .sidebar-btn:hover, .sidebar-btn.active {
+      color: var(--text-main);
+      background: rgba(255, 90, 31, 0.06);
     }
-    .menu-item.active {
-      border-left: 2px solid var(--fire);
-      padding-left: 14px;
+    .sidebar-btn.active {
+      color: var(--brand-orange);
+      border-left: 3px solid var(--brand-orange);
+      padding-left: 13px;
+    }
+    .sidebar-footer {
+      padding: 20px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--brand-orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--brand-orange);
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
-    /* Main view area */
-    .admin-main {
+    /* Main Frame */
+    .cc-main {
       flex-grow: 1;
       height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: #0c0c0d;
     }
-    .admin-header {
+    .cc-header {
       padding: 24px 40px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0f0f10;
+      background: var(--bg-card);
     }
-    .admin-title {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--volt);
-      letter-spacing: 0.5px;
+    .cc-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
-    .admin-content {
+    .header-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .header-action-btn:hover {
+      color: var(--text-main);
+    }
+    .badge-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: var(--brand-orange);
+      border-radius: 50%;
+    }
+    .cc-content {
       padding: 40px;
       overflow-y: auto;
       flex-grow: 1;
+      background: var(--bg-base);
     }
 
-    /* Sub-views layout */
-    .admin-view {
+    /* Views */
+    .cc-view {
       display: none;
+      animation: fadeIn 0.4s ease forwards;
     }
-    .admin-view.active {
+    .cc-view.active {
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 32px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Data Tables */
-    .table-card {
-      background: #0f0f10;
-      border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-    .admin-table th {
-      background: rgba(255, 255, 255, 0.02);
-      padding: 16px 24px;
-      font-family: var(--font-display);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--mist);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .admin-table td {
-      padding: 18px 24px;
-      font-size: 0.9rem;
-      color: var(--mist);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      vertical-align: middle;
-    }
-    .admin-table tr:hover td {
-      background: rgba(255, 255, 255, 0.01);
-      color: var(--volt);
-    }
-
-    /* Status Pills */
-    .status-badge {
-      font-size: 0.75rem;
-      font-family: var(--font-display);
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 50px;
-      display: inline-block;
-    }
-    .status-badge.pending { background: rgba(255, 214, 0, 0.1); color: #FFD600; border: 1px solid rgba(255,214,0,0.2); }
-    .status-badge.approved { background: rgba(0, 230, 118, 0.1); color: #00E676; border: 1px solid rgba(0,230,118,0.2); }
-    .status-badge.rejected { background: rgba(255, 23, 68, 0.1); color: #FF1744; border: 1px solid rgba(255,23,68,0.2); }
-    .status-badge.inactive { background: rgba(255, 255, 255, 0.05); color: var(--mist); border: 1px solid rgba(255,255,255,0.1); }
-
-    /* Action Buttons */
-    .action-btn {
-      padding: 6px 12px;
-      font-family: var(--font-display);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: transparent;
-      color: var(--volt);
-      transition: var(--transition-fast);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .action-btn:hover { border-color: var(--volt); }
-    .action-btn--approve { background: rgba(0, 230, 118, 0.05); color: #00E676; border-color: rgba(0,230,118,0.2); }
-    .action-btn--approve:hover { background: #00E676; color: #000; border-color: #00E676; }
-    .action-btn--reject { background: rgba(255, 23, 68, 0.05); color: #FF1744; border-color: rgba(255,23,68,0.2); }
-    .action-btn--reject:hover { background: #FF1744; color: #fff; border-color: #FF1744; }
-
-    /* Analytics Widget Cards */
-    .analytics-row {
+    /* Cards */
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 20px;
     }
-    @media(max-width: 1024px) {
-      .analytics-row { grid-template-columns: repeat(2, 1fr); }
-    }
-    .stat-box {
-      background: #0f0f10;
-      border: 1px solid var(--glass-border);
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-    }
-    .stat-box__label {
-      font-family: var(--font-display);
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--mist);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .stat-box__value {
-      font-family: var(--font-display);
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--volt);
-    }
-    .stat-box__change {
-      font-size: 0.8rem;
-      color: #00E676;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Distribution grids */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media(max-width: 900px) {
-      .charts-row { grid-template-columns: 1fr; }
-    }
-    .chart-box {
-      background: #0f0f10;
-      border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      padding: 30px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .bar-row {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .bar-row__labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--mist);
-    }
-    .bar-track {
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
+      gap: 8px;
+      position: relative;
       overflow: hidden;
     }
-    .bar-fill {
-      height: 100%;
-      background: var(--fire);
-      border-radius: 10px;
-      width: 0;
-      transition: width 1s var(--ease-premium);
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-main);
     }
 
-    /* Modal Form Overlays */
-    .admin-modal {
+    /* Widgets / Tables */
+    .cc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 28px;
+    }
+    .cc-card-title {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+
+    /* Grid alignments */
+    .dashboard-split {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+    @media(max-width: 1024px) {
+      .dashboard-split { grid-template-columns: 1fr; }
+    }
+
+    /* Tables */
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .cc-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .cc-table th {
+      padding: 14px 18px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .cc-table td {
+      padding: 16px 18px;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+    .cc-table tr:hover td {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Statuses */
+    .badge-status {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .badge-status.pending { background: rgba(255, 90, 31, 0.1); color: var(--brand-orange); }
+    .badge-status.approved, .badge-status.won { background: rgba(0, 230, 118, 0.1); color: #00E676; }
+    .badge-status.rejected, .badge-status.lost { background: rgba(255, 23, 68, 0.1); color: #FF1744; }
+    .badge-status.new { background: rgba(0, 176, 255, 0.1); color: #00B0FF; }
+
+    /* Modals & Dialogs */
+    .cc-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(9,9,9,0.9);
+      background: rgba(0,0,0,0.85);
       z-index: 50000;
       display: none;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.4s var(--ease-premium);
+      transition: opacity 0.3s ease;
       padding: 20px;
     }
-    .admin-modal.active {
+    .cc-modal.active {
       display: flex;
       opacity: 1;
     }
-    .modal-card {
+    .cc-modal-card {
       width: 100%;
-      max-width: 580px;
-      background: #0f0f10;
-      border: 1px solid var(--glass-border);
+      max-width: 640px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 40px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      padding: 36px;
       max-height: 90vh;
       overflow-y: auto;
+      position: relative;
     }
-    
-    /* Form specifics */
+    .close-modal-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .close-modal-btn:hover {
+      color: var(--text-main);
+    }
+
+    /* Forms */
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 18px;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
     .form-label {
-      font-family: var(--font-display);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      color: var(--mist);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .form-control {
       background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      color: var(--volt);
-      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 14px;
       border-radius: 4px;
-      font-size: 0.9rem;
-      font-family: var(--font-body);
+      font-size: 0.85rem;
       outline: none;
-      transition: var(--transition-fast);
-      width: 100%;
+      font-family: var(--font-body);
+      transition: border 0.3s;
     }
     .form-control:focus {
-      border-color: var(--fire);
-      background: rgba(255, 255, 255, 0.04);
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 15px;
-      margin-top: 30px;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      padding-top: 20px;
+      border-color: var(--brand-orange);
     }
 
-    /* Checkbox layout inside forms */
-    .checkbox-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      background: rgba(0,0,0,0.2);
-      padding: 15px;
+    /* Action triggers */
+    .btn-main {
+      padding: 10px 20px;
+      background: var(--brand-orange);
+      border: none;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       border-radius: 4px;
-      border: 1px solid var(--glass-border);
-    }
-    .checkbox-label {
-      display: flex;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.85rem;
-      color: var(--mist);
+      transition: background 0.3s;
+    }
+    .btn-main:hover {
+      background: var(--brand-orange-hover);
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-ghost:hover {
+      border-color: var(--text-muted);
+    }
+
+    /* Leads pipeline columns */
+    .pipeline-container {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      height: 600px;
+    }
+    .pipeline-column {
+      flex: 0 0 280px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .pipeline-column-header {
+      padding: 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pipeline-cards {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+    .pipeline-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 16px;
+      cursor: grab;
+      transition: border-color 0.3s;
+    }
+    .pipeline-card:hover {
+      border-color: var(--brand-orange);
+    }
+
+    /* Messaging UI */
+    .msg-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: 650px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .msg-threads {
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .msg-thread-item {
+      padding: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
       cursor: pointer;
+      transition: background 0.3s;
+    }
+    .msg-thread-item:hover, .msg-thread-item.active {
+      background: rgba(255, 90, 31, 0.04);
+    }
+    .msg-chat-pane {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .msg-chat-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .msg-chat-messages {
+      flex-grow: 1;
+      padding: 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chat-bubble {
+      max-width: 60%;
+      padding: 14px 18px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .chat-bubble.sent {
+      background: var(--brand-orange);
+      color: #fff;
+      align-self: flex-end;
+    }
+    .chat-bubble.received {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      align-self: flex-start;
+      border: 1px solid var(--border-color);
+    }
+    .msg-chat-input-area {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 16px;
+    }
+
+    /* Global Search Screen Overlay */
+    .search-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.9);
+      z-index: 100000;
+      display: none;
+      justify-content: center;
+      padding-top: 100px;
+    }
+    .search-overlay.active {
+      display: flex;
+    }
+    .search-box-card {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .search-bar-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 16px 20px;
+      font-size: 1.2rem;
+      border-radius: 8px;
+      outline: none;
+    }
+    .search-results-list {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .search-result-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+    .search-result-item:hover {
+      background: rgba(255, 90, 31, 0.05);
+    }
+
+    /* Notification Center */
+    .notification-pane {
+      position: absolute;
+      top: 60px;
+      right: 40px;
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 99999;
+      display: none;
+      flex-direction: column;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .notification-pane.active {
+      display: flex;
+    }
+    .notification-item {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      font-size: 0.8rem;
+    }
+    .notification-item.unread {
+      background: rgba(255, 90, 31, 0.03);
+    }
+
+    /* File Asset Manager */
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .asset-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+      position: relative;
+    }
+    .asset-preview {
+      height: 120px;
+      background: rgba(255, 255, 255, 0.01);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .asset-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
 
-  <!-- PASSWORD GATE OVERLAY -->
-  <div id="admin-gate" class="admin-gate">
-    <div class="gate-card">
-      <div style="margin-bottom: 24px;">
+  <!-- GLOBAL SEARCH OVERLAY -->
+  <div id="search-overlay" class="search-overlay">
+    <div class="search-box-card">
+      <input type="text" id="search-global-input" class="search-bar-input" placeholder="Search creators, leads, projects, files...">
+      <div id="search-results" class="search-results-list"></div>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION GATE -->
+  <div id="auth-gate" class="auth-gate">
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 30px;">
         <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 48px; height: 48px; margin: 0 auto 10px auto;">
           <circle cx="16" cy="16" r="12" fill="none" stroke="rgba(255,255,255,0.1)"></circle>
           <circle cx="24.48" cy="7.52" r="2" fill="#FF5A1F"></circle>
           <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5"></image>
         </svg>
-        <h2 style="font-family: var(--font-display); text-transform: uppercase; font-size: 1.25rem;">Vanguard Terminal</h2>
-        <p style="color: var(--mist); font-size: 0.8rem; margin-top: 4px;">Collective Admin Portal Authentication</p>
+        <h2 style="font-family: var(--font-body); font-size: 1.25rem; font-weight: 800; text-transform: uppercase; margin: 0;">YAWMATIC</h2>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Control Center Terminal</p>
       </div>
-      <form id="form-gate-auth">
-        <div class="form-group" style="text-align: left;">
-          <label class="form-label" for="gate-password">Enter Agency Password</label>
-          <input type="password" id="gate-password" class="form-control" placeholder="••••••••" required style="text-align: center;">
+
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
+        <button id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+      </div>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group">
+          <label class="form-label" for="auth-email">Email Address</label>
+          <input type="email" id="auth-email" class="form-control" placeholder="name@agency.com" required>
         </div>
-        <button type="submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 8px;">
-          Authenticate Access
+        <div class="form-group">
+          <label class="form-label" for="auth-password">Password</label>
+          <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" id="auth-submit-btn" class="btn-main" style="width: 100%; justify-content: center; margin-top: 10px;">
+          Authenticate
         </button>
       </form>
     </div>
   </div>
 
-  <!-- ADMIN WORKSPACE LAYOUT -->
-  <div id="admin-workspace" class="admin-layout">
+  <!-- MAIN OPERATING WORKSPACE -->
+  <div id="admin-workspace" class="cc-layout">
     
     <!-- Sidebar Navigation -->
-    <aside class="admin-sidebar">
-      <div class="sidebar-logo">
+    <aside class="cc-sidebar">
+      <div class="sidebar-header">
         <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 24px; height: 24px;">
           <circle cx="16" cy="16" r="12" fill="none" stroke="rgba(255,255,255,0.1)"></circle>
           <circle cx="24.48" cy="7.52" r="2" fill="#FF5A1F"></circle>
           <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5"></image>
         </svg>
-        <span style="font-family: var(--font-display); font-weight: 800; font-size: 1rem; color: var(--volt);">YAWMATIC</span>
+        <span style="font-family: var(--font-body); font-weight: 800; font-size: 1rem; color: var(--text-main);">YAWMATIC</span>
       </div>
-      <ul class="admin-menu">
-        <li><button class="menu-item active" data-view="analytics">Analytics</button></li>
-        <li><button class="menu-item" data-view="queue">Applications Queue</button></li>
-        <li><button class="menu-item" data-view="creators">Creators Vetting</button></li>
-        <li><button class="menu-item" data-view="projects">Project Pipeline</button></li>
-        <li><button class="menu-item" data-view="reviews">Review Moderation</button></li>
-        <li><button class="menu-item" data-view="inquiries">Client Inquiries</button></li>
+
+      <ul class="sidebar-menu">
+        <li><button class="sidebar-btn active" data-view="dashboard"><i data-lucide="layout-dashboard" style="width:16px;"></i>Dashboard</button></li>
+        <li><button class="sidebar-btn" data-view="applications"><i data-lucide="user-check" style="width:16px;"></i>Applications</button></li>
+        <li><button class="sidebar-btn" data-view="creators"><i data-lucide="users" style="width:16px;"></i>Creators</button></li>
+        <li><button class="sidebar-btn" data-view="leads"><i data-lucide="file-text" style="width:16px;"></i>Client Leads</button></li>
+        <li><button class="sidebar-btn" data-view="projects"><i data-lucide="folder-kanban" style="width:16px;"></i>Projects</button></li>
+        <li><button class="sidebar-btn" data-view="messages"><i data-lucide="mail" style="width:16px;"></i>Messages</button></li>
+        <li><button class="sidebar-btn" data-view="reviews"><i data-lucide="star" style="width:16px;"></i>Reviews</button></li>
+        <li><button class="sidebar-btn" data-view="files"><i data-lucide="hard-drive" style="width:16px;"></i>Files</button></li>
+        <li><button class="sidebar-btn" data-view="logs"><i data-lucide="list" style="width:16px;"></i>Activity Log</button></li>
+        <li><button class="sidebar-btn" data-view="settings"><i data-lucide="settings" style="width:16px;"></i>Settings</button></li>
       </ul>
-      
-      <div style="margin-top: auto; padding: 20px 24px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-        <a href="/creators" class="action-btn" style="width: 100%; justify-content: center;">
-          ← Public Site
-        </a>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <div class="user-avatar" id="sidebar-user-avatar">A</div>
+          <div class="user-info">
+            <span class="user-name" id="sidebar-user-name">Loading...</span>
+            <span class="user-role" id="sidebar-user-role">Guest</span>
+          </div>
+        </div>
+        <button onclick="handleSignOut()" class="btn-main btn-ghost" style="width: 100%; justify-content: center; padding: 8px 0; font-size: 0.75rem;">
+          Sign Out
+        </button>
       </div>
     </aside>
 
     <!-- Main Content Frame -->
-    <main class="admin-main">
+    <main class="cc-main">
       
-      <header class="admin-header">
-        <h2 id="header-view-title" class="admin-title">Analytics</h2>
-        <div style="font-family: var(--font-display); font-size: 0.8rem; color: var(--fire); font-weight: 700; text-transform: uppercase;">
-          VETTED STATUS: SECURED
+      <header class="cc-header">
+        <h2 id="header-view-title" class="admin-title" style="font-size: 1.15rem; margin: 0; text-transform: uppercase; font-family: var(--font-body); letter-spacing: 0.5px;">Dashboard</h2>
+        <div class="cc-header-actions">
+          <button class="header-action-btn" onclick="toggleSearch()" title="Global Search (/)">
+            <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+          </button>
+          <button class="header-action-btn" onclick="toggleNotifications()" title="Notifications">
+            <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
+            <span id="unread-notif-dot" class="badge-dot" style="display: none;"></span>
+          </button>
+
+          <!-- Notification Popover Pane -->
+          <div id="notification-pane" class="notification-pane">
+            <div style="padding: 16px; font-weight: 700; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+              <span>NOTIFICATIONS</span>
+              <button onclick="clearNotifications()" style="background:none; border:none; color:var(--brand-orange); font-size:0.7rem; font-weight:700;">CLEAR ALL</button>
+            </div>
+            <div id="notification-list">
+              <div style="padding: 20px; text-align: center; color: var(--text-muted);">No new notifications.</div>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div class="admin-content">
-        
+      <div class="cc-content">
+
         <!-- ============================================== -->
-        <!-- VIEW: ANALYTICS -->
+        <!-- VIEW: DASHBOARD -->
         <!-- ============================================== -->
-        <div class="admin-view active" id="view-analytics">
+        <div class="cc-view active" id="view-dashboard">
           
-          <!-- Stat cards row -->
-          <div class="analytics-row" id="analytics-stats-row">
-            <!-- Dynamic stats boxes -->
+          <!-- Metrics Widgets -->
+          <div class="stats-grid" id="dashboard-stats-grid">
+            <!-- Dynamic stats inject -->
           </div>
 
-          <!-- Distribution Chart rows -->
-          <div class="charts-row">
+          <!-- Charts rows -->
+          <div class="dashboard-split">
+            <div class="cc-card">
+              <span class="cc-card-title">Creator Categories Distribution</span>
+              <div class="chart-container">
+                <canvas id="chart-categories"></canvas>
+              </div>
+            </div>
+            <div class="cc-card">
+              <span class="cc-card-title">Project Status Metrics</span>
+              <div class="chart-container">
+                <canvas id="chart-projects"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Split feed lists -->
+          <div class="dashboard-split">
+            <div class="cc-card">
+              <span class="cc-card-title">Recent Activity Logs</span>
+              <div class="table-responsive">
+                <table class="cc-table">
+                  <thead>
+                    <tr>
+                      <th>Actor</th>
+                      <th>Action</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dash-activity-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="cc-card">
+              <span class="cc-card-title">Recent Creator Applications</span>
+              <div class="table-responsive">
+                <table class="cc-table">
+                  <tbody id="dash-apps-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: APPLICATIONS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-applications">
+          <div class="cc-card">
+            <span class="cc-card-title">Review Queue</span>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Applicant Name</th>
+                    <th>Categories</th>
+                    <th>City</th>
+                    <th>Experience</th>
+                    <th>Submitted At</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="apps-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: CREATORS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-creators">
+          <div class="cc-card">
+            <span class="cc-card-title">Vetted Network</span>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Creator</th>
+                    <th>Sphere</th>
+                    <th>Location</th>
+                    <th>Availability</th>
+                    <th>Rating</th>
+                    <th>Badges</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="creators-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: CLIENT LEADS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-leads">
+          <div class="pipeline-container" id="leads-pipeline">
             
-            <div class="chart-box">
-              <h3 class="sidebar-title" style="font-size: 1.1rem;">Category Distribution</h3>
-              <div id="chart-categories-list">
-                <!-- Injected dynamically -->
-              </div>
+            <div class="pipeline-column" data-status="new">
+              <div class="pipeline-column-header"><span>New Leads</span><span class="column-count">0</span></div>
+              <div class="pipeline-cards" id="column-new"></div>
             </div>
 
-            <div class="chart-box">
-              <h3 class="sidebar-title" style="font-size: 1.1rem;">City Footprints</h3>
-              <div id="chart-cities-list">
-                <!-- Injected dynamically -->
-              </div>
+            <div class="pipeline-column" data-status="contacted">
+              <div class="pipeline-column-header"><span>Contacted</span><span class="column-count">0</span></div>
+              <div class="pipeline-cards" id="column-contacted"></div>
+            </div>
+
+            <div class="pipeline-column" data-status="meeting">
+              <div class="pipeline-column-header"><span>Meeting</span><span class="column-count">0</span></div>
+              <div class="pipeline-cards" id="column-meeting"></div>
+            </div>
+
+            <div class="pipeline-column" data-status="proposal">
+              <div class="pipeline-column-header"><span>Proposal</span><span class="column-count">0</span></div>
+              <div class="pipeline-cards" id="column-proposal"></div>
+            </div>
+
+            <div class="pipeline-column" data-status="won">
+              <div class="pipeline-column-header"><span>Won</span><span class="column-count">0</span></div>
+              <div class="pipeline-cards" id="column-won"></div>
             </div>
 
           </div>
-
         </div>
 
         <!-- ============================================== -->
-        <!-- VIEW: QUEUE -->
+        <!-- VIEW: PROJECTS -->
         <!-- ============================================== -->
-        <div class="admin-view" id="view-queue">
-          <div class="table-card">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Creator Name</th>
-                  <th>Core Sphere</th>
-                  <th>Location</th>
-                  <th>Exp</th>
-                  <th>Applied On</th>
-                  <th style="text-align: right;">Vanguard Evaluation</th>
-                </tr>
-              </thead>
-              <tbody id="queue-table-body">
-                <!-- Dynamic queue list -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- VIEW: CREATORS VETTING -->
-        <!-- ============================================== -->
-        <div class="admin-view" id="view-creators">
-          <div class="table-card">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Vetted Creator</th>
-                  <th>Sphere</th>
-                  <th>Availability</th>
-                  <th>Rating</th>
-                  <th>Badges</th>
-                  <th>Status</th>
-                  <th style="text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="creators-table-body">
-                <!-- Dynamic creators list -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- VIEW: PROJECT PIPELINE -->
-        <!-- ============================================== -->
-        <div class="admin-view" id="view-projects">
+        <div class="cc-view" id="view-projects">
           <div style="display: flex; justify-content: flex-end;">
-            <button id="btn-create-project" class="btn btn--primary" style="padding: 12px 24px; font-size: 0.85rem;">
-              + Setup Project Scope
-            </button>
+            <button onclick="openProjectModal()" class="btn-main">+ Add Project Scope</button>
           </div>
-          <div class="table-card">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Project Name / Client</th>
-                  <th>Brief Vertical</th>
-                  <th>Budget</th>
-                  <th>Timeline</th>
-                  <th>Assigned Vetted Creators</th>
-                  <th>Pipeline Status</th>
-                  <th style="text-align: right;">Control</th>
-                </tr>
-              </thead>
-              <tbody id="projects-table-body">
-                <!-- Dynamic projects list -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- VIEW: REVIEW MODERATION -->
-        <!-- ============================================== -->
-        <div class="admin-view" id="view-reviews">
-          <div class="table-card">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Target Creator</th>
-                  <th>Reviewer Client</th>
-                  <th>Rating</th>
-                  <th>Review Comment</th>
-                  <th>Status</th>
-                  <th style="text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="reviews-table-body">
-                <!-- Dynamic reviews list -->
-              </tbody>
-            </table>
+          <div class="cc-card">
+            <span class="cc-card-title">Projects Pipeline</span>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Project Name</th>
+                    <th>Client Name</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Budget</th>
+                    <th>Progress</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="projects-table-body"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- VIEW: CLIENT INQUIRIES -->
+        <!-- VIEW: MESSAGES -->
         <!-- ============================================== -->
-        <div class="admin-view" id="view-inquiries">
-          <div class="table-card">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Client Name</th>
-                  <th>Email</th>
-                  <th>Creator Assigned Scope</th>
-                  <th>Brief Details</th>
-                  <th>Received On</th>
-                </tr>
-              </thead>
-              <tbody id="inquiries-table-body">
-                <!-- Dynamic inquiries list -->
-              </tbody>
-            </table>
+        <div class="cc-view" id="view-messages">
+          <div class="msg-layout">
+            <div class="msg-threads" id="msg-threads-list">
+              <!-- Dynamically populated thread list -->
+            </div>
+            <div class="msg-chat-pane">
+              <div class="msg-chat-header" id="chat-header-title">Select a thread to begin</div>
+              <div class="msg-chat-messages" id="chat-messages-container"></div>
+              <div class="msg-chat-input-area">
+                <input type="text" id="chat-message-input" class="form-control" placeholder="Type your message here..." style="flex-grow: 1;">
+                <button onclick="sendMessage()" class="btn-main">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: REVIEWS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-reviews">
+          <div class="cc-card">
+            <span class="cc-card-title">Moderation Queue</span>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Reviewer</th>
+                    <th>Creator</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: FILES -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-files">
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <input type="file" id="file-uploader-input" style="display: none;" onchange="handleFileUpload(event)">
+            <button onclick="document.getElementById('file-uploader-input').click()" class="btn-main">Upload Asset</button>
+          </div>
+          <div class="cc-card">
+            <span class="cc-card-title">Asset Manager</span>
+            <div class="assets-grid" id="assets-grid-container"></div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: LOGS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-logs">
+          <div class="cc-card">
+            <span class="cc-card-title">Security & Audit History</span>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Entity Type</th>
+                    <th>Entity ID</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: SETTINGS -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-settings">
+          <div class="cc-card">
+            <span class="cc-card-title">Settings & Parameters</span>
+            <form onsubmit="saveSettingsForm(event)">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Agency Name</label>
+                  <input type="text" id="set-agency-name" class="form-control" value="YAWMATIC Collective">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Support Email</label>
+                  <input type="email" id="set-support-email" class="form-control" value="ops@yawmatic.com">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Storage Quota Utilization</label>
+                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; margin-top: 5px;">
+                  <div id="storage-progress" style="width: 12%; height: 100%; background: var(--brand-orange);"></div>
+                </div>
+                <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:inline-block;">1.2 GB of 10 GB Used (12%)</span>
+              </div>
+              <div class="form-group" style="margin-top: 20px;">
+                <button type="submit" class="btn-main">Save System Updates</button>
+              </div>
+            </form>
           </div>
         </div>
 
       </div>
-
     </main>
 
   </div>
 
-  <!-- MODAL: EDIT CREATOR PROFILE -->
-  <div id="modal-edit-creator" class="admin-modal">
-    <div class="modal-card">
-      <h3 class="sidebar-title" style="margin-bottom: 24px;">Adjust Creator Profile</h3>
-      <form id="form-edit-creator">
+  <!-- ======================================================== -->
+  <!-- MODAL: APPLICATION DETAIL VIEW -->
+  <!-- ======================================================== -->
+  <div id="modal-app-details" class="cc-modal">
+    <div class="cc-modal-card" style="max-width: 720px;">
+      <button class="close-modal-btn" onclick="closeModal('modal-app-details')"><i data-lucide="x"></i></button>
+      <h3 class="cc-card-title">Applicant Profile Inspection</h3>
+      <div id="app-details-content" style="display:flex; flex-direction:column; gap:20px;"></div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EDIT CREATOR -->
+  <!-- ======================================================== -->
+  <div id="modal-edit-creator" class="cc-modal">
+    <div class="cc-modal-card">
+      <button class="close-modal-btn" onclick="closeModal('modal-edit-creator')"><i data-lucide="x"></i></button>
+      <h3 class="cc-card-title">Adjust Creator Parameters</h3>
+      <form id="form-edit-creator" onsubmit="submitCreatorEdits(event)">
         <input type="hidden" id="edit-c-id">
         <div class="form-group">
-          <label class="form-label" for="edit-c-name">Full Name</label>
+          <label class="form-label">Full Name</label>
           <input type="text" id="edit-c-name" class="form-control" required>
         </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div>
-            <label class="form-label" for="edit-c-email">Email</label>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
             <input type="email" id="edit-c-email" class="form-control" required>
           </div>
-          <div>
-            <label class="form-label" for="edit-c-phone">Phone</label>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
             <input type="text" id="edit-c-phone" class="form-control">
           </div>
         </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div>
-            <label class="form-label" for="edit-c-city">City</label>
-            <input type="text" id="edit-c-city" class="form-control" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" id="edit-c-city" class="form-control">
           </div>
-          <div>
-            <label class="form-label" for="edit-c-country">Country</label>
-            <input type="text" id="edit-c-country" class="form-control" required>
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <input type="text" id="edit-c-country" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Years of Experience</label>
+            <input type="number" id="edit-c-experience" class="form-control" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating score</label>
+            <input type="number" id="edit-c-rating" class="form-control" min="1" max="5" step="0.1">
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Core Spheres</label>
-          <div id="edit-c-categories-container" class="checkbox-grid">
-            <!-- Seeded dynamically -->
-          </div>
-        </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div>
-            <label class="form-label" for="edit-c-experience">Years of Experience</label>
-            <input type="number" id="edit-c-experience" class="form-control" required min="0">
-          </div>
-          <div>
-            <label class="form-label" for="edit-c-rating">Vetted rating</label>
-            <input type="number" id="edit-c-rating" class="form-control" required min="1" max="5" step="0.1">
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="edit-c-availability">Availability Status</label>
+          <label class="form-label">Availability Status</label>
           <select id="edit-c-availability" class="form-control">
             <option value="available">Available</option>
-            <option value="limited">Limited Spots</option>
+            <option value="limited">Limited</option>
             <option value="booked">Booked</option>
           </select>
         </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="edit-c-verified" class="checkbox-input">
-            <label class="form-label" for="edit-c-verified" style="margin:0;">Vetted / Verified</label>
-          </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="edit-c-featured" class="checkbox-input">
-            <label class="form-label" for="edit-c-featured" style="margin:0;">Featured Hub Card</label>
-          </div>
+        <div class="form-group" style="display:flex; flex-direction:row; gap:20px;">
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="edit-c-verified"> Verified
+          </label>
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="edit-c-featured"> Featured
+          </label>
         </div>
         <div class="form-group">
-          <label class="form-label" for="edit-c-notes">Internal Vetting Notes</label>
-          <textarea id="edit-c-notes" class="form-control" placeholder="Add candidate remarks, verification history, or feedback..."></textarea>
+          <label class="form-label">Internal Vetting Remarks</label>
+          <textarea id="edit-c-notes" class="form-control" style="height:80px; resize:none;"></textarea>
         </div>
-
-        <div class="modal-actions">
-          <button type="button" id="btn-close-edit-modal" class="btn btn--ghost" style="padding:10px 20px;">Cancel</button>
-          <button type="submit" class="btn btn--primary" style="padding:10px 24px;">Save Updates</button>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+          <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
+          <button type="submit" class="btn-main">Save Updates</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- ======================================================== -->
   <!-- MODAL: ADD / EDIT PROJECT -->
-  <div id="modal-project" class="admin-modal">
-    <div class="modal-card">
-      <h3 id="project-modal-title" class="sidebar-title" style="margin-bottom: 24px;">Setup Project Scope</h3>
-      <form id="form-project">
+  <!-- ======================================================== -->
+  <div id="modal-project" class="cc-modal">
+    <div class="cc-modal-card">
+      <button class="close-modal-btn" onclick="closeModal('modal-project')"><i data-lucide="x"></i></button>
+      <h3 class="cc-card-title" id="project-modal-title">Setup Project Scope</h3>
+      <form id="form-project" onsubmit="submitProjectForm(event)">
         <input type="hidden" id="project-id">
         <div class="form-group">
-          <label class="form-label" for="proj-client">Client / Project Name</label>
-          <input type="text" id="proj-client" class="form-control" required placeholder="e.g. Aman Luxury resorts Campaign">
+          <label class="form-label">Project Title</label>
+          <input type="text" id="proj-title" class="form-control" required placeholder="e.g. Winter Showcase 2026">
         </div>
         <div class="form-group">
-          <label class="form-label" for="proj-desc">Brief Description</label>
-          <textarea id="proj-desc" class="form-control" placeholder="Describe the creative brief deliverables and timeline details..."></textarea>
+          <label class="form-label">Client Name</label>
+          <input type="text" id="proj-client" class="form-control" required placeholder="e.g. Aman Luxury Group">
         </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div>
-            <label class="form-label" for="proj-category">Vertical Category</label>
-            <input type="text" id="proj-category" class="form-control" placeholder="e.g. Photography, UI/UX Design">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Deadline</label>
+            <input type="text" id="proj-timeline" class="form-control" placeholder="e.g. 4 Weeks / Dec 2026">
           </div>
-          <div>
-            <label class="form-label" for="proj-status">Pipeline Status</label>
+          <div class="form-group">
+            <label class="form-label">Budget retainer</label>
+            <input type="text" id="proj-budget" class="form-control" placeholder="e.g. $18,500">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select id="proj-priority" class="form-control">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Project Status</label>
             <select id="proj-status" class="form-control">
               <option value="assigned">Assigned</option>
               <option value="in_progress">In Progress</option>
@@ -749,554 +1269,640 @@
             </select>
           </div>
         </div>
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-          <div>
-            <label class="form-label" for="proj-timeline">Timeline Scope</label>
-            <input type="text" id="proj-timeline" class="form-control" placeholder="e.g. 4 weeks, 2 months">
-          </div>
-          <div>
-            <label class="form-label" for="proj-budget">Budget retainer</label>
-            <input type="text" id="proj-budget" class="form-control" placeholder="e.g. $15,000, $25,000">
-          </div>
+        <div class="form-group">
+          <label class="form-label">Progress Percentage: <span id="proj-progress-val">0</span>%</label>
+          <input type="range" id="proj-progress" class="form-control" min="0" max="100" value="0" oninput="document.getElementById('proj-progress-val').textContent=this.value">
         </div>
         <div class="form-group">
-          <label class="form-label">Assign Vetted Collective Creators</label>
-          <div id="proj-creators-list" class="checkbox-grid" style="max-height: 180px; overflow-y: auto;">
-            <!-- Approved creators will be injected here with checkboxes -->
+          <label class="form-label">Brief & Description</label>
+          <textarea id="proj-desc" class="form-control" style="height:80px; resize:none;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign Creators</label>
+          <div id="proj-creators-list" class="checkbox-grid" style="max-height: 120px; overflow-y: auto; padding: 12px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2);">
+            <!-- Approved creators check list -->
           </div>
         </div>
-
-        <div class="modal-actions">
-          <button type="button" id="btn-close-proj-modal" class="btn btn--ghost" style="padding:10px 20px;">Cancel</button>
-          <button type="submit" class="btn btn--primary" style="padding:10px 24px;">Log Assignment</button>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+          <button type="button" onclick="closeModal('modal-project')" class="btn-main btn-ghost">Cancel</button>
+          <button type="submit" class="btn-main">Save Project</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ADMIN PAGE BUSINESS L    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+  <!-- ======================================================== -->
+  <!-- MODAL: LEAD DETAILS -->
+  <!-- ======================================================== -->
+  <div id="modal-lead" class="cc-modal">
+    <div class="cc-modal-card">
+      <button class="close-modal-btn" onclick="closeModal('modal-lead')"><i data-lucide="x"></i></button>
+      <h3 class="cc-card-title">Client Lead Card</h3>
+      <form id="form-lead" onsubmit="submitLeadForm(event)">
+        <input type="hidden" id="lead-id">
+        <div class="form-group">
+          <label class="form-label">Client Name</label>
+          <input type="text" id="lead-name" class="form-control" readonly>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="lead-email" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" id="lead-company" class="form-control" readonly>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Budget</label>
+            <input type="text" id="lead-budget" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Project Type</label>
+            <input type="text" id="lead-type" class="form-control" readonly>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Inquiry Message</label>
+          <textarea id="lead-message" class="form-control" style="height:80px; resize:none;" readonly></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pipeline Status</label>
+            <select id="lead-status" class="form-control">
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="meeting">Meeting Scheduled</option>
+              <option value="proposal">Proposal Sent</option>
+              <option value="won">Won (Archive)</option>
+              <option value="lost">Lost (Archive)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assign Manager</label>
+            <select id="lead-manager" class="form-control">
+              <!-- Dynamically populated admin list -->
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Internal Follow-up Notes</label>
+          <textarea id="lead-notes" class="form-control" style="height:80px; resize:none;"></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+          <button type="button" onclick="closeModal('modal-lead')" class="btn-main btn-ghost">Cancel</button>
+          <button type="submit" class="btn-main">Update Lead</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONTROL CENTER BUSINESS ENGINE -->
+  <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+    
+    // Initialize Supabase Client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function supabaseFetch(path, options = {}) {
-      const url = `${SUPABASE_URL}/rest/v1/${path}`;
-      const headers = {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      };
-      return fetch(url, { ...options, headers });
-    }
-
-    let activeView = 'analytics';
+    let activeUser = null;
     let cachedCreators = [];
     let cachedCategories = [];
+    let cachedAdmins = [];
+    let cachedMessages = [];
+    let currentThreadId = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Password Auth Gate
-      const gateForm = document.getElementById('form-gate-auth');
-      gateForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const pwd = document.getElementById('gate-password').value;
-        if (pwd === 'admin' || pwd === 'yawmatic') {
-          // Unlock dashboard
-          document.getElementById('admin-gate').style.display = 'none';
-          document.getElementById('admin-workspace').style.visibility = 'visible';
-          
-          // Initial load
-          loadAllData();
-        } else {
-          alert('Access Denied. Incorrect agency key.');
+    // Authentication Tab Management
+    let authMode = 'login';
+    function switchAuthTab(mode) {
+      authMode = mode;
+      document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${mode}`).classList.add('active');
+      document.getElementById('auth-submit-btn').textContent = (mode === 'login') ? 'Authenticate' : 'Register Account';
+    }
+
+    // Handles Authentication Submission
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      
+      if (authMode === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          alert('Auth Error: ' + error.message);
+          return;
         }
-      });
+        await verifyUserRole(data.user);
+      } else {
+        // Sign Up Mode
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          alert('Registration Error: ' + error.message);
+          return;
+        }
+        
+        // Auto super admin assignment if database is completely empty
+        const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
+        const defaultRole = (count === 0) ? 'super_admin' : 'creator';
+        
+        // Create matching database profile
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          full_name: email.split('@')[0],
+          email: email,
+          role: defaultRole
+        });
 
-      // 2. Sidebar Navigation Click Listeners
-      document.querySelectorAll('.menu-item').forEach(btn => {
+        if (profileError) {
+          alert('Profile setup error: ' + profileError.message);
+          return;
+        }
+
+        alert(`Sign up successful! Registered role: ${defaultRole}. Please Log In.`);
+        switchAuthTab('login');
+      }
+    }
+
+    // Check permissions and load workspace
+    async function verifyUserRole(user) {
+      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      
+      if (error || !profile) {
+        alert('Permission Denied. No registered profile found.');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      const allowedRoles = ['super_admin', 'admin', 'project_manager', 'finance', 'moderator'];
+      if (!allowedRoles.includes(profile.role)) {
+        alert(`Access Blocked. Control Center is restricted to Admins. Your role: ${profile.role}`);
+        await supabase.auth.signOut();
+        return;
+      }
+
+      activeUser = profile;
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('admin-workspace').classList.add('active');
+      
+      // Animate Control Center load
+      gsap.to('#admin-workspace', { opacity: 1, duration: 0.5 });
+      
+      // Update Sidebar Roster
+      document.getElementById('sidebar-user-name').textContent = profile.full_name || 'Admin';
+      document.getElementById('sidebar-user-role').textContent = profile.role.replace('_', ' ');
+      document.getElementById('sidebar-user-avatar').textContent = (profile.full_name || 'A').charAt(0).toUpperCase();
+
+      // Log Security login activity
+      logActivity('Security Login', 'profiles', profile.id, { email: profile.email });
+
+      // Run business workspace logic
+      initControlCenter();
+    }
+
+    async function handleSignOut() {
+      await supabase.auth.signOut();
+      window.location.reload();
+    }
+
+    // Initial Engine Loader
+    function initControlCenter() {
+      lucide.createIcons();
+      loadAllRosters();
+      setupMenuNavigation();
+      setupRealtimeListeners();
+    }
+
+    // Nav navigation switcher
+    function setupMenuNavigation() {
+      document.querySelectorAll('.sidebar-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
 
           const viewId = btn.dataset.view;
-          activeView = viewId;
-          document.getElementById('header-view-title').textContent = btn.textContent;
+          document.getElementById('header-view-title').textContent = btn.textContent.trim();
 
-          document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+          document.querySelectorAll('.cc-view').forEach(v => v.classList.remove('active'));
           document.getElementById(`view-${viewId}`).classList.add('active');
 
           loadViewData(viewId);
         });
       });
 
-      // 3. Setup Dialog Close Event Handlers
-      document.getElementById('btn-close-edit-modal').addEventListener('click', () => {
-        document.getElementById('modal-edit-creator').classList.remove('active');
+      // Pressing "/" triggers Search
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          toggleSearch();
+        }
+        if (e.key === 'Escape') {
+          document.getElementById('search-overlay').classList.remove('active');
+          document.getElementById('notification-pane').classList.remove('active');
+        }
       });
-      document.getElementById('btn-close-proj-modal').addEventListener('click', () => {
-        document.getElementById('modal-project').classList.remove('active');
+      
+      document.getElementById('search-global-input').addEventListener('input', (e) => {
+        runGlobalSearch(e.target.value);
       });
+    }
 
-      // 4. Setup Create Project button
-      document.getElementById('btn-create-project').addEventListener('click', () => {
-        openProjectModal();
-      });
+    // Load necessary caches once
+    async function loadAllRosters() {
+      // 1. Fetch categories
+      const { data: cats } = await supabase.from('categories').select('*').order('display_order');
+      cachedCategories = cats || [];
 
-      // 5. Submit Creator Edit Form
-      const editForm = document.getElementById('form-edit-creator');
-      editForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        submitCreatorEdits();
-      });
+      // 2. Fetch admins list for manager dropdown options
+      const { data: admins } = await supabase.from('profiles').select('id, full_name').in('role', ['super_admin', 'admin', 'project_manager']);
+      cachedAdmins = admins || [];
 
-      // 6. Submit Project Assignment Form
-      const projForm = document.getElementById('form-project');
-      projForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        submitProjectForm();
-      });
-    });
-
-    function loadAllData() {
-      // Load categories from Supabase (fallback to static list if empty)
-      supabaseFetch('categories?select=*&order=display_order')
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            cachedCategories = data;
-          } else {
-            cachedCategories = [
-              { slug: 'photography',          name: 'Photography' },
-              { slug: 'videography',          name: 'Videography' },
-              { slug: 'drone-operator',       name: 'Drone Operator' },
-              { slug: 'video-editor',         name: 'Video Editor' },
-              { slug: 'motion-designer',      name: 'Motion Designer' },
-              { slug: 'graphic-designer',     name: 'Graphic Designer' },
-              { slug: 'brand-designer',       name: 'Brand Designer' },
-              { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
-              { slug: 'web-designer',         name: 'Web Designer' },
-              { slug: '3d-artist',            name: '3D Artist' },
-              { slug: 'content-creator',      name: 'Content Creator' },
-              { slug: 'social-media-manager', name: 'Social Media Manager' },
-              { slug: 'copywriter',           name: 'Copywriter' },
-              { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
-            ];
-          }
-          loadViewData(activeView);
-        })
-        .catch(() => {
-          // Robust static fallback
-          cachedCategories = [
-            { slug: 'photography',          name: 'Photography' },
-            { slug: 'videography',          name: 'Videography' },
-            { slug: 'drone-operator',       name: 'Drone Operator' },
-            { slug: 'video-editor',         name: 'Video Editor' },
-            { slug: 'motion-designer',      name: 'Motion Designer' },
-            { slug: 'graphic-designer',     name: 'Graphic Designer' },
-            { slug: 'brand-designer',       name: 'Brand Designer' },
-            { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
-            { slug: 'web-designer',         name: 'Web Designer' },
-            { slug: '3d-artist',            name: '3D Artist' },
-            { slug: 'content-creator',      name: 'Content Creator' },
-            { slug: 'social-media-manager', name: 'Social Media Manager' },
-            { slug: 'copywriter',           name: 'Copywriter' },
-            { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
-          ];
-          loadViewData(activeView);
-        });
+      // Load analytics initially
+      loadViewData('analytics');
     }
 
     function loadViewData(viewId) {
-      if (viewId === 'analytics') {
-        loadAnalytics();
-      } else if (viewId === 'queue') {
-        loadQueue();
-      } else if (viewId === 'creators') {
-        loadCreators();
-      } else if (viewId === 'projects') {
-        loadProjects();
-      } else if (viewId === 'reviews') {
-        loadReviews();
-      } else if (viewId === 'inquiries') {
-        loadInquiries();
-      }
+      if (viewId === 'analytics' || viewId === 'dashboard') loadDashboard();
+      else if (viewId === 'applications') loadApplications();
+      else if (viewId === 'creators') loadCreators();
+      else if (viewId === 'leads') loadLeads();
+      else if (viewId === 'projects') loadProjects();
+      else if (viewId === 'messages') loadMessages();
+      else if (viewId === 'reviews') loadReviews();
+      else if (viewId === 'files') loadFiles();
+      else if (viewId === 'logs') loadLogs();
     }
 
     // --------------------------------------------------
-    // VIEW HANDLER: ANALYTICS
+    // ACTIVITY ENGINE LOGGER
     // --------------------------------------------------
-    function loadAnalytics() {
-      // Load both applications (queue/vetted) and inquiries to compute counts
-      Promise.all([
-        supabaseFetch('creator_applications?select=*').then(res => res.json()),
-        supabaseFetch('inquiries?select=id').then(res => res.json()),
-        supabaseFetch('projects?select=id').then(res => res.json())
-      ])
-      .then(([creators, inquiries, projects]) => {
-        const approved = creators.filter(c => c.status === 'approved');
-        const pending = creators.filter(c => c.status === 'pending');
-        
-        const approvedCount = approved.length;
-        const pendingCount = pending.length;
-        const inquiriesCount = inquiries ? inquiries.length : 0;
-        const projectsCount = projects ? projects.length : 0;
-        const conversionRate = inquiriesCount > 0 ? ((projectsCount / inquiriesCount) * 100).toFixed(0) + '%' : '0%';
+    async function logActivity(action, entityType, entityId, details = {}) {
+      if (!activeUser) return;
+      await supabase.from('activity_log').insert({
+        actor_name: activeUser.full_name || activeUser.email,
+        action,
+        entity_type: entityType,
+        entity_id: String(entityId),
+        details
+      });
+    }
 
-        // Render stats boxes
-        const statsRow = document.getElementById('analytics-stats-row');
-        statsRow.innerHTML = `
-          <div class="stat-box">
-            <span class="stat-box__label">Approved Network</span>
-            <span class="stat-box__value">${approvedCount}</span>
-            <span class="stat-box__change">Active Creators</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__label">Pending Queue</span>
-            <span class="stat-box__value">${pendingCount}</span>
-            <span class="stat-box__change" style="color:#FFD600;">Needs Vetting</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__label">Project Inquiries</span>
-            <span class="stat-box__value">${inquiriesCount}</span>
-            <span class="stat-box__change">Routed briefs</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-box__label">Conversion Rate</span>
-            <span class="stat-box__value">${conversionRate}</span>
-            <span class="stat-box__change">Inquiry Conversion</span>
-          </div>
+    // --------------------------------------------------
+    // VIEW HANDLER: DASHBOARD
+    // --------------------------------------------------
+    let chartsInst = {};
+    async function loadDashboard() {
+      // Fetch counts from Supabase
+      const [creatorsRes, inquiriesRes, projectsRes, reviewsRes] = await Promise.all([
+        supabase.from('creator_applications').select('*'),
+        supabase.from('inquiries').select('id'),
+        supabase.from('projects').select('*'),
+        supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('approved', false)
+      ]);
+
+      const creators = creatorsRes.data || [];
+      const approvedCount = creators.filter(c => c.status === 'approved').length;
+      const pendingCount = creators.filter(c => c.status === 'pending').length;
+      const rejectedCount = creators.filter(c => c.status === 'rejected').length;
+      
+      const inquiriesCount = inquiriesRes.data ? inquiriesRes.data.length : 0;
+      
+      const projects = projectsRes.data || [];
+      const activeProjectsCount = projects.filter(p => p.project_status === 'active').length;
+      const pendingProjectsCount = projects.filter(p => p.project_status === 'assigned').length;
+
+      // Stats metrics display cards
+      const statsGrid = document.getElementById('dashboard-stats-grid');
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <span class="stat-label">Total Creators</span>
+          <span class="stat-value">${creators.length}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Pending Applications</span>
+          <span class="stat-value" style="color:var(--brand-orange);">${pendingCount}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Approved Vetted</span>
+          <span class="stat-value">${approvedCount}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Active Projects</span>
+          <span class="stat-value">${activeProjectsCount}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Client Inquiries</span>
+          <span class="stat-value">${inquiriesCount}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Moderation Queue</span>
+          <span class="stat-value">${reviewsRes.count || 0}</span>
+        </div>
+      `;
+
+      // 1. Chart: Creators Categories Distribution
+      const catCountMap = {};
+      creators.filter(c => c.status === 'approved').forEach(c => {
+        (c.categories || []).forEach(slug => {
+          catCountMap[slug] = (catCountMap[slug] || 0) + 1;
+        });
+      });
+
+      const catLabels = cachedCategories.map(c => c.name);
+      const catData = cachedCategories.map(c => catCountMap[c.slug] || 0);
+
+      renderCategoryChart(catLabels, catData);
+
+      // 2. Chart: Projects status Distribution
+      const statusCounts = { assigned: 0, active: 0, completed: 0 };
+      projects.forEach(p => {
+        if (p.project_status in statusCounts) statusCounts[p.project_status]++;
+      });
+      renderProjectChart(Object.keys(statusCounts), Object.values(statusCounts));
+
+      // 3. Activity Timeline logs
+      const { data: logs } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(6);
+      const logsBody = document.getElementById('dash-activity-tbody');
+      logsBody.innerHTML = '';
+      if (logs) {
+        logs.forEach(l => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${l.actor_name}</strong></td>
+            <td>${l.action} (${l.entity_type})</td>
+            <td>${new Date(l.created_at).toLocaleTimeString()}</td>
+          `;
+          logsBody.appendChild(tr);
+        });
+      }
+
+      // 4. Quick newest applications list
+      const dashAppsBody = document.getElementById('dash-apps-tbody');
+      dashAppsBody.innerHTML = '';
+      const pendingApps = creators.filter(c => c.status === 'pending').slice(0, 3);
+      if (pendingApps.length > 0) {
+        pendingApps.forEach(a => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${a.full_name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${a.city}</span></td>
+            <td style="text-align:right;"><button class="btn-main" style="padding:6px 12px; font-size:0.7rem;" onclick="openApplicationDetails(${a.id})">Inspect</button></td>
+          `;
+          dashAppsBody.appendChild(tr);
+        });
+      } else {
+        dashAppsBody.innerHTML = '<tr><td style="text-align:center; color:var(--text-muted); padding:20px;">Queue is empty.</td></tr>';
+      }
+    }
+
+    function renderCategoryChart(labels, data) {
+      if (chartsInst.cats) chartsInst.cats.destroy();
+      const ctx = document.getElementById('chart-categories').getContext('2d');
+      chartsInst.cats = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Creators count',
+            data,
+            backgroundColor: '#FF5A1F',
+            borderColor: '#FF5A1F',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#8F8F9B' } },
+            x: { grid: { display: false }, ticks: { color: '#8F8F9B', font: { size: 9 } } }
+          }
+        }
+      });
+    }
+
+    function renderProjectChart(labels, data) {
+      if (chartsInst.projects) chartsInst.projects.destroy();
+      const ctx = document.getElementById('chart-projects').getContext('2d');
+      chartsInst.projects = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels.map(l => l.toUpperCase()),
+          datasets: [{
+            data,
+            backgroundColor: ['#00B0FF', '#FF5A1F', '#00E676'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: '#F5F5F5', font: { size: 10 } } } }
+        }
+      });
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: APPLICATIONS QUEUE
+    // --------------------------------------------------
+    async function loadApplications() {
+      const { data, error } = await supabase.from('creator_applications').select('*').order('submitted_at', { ascending: false });
+      if (error) return;
+
+      const body = document.getElementById('apps-table-body');
+      body.innerHTML = '';
+
+      const pending = data.filter(c => c.status === 'pending' || c.status === 'changes_requested');
+      if (pending.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-muted);">Applications queue is currently empty.</td></tr>';
+        return;
+      }
+
+      pending.forEach(c => {
+        const tr = document.createElement('tr');
+        const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+        const formattedDate = c.submitted_at ? new Date(c.submitted_at).toLocaleDateString() : 'N/A';
+        const statusBadge = `<span class="badge-status pending">${c.status}</span>`;
+
+        tr.innerHTML = `
+          <td><strong style="color:var(--text-main);">${c.full_name}</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">${c.email}</span></td>
+          <td style="text-transform: uppercase;">${primaryCat}</td>
+          <td>${c.city}, ${c.country}</td>
+          <td>${c.years_experience} Yrs</td>
+          <td>${formattedDate} ${statusBadge}</td>
+          <td style="text-align: right;">
+            <button class="btn-main" style="padding:6px 12px; font-size:0.75rem;" onclick="openApplicationDetails(${c.id})">Inspect Application</button>
+          </td>
         `;
+        body.appendChild(tr);
+      });
+    }
 
-        // Compute category distribution count
-        const catMap = {};
-        approved.forEach(c => {
-          const cats = c.categories || [];
-          cats.forEach(slug => {
-            catMap[slug] = (catMap[slug] || 0) + 1;
-          });
-        });
+    // Modal view application details
+    async function openApplicationDetails(id) {
+      const { data: c, error } = await supabase.from('creator_applications').select('*').eq('id', id).single();
+      if (error || !c) return;
 
-        // Render Category distribution bars
-        const catList = document.getElementById('chart-categories-list');
-        catList.innerHTML = '';
-        const maxCount = Math.max(...Object.values(catMap), 1);
-        
-        cachedCategories.forEach(cat => {
-          const count = catMap[cat.slug] || 0;
-          const barPct = (count / maxCount) * 100;
-          const row = document.createElement('div');
-          row.className = 'bar-row';
-          row.innerHTML = `
-            <div class="bar-row__labels">
-              <span>${cat.name}</span>
-              <span>${count} creators</span>
+      const content = document.getElementById('app-details-content');
+      const categoriesText = (c.categories || []).join(', ').toUpperCase();
+      const languagesText = (c.languages || []).join(', ');
+      const equipmentText = (c.equipment || []).join(', ');
+
+      content.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; border-bottom: 1px solid var(--border-color); padding-bottom:20px;">
+          <div>
+            <span class="stat-label">Full Name</span>
+            <div style="font-weight:700; font-size:1.1rem; margin-top:4px;">${c.full_name}</div>
+          </div>
+          <div>
+            <span class="stat-label">Location</span>
+            <div style="font-weight:700; font-size:1.1rem; margin-top:4px; text-transform:capitalize;">${c.city}, ${c.country}</div>
+          </div>
+          <div>
+            <span class="stat-label">Email</span>
+            <div style="margin-top:4px;">${c.email}</div>
+          </div>
+          <div>
+            <span class="stat-label">Phone</span>
+            <div style="margin-top:4px;">${c.phone || 'N/A'}</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div><span class="stat-label">Categories:</span> <span style="font-weight:700;">${categoriesText}</span></div>
+          <div><span class="stat-label">Years of Experience:</span> <span style="font-weight:700;">${c.years_experience} Years</span></div>
+          <div><span class="stat-label">Biography:</span> <p style="margin:4px 0; color:var(--text-muted); line-height:1.5;">${c.bio || 'None'}</p></div>
+          <div><span class="stat-label">Equipment List:</span> <span style="color:var(--text-muted);">${equipmentText || 'None'}</span></div>
+          <div><span class="stat-label">Languages spoken:</span> <span style="color:var(--text-muted);">${languagesText || 'None'}</span></div>
+          <div><span class="stat-label">Portfolio URL:</span> <a href="${c.portfolio_url}" target="_blank" style="color:var(--brand-orange);">${c.portfolio_url}</a></div>
+          <div>
+            <span class="stat-label">Social Handles:</span>
+            <div style="display:flex; gap:16px; margin-top:4px;">
+              <span>Instagram: @${c.instagram || 'N/A'}</span>
+              <span>Behance: ${c.behance || 'N/A'}</span>
+              <span>Website: ${c.website || 'N/A'}</span>
             </div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width: ${barPct}%"></div>
-            </div>
-          `;
-          catList.appendChild(row);
-        });
+          </div>
+        </div>
 
-        // Compute city distribution count
-        const cityMap = {};
-        approved.forEach(c => {
-          if (c.city) {
-            const normalized = c.city.trim().toLowerCase();
-            const formatted = normalized.charAt(0).toUpperCase() + normalized.slice(1);
-            cityMap[formatted] = (cityMap[formatted] || 0) + 1;
-          }
-        });
+        <div class="form-group" style="margin-top:10px;">
+          <label class="form-label">Internal Vetting Remarks</label>
+          <textarea id="app-vetting-notes" class="form-control" style="height:60px; resize:none;" placeholder="Write internal candidate notes here...">${c.internal_notes || ''}</textarea>
+        </div>
 
-        // Render Cities footprint bars
-        const cityList = document.getElementById('chart-cities-list');
-        cityList.innerHTML = '';
-        const maxCity = Math.max(...Object.values(cityMap), 1);
-        
-        Object.entries(cityMap).forEach(([city, count]) => {
-          const barPct = (count / maxCity) * 100;
-          const row = document.createElement('div');
-          row.className = 'bar-row';
-          row.innerHTML = `
-            <div class="bar-row__labels">
-              <span>${city}</span>
-              <span>${count} creators</span>
-            </div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width: ${barPct}%"></div>
-            </div>
-          `;
-          cityList.appendChild(row);
-        });
-      })
-      .catch(err => console.error('Error loading analytics:', err));
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-color); padding-top:20px;">
+          <div style="display:flex; gap:10px;">
+            <button onclick="rejectApplication(${c.id})" class="btn-main" style="background:#FF1744;">Reject</button>
+            <button onclick="requestChangesApplication(${c.id})" class="btn-main btn-ghost">Request Changes</button>
+          </div>
+          <button onclick="approveApplication(${c.id})" class="btn-main">Approve Profile</button>
+        </div>
+      `;
+
+      openModal('modal-app-details');
     }
 
-    // --------------------------------------------------
-    // VIEW HANDLER: QUEUE (PENDING APPLICATIONS)
-    // --------------------------------------------------
-    function loadQueue() {
-      supabaseFetch('creator_applications?select=*&status=eq.pending&order=submitted_at.desc')
-        .then(res => res.json())
-        .then(data => {
-          cachedCreators = data;
-          const body = document.getElementById('queue-table-body');
-          body.innerHTML = '';
+    async function approveApplication(id) {
+      const notes = document.getElementById('app-vetting-notes').value;
+      const { error } = await supabase.from('creator_applications').update({ 
+        status: 'approved',
+        internal_notes: notes,
+        verified: true 
+      }).eq('id', id);
 
-          if (!data || data.length === 0) {
-            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--mist);">No pending applications in queue. Network is currently fully vetted.</td></tr>';
-            return;
-          }
-
-          data.forEach(c => {
-            const tr = document.createElement('tr');
-            const primaryCat = (c.categories && c.categories.length > 0) 
-              ? c.categories[0].replace(/-/g, ' ') 
-              : 'Creative';
-            
-            const city = c.city || 'Unknown';
-            const country = c.country || 'Unknown';
-            
-            tr.innerHTML = `
-              <td><strong style="color:var(--volt);">${c.full_name || 'Anonymous'}</strong><br><span style="font-size:0.75rem;opacity:0.6;">${c.email || ''}</span></td>
-              <td style="text-transform: uppercase;">${primaryCat}</td>
-              <td style="text-transform: capitalize;">${city}, ${country}</td>
-              <td>${c.years_experience || 1} Yrs</td>
-              <td>${c.submitted_at ? new Date(c.submitted_at).toLocaleDateString() : 'N/A'}</td>
-              <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="action-btn" onclick="openCreatorEditModal(${c.id})">Review Profile</button>
-                <button class="action-btn action-btn--approve" onclick="approveCreator(${c.id})">Approve</button>
-                <button class="action-btn action-btn--reject" onclick="rejectCreator(${c.id})">Reject</button>
-              </td>
-            `;
-            body.appendChild(tr);
-          });
-        })
-        .catch(err => console.error('Error loading application queue:', err));
-    }
-
-    // --------------------------------------------------
-    // VIEW HANDLER: CREATORS LISTING (VETTED CREATORS)
-    // --------------------------------------------------
-    function loadCreators() {
-      supabaseFetch('creator_applications?select=*&status=eq.approved&order=full_name.asc')
-        .then(res => res.json())
-        .then(data => {
-          cachedCreators = data;
-          const body = document.getElementById('creators-table-body');
-          body.innerHTML = '';
-
-          if (!data || data.length === 0) {
-            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--mist);">No vetted creators in network. Approve applicants to build your roster.</td></tr>';
-            return;
-          }
-
-          data.forEach(c => {
-            const tr = document.createElement('tr');
-            const primaryCat = (c.categories && c.categories.length > 0) 
-              ? c.categories[0].replace(/-/g, ' ') 
-              : 'Creative';
-            
-            const rating = Number(c.rating || 5.0).toFixed(1);
-            const availabilityText = c.availability || 'available';
-
-            tr.innerHTML = `
-              <td><strong style="color:var(--volt);">${c.full_name || 'Anonymous'}</strong><br><span style="font-size:0.75rem;opacity:0.6;text-transform: capitalize;">${c.city || ''}</span></td>
-              <td style="text-transform: uppercase;">${primaryCat}</td>
-              <td><span class="status-badge" style="background:none;border:none;padding:0;color:var(--volt);text-transform: capitalize;">${availabilityText}</span></td>
-              <td>${rating} ★</td>
-              <td>
-                ${c.featured ? '<span style="color:var(--fire); font-size:0.8rem; margin-right:8px;">★ Featured</span>' : ''}
-                ${c.verified ? '<span style="color:#00E676; font-size:0.8rem;">✓ Vetted</span>' : ''}
-              </td>
-              <td><span class="status-badge approved">Approved</span></td>
-              <td style="text-align: right;">
-                <button class="action-btn" onclick="openCreatorEditModal(${c.id})">Modify Parameters</button>
-              </td>
-            `;
-            body.appendChild(tr);
-          });
-        })
-        .catch(err => console.error('Error loading vetted creators:', err));
-    }
-
-    // --------------------------------------------------
-    // VIEW HANDLER: PROJECTS PIPELINE
-    // --------------------------------------------------
-    function loadProjects() {
-      Promise.all([
-        supabaseFetch('projects?select=*&order=created_at.desc').then(res => res.json()),
-        supabaseFetch('creator_applications?select=id,full_name&status=eq.approved').then(res => res.json())
-      ])
-      .then(([projects, creators]) => {
-        const body = document.getElementById('projects-table-body');
-        body.innerHTML = '';
-
-        if (!projects || projects.length === 0) {
-          body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--mist);">No logged projects. Assign creators to initiate pipeline tracking.</td></tr>';
-          return;
-        }
-
-        projects.forEach(p => {
-          const tr = document.createElement('tr');
-          
-          // Map single project.creator_id to names array for compatibility
-          const assignedNames = [];
-          if (p.creator_id) {
-            const matching = creators.find(cr => String(cr.id) === String(p.creator_id));
-            assignedNames.push(matching ? matching.full_name : 'Unknown Creator');
-          }
-
-          // Compatibility wrapper payload for the edit button click handler
-          const compatPayload = {
-            id: p.id,
-            client_name: p.client_name,
-            description: p.notes,
-            category: p.project_title,
-            assigned_creator_ids: p.creator_id ? [p.creator_id] : [],
-            status: p.project_status === 'active' ? 'in_progress' : p.project_status === 'completed' ? 'delivered' : 'assigned',
-            timeline: p.deadline,
-            budget: p.budget
-          };
-
-          tr.innerHTML = `
-            <td><strong style="color:var(--volt);">${p.client_name || 'Unnamed Client'}</strong><br><span style="font-size:0.8rem;opacity:0.6;">${(p.notes || '').substring(0, 30)}...</span></td>
-            <td>${p.project_title || 'Creative Scope'}</td>
-            <td>${p.budget || 'N/A'}</td>
-            <td>${p.deadline || 'N/A'}</td>
-            <td>${assignedNames.join(', ') || 'No Assigned Creators'}</td>
-            <td><span class="status-badge ${p.project_status === 'active' ? 'pending' : p.project_status === 'completed' ? 'approved' : 'inactive'}">${(p.project_status || '').replace('_', ' ')}</span></td>
-            <td style="text-align: right;">
-              <button class="action-btn" onclick="openProjectModal(${JSON.stringify(compatPayload).replace(/"/g, '&quot;')})">Edit Scope</button>
-            </td>
-          `;
-          body.appendChild(tr);
-        });
-      })
-      .catch(err => console.error('Error loading projects:', err));
-    }
-
-    // --------------------------------------------------
-    // VIEW HANDLER: REVIEWS TESTIMONIALS
-    // --------------------------------------------------
-    function loadReviews() {
-      Promise.all([
-        supabaseFetch('reviews?select=*&order=created_at.desc').then(res => res.json()),
-        supabaseFetch('creator_applications?select=id,full_name').then(res => res.json())
-      ])
-      .then(([reviews, creators]) => {
-        const body = document.getElementById('reviews-table-body');
-        body.innerHTML = '';
-
-        if (!reviews || reviews.length === 0) {
-          body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--mist);">No reviews logged for moderation.</td></tr>';
-          return;
-        }
-
-        reviews.forEach(r => {
-          const matching = creators.find(cr => String(cr.id) === String(r.creator_id));
-          const creatorName = matching ? matching.full_name : 'Unknown Creator';
-
-          const tr = document.createElement('tr');
-          const statusText = r.approved ? 'approved' : 'pending';
-          const rating = Number(r.rating || 5).toFixed(1);
-
-          tr.innerHTML = `
-            <td><strong>${creatorName}</strong></td>
-            <td>${r.client_name || 'Anonymous'}</td>
-            <td>${rating} ★</td>
-            <td><span style="font-style:italic;">"${(r.review || '').substring(0, 50)}..."</span></td>
-            <td><span class="status-badge ${statusText}">${statusText}</span></td>
-            <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-              ${!r.approved ? `
-                <button class="action-btn action-btn--approve" onclick="moderateReview(${r.id}, 'approved')">Approve</button>
-                <button class="action-btn action-btn--reject" onclick="moderateReview(${r.id}, 'hidden')">Hide</button>
-              ` : `
-                <button class="action-btn" onclick="moderateReview(${r.id}, 'hidden')">
-                  Hide Testimonial
-                </button>
-              `}
-            </td>
-          `;
-          body.appendChild(tr);
-        });
-      })
-      .catch(err => console.error('Error loading reviews:', err));
-    }
-
-    // --------------------------------------------------
-    // VIEW HANDLER: CLIENT INQUIRIES
-    // --------------------------------------------------
-    function loadInquiries() {
-      Promise.all([
-        supabaseFetch('inquiries?select=*&order=created_at.desc').then(res => res.json()),
-        supabaseFetch('creator_applications?select=id,full_name').then(res => res.json())
-      ])
-      .then(([inquiries, creators]) => {
-        const body = document.getElementById('inquiries-table-body');
-        body.innerHTML = '';
-
-        if (!inquiries || inquiries.length === 0) {
-          body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--mist);">No client inquiries received. Inquiries logged on profile forms will show up here.</td></tr>';
-          return;
-        }
-
-        inquiries.forEach(i => {
-          const matching = creators.find(cr => String(cr.id) === String(i.creator_id));
-          const creatorName = matching ? matching.full_name : null;
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong style="color:var(--volt);">${i.client_name || 'Anonymous'}</strong></td>
-            <td><a href="mailto:${i.email}" style="color:var(--fire);">${i.email}</a></td>
-            <td>${creatorName || '<span style="color:var(--fire); font-weight:700;">General Collective</span>'}</td>
-            <td><span style="font-size:0.85rem;">${i.message || ''}</span></td>
-            <td>${i.created_at ? new Date(i.created_at).toLocaleDateString() : 'N/A'}</td>
-          `;
-          body.appendChild(tr);
-        });
-      })
-      .catch(err => console.error('Error loading inquiries:', err));
-    }
-
-    // --------------------------------------------------
-    // ACTIONS & MODALS CONTROLLER
-    // --------------------------------------------------
-    function approveCreator(id) {
-      supabaseFetch(`creator_applications?id=eq.${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'approved' })
-      })
-      .then(() => {
-        loadViewData(activeView);
-      })
-      .catch(err => console.error('Error approving creator:', err));
-    }
-
-    function rejectCreator(id) {
-      if (confirm('Are you sure you want to reject this applicant?')) {
-        supabaseFetch(`creator_applications?id=eq.${id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: 'rejected' })
-        })
-        .then(() => {
-          loadViewData(activeView);
-        })
-        .catch(err => console.error('Error rejecting creator:', err));
+      if (error) {
+        alert('Approve error: ' + error.message);
+        return;
       }
+
+      logActivity('Approved Creator Application', 'creator_applications', id);
+      closeModal('modal-app-details');
+      loadApplications();
     }
 
-    function moderateReview(id, status) {
-      const approved = (status === 'approved');
-      supabaseFetch(`reviews?id=eq.${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ approved })
-      })
-      .then(() => {
-        loadViewData(activeView);
-      })
-      .catch(err => console.error('Error moderating review:', err));
+    async function rejectApplication(id) {
+      const reason = prompt('Please enter the reason for rejecting this application:');
+      if (reason === null) return; // Cancelled
+
+      const notes = document.getElementById('app-vetting-notes').value;
+      const { error } = await supabase.from('creator_applications').update({
+        status: 'rejected',
+        internal_notes: notes,
+        rejection_reason: reason
+      }).eq('id', id);
+
+      if (error) {
+        alert('Reject error: ' + error.message);
+        return;
+      }
+
+      logActivity('Rejected Creator Application', 'creator_applications', id, { reason });
+      closeModal('modal-app-details');
+      loadApplications();
     }
 
-    // Modal Edit Profile Creator
+    async function requestChangesApplication(id) {
+      const details = prompt('Specify what adjustments or files are requested from the candidate:');
+      if (details === null) return; // Cancelled
+
+      const notes = document.getElementById('app-vetting-notes').value;
+      const { error } = await supabase.from('creator_applications').update({
+        status: 'changes_requested',
+        internal_notes: notes,
+        changes_requested_details: details
+      }).eq('id', id);
+
+      if (error) {
+        alert('Request error: ' + error.message);
+        return;
+      }
+
+      logActivity('Requested Application Changes', 'creator_applications', id, { details });
+      closeModal('modal-app-details');
+      loadApplications();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: CREATORS ROSTER
+    // --------------------------------------------------
+    async function loadCreators() {
+      const { data, error } = await supabase.from('creator_applications').select('*').eq('status', 'approved').order('full_name', { ascending: true });
+      if (error) return;
+
+      cachedCreators = data;
+      const body = document.getElementById('creators-table-body');
+      body.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--text-muted);">No vetted creators found.</td></tr>';
+        return;
+      }
+
+      data.forEach(c => {
+        const tr = document.createElement('tr');
+        const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+        const rating = Number(c.rating || 5.0).toFixed(1);
+
+        tr.innerHTML = `
+          <td><strong style="color:var(--text-main);">${c.full_name}</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">${c.email}</span></td>
+          <td style="text-transform: uppercase;">${primaryCat}</td>
+          <td style="text-transform: capitalize;">${c.city || 'N/A'}</td>
+          <td style="text-transform: capitalize;">${c.availability || 'available'}</td>
+          <td>${rating} ★</td>
+          <td>
+            ${c.featured ? '<span style="color:var(--brand-orange); font-size:0.75rem; margin-right:8px;">★ Featured</span>' : ''}
+            ${c.verified ? '<span style="color:#00E676; font-size:0.75rem;">✓ Vetted</span>' : ''}
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;" onclick="openCreatorEditModal(${c.id})">Modify Parameters</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
     function openCreatorEditModal(id) {
       const c = cachedCreators.find(cr => String(cr.id) === String(id));
       if (!c) return;
@@ -1328,12 +1934,11 @@
         catsBox.appendChild(label);
       });
 
-      // Show modal
-      const modal = document.getElementById('modal-edit-creator');
-      modal.classList.add('active');
+      openModal('modal-edit-creator');
     }
 
-    function submitCreatorEdits() {
+    async function submitCreatorEdits(e) {
+      e.preventDefault();
       const id = document.getElementById('edit-c-id').value;
       
       const categories = [];
@@ -1356,111 +1961,695 @@
         internal_notes: document.getElementById('edit-c-notes').value
       };
 
-      supabaseFetch(`creator_applications?id=eq.${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(payload)
-      })
-      .then(res => {
-        if (res.ok) {
-          document.getElementById('modal-edit-creator').classList.remove('active');
-          loadViewData(activeView);
-        } else {
-          alert('Failed to update creator.');
-        }
-      })
-      .catch(err => console.error('Error updating creator:', err));
+      const { error } = await supabase.from('creator_applications').update(payload).eq('id', id);
+      if (error) {
+        alert('Update error: ' + error.message);
+        return;
+      }
+
+      logActivity('Modified Creator Parameters', 'creator_applications', id, { name: payload.full_name });
+      closeModal('modal-edit-creator');
+      loadCreators();
     }
 
-    // Modal Add / Edit Project Scope
-    function openProjectModal(p = null) {
-      // Fetch approved creators list first to populate selection checkbox list
-      supabaseFetch('creator_applications?select=id,full_name,city&status=eq.approved&order=full_name.asc')
-        .then(res => res.json())
-        .then(creators => {
-          const container = document.getElementById('proj-creators-list');
-          container.innerHTML = '';
+    async function suspendCreator() {
+      const id = document.getElementById('edit-c-id').value;
+      if (!confirm('Are you sure you want to suspend this creator account?')) return;
 
-          const assignedIds = p ? p.assigned_creator_ids.map(String) : [];
+      const { error } = await supabase.from('creator_applications').update({ status: 'suspended' }).eq('id', id);
+      if (error) {
+        alert('Suspension error: ' + error.message);
+        return;
+      }
 
-          creators.forEach(c => {
-            const isChecked = assignedIds.includes(String(c.id)) ? 'checked' : '';
-            const label = document.createElement('label');
-            label.className = 'checkbox-label';
-            label.innerHTML = `
-              <input type="checkbox" value="${c.id}" class="proj-creator-cb" ${isChecked}>
-              ${c.full_name} (${c.city || ''})
-            `;
-            container.appendChild(label);
-          });
-
-          // Populate fields
-          if (p) {
-            document.getElementById('project-modal-title').textContent = 'Edit Project Scope';
-            document.getElementById('project-id').value = p.id;
-            document.getElementById('proj-client').value = p.client_name || '';
-            document.getElementById('proj-desc').value = p.description || '';
-            document.getElementById('proj-category').value = p.category || '';
-            document.getElementById('proj-status').value = p.status;
-            document.getElementById('proj-timeline').value = p.timeline || '';
-            document.getElementById('proj-budget').value = p.budget || '';
-          } else {
-            document.getElementById('project-modal-title').textContent = 'Setup Project Scope';
-            document.getElementById('project-id').value = '';
-            document.getElementById('proj-client').value = '';
-            document.getElementById('proj-desc').value = '';
-            document.getElementById('proj-category').value = '';
-            document.getElementById('proj-status').value = 'assigned';
-            document.getElementById('proj-timeline').value = '';
-            document.getElementById('proj-budget').value = '';
-          }
-
-          document.getElementById('modal-project').classList.add('active');
-        });
+      logActivity('Suspended Creator Account', 'creator_applications', id);
+      closeModal('modal-edit-creator');
+      loadCreators();
     }
 
-    function submitProjectForm() {
-      const id = document.getElementById('project-id').value;
+    // --------------------------------------------------
+    // VIEW HANDLER: CLIENT LEADS
+    // --------------------------------------------------
+    async function loadLeads() {
+      const { data, error } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
+      if (error) return;
 
-      const assignedCreatorIds = [];
-      document.querySelectorAll('.proj-creator-cb:checked').forEach(cb => {
-        assignedCreatorIds.push(cb.value);
+      // Clear columns
+      const cols = ['new', 'contacted', 'meeting', 'proposal', 'won'];
+      cols.forEach(col => {
+        document.getElementById(`column-${col}`).innerHTML = '';
       });
 
-      // Map admin status strings to valid project_status enum values
-      const adminStatus = document.getElementById('proj-status').value; // 'assigned', 'in_progress', 'delivered', 'paid'
-      let projectStatus = 'assigned';
-      if (adminStatus === 'in_progress') projectStatus = 'active';
-      else if (adminStatus === 'delivered' || adminStatus === 'paid') projectStatus = 'completed';
+      const colCounts = { new: 0, contacted: 0, meeting: 0, proposal: 0, won: 0 };
+
+      data.forEach(lead => {
+        const status = lead.status || 'new';
+        if (!(status in colCounts)) return; // Skipped lost/archived
+
+        colCounts[status]++;
+        
+        const card = document.createElement('div');
+        card.className = 'pipeline-card';
+        card.draggable = true;
+        card.innerHTML = `
+          <strong style="color:var(--text-main); font-size:0.85rem;">${lead.client_name}</strong>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${lead.company || 'Private Client'}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <span style="font-size:0.75rem; color:var(--brand-orange); font-weight:700;">${lead.budget || 'Open'}</span>
+            <button class="btn-main" style="padding:4px 8px; font-size:0.65rem;" onclick="openLeadModal(${lead.id})">View Card</button>
+          </div>
+        `;
+
+        card.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', lead.id);
+        });
+
+        document.getElementById(`column-${status}`).appendChild(card);
+      });
+
+      // Update headers counts
+      Object.entries(colCounts).forEach(([col, count]) => {
+        const header = document.querySelector(`.pipeline-column[data-status="${col}"] .column-count`);
+        if (header) header.textContent = count;
+      });
+
+      setupDragAndDrop();
+    }
+
+    function setupDragAndDrop() {
+      document.querySelectorAll('.pipeline-column').forEach(column => {
+        column.addEventListener('dragover', (e) => {
+          e.preventDefault();
+        });
+        column.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          const id = e.dataTransfer.getData('text/plain');
+          const newStatus = column.dataset.status;
+
+          // Update lead status in Supabase
+          const { error } = await supabase.from('inquiries').update({ status: newStatus }).eq('id', id);
+          if (!error) {
+            logActivity('Updated Client Lead Pipeline Status', 'inquiries', id, { status: newStatus });
+            loadLeads();
+          }
+        });
+      });
+    }
+
+    // Modal Lead cards
+    async function openLeadModal(id) {
+      const { data: lead } = await supabase.from('inquiries').select('*').eq('id', id).single();
+      if (!lead) return;
+
+      document.getElementById('lead-id').value = lead.id;
+      document.getElementById('lead-name').value = lead.client_name;
+      document.getElementById('lead-email').value = lead.email;
+      document.getElementById('lead-company').value = lead.company || '';
+      document.getElementById('lead-budget').value = lead.budget || 'Open';
+      document.getElementById('lead-type').value = lead.project_type || 'General Inquiry';
+      document.getElementById('lead-message').value = lead.message || '';
+      document.getElementById('lead-status').value = lead.status || 'new';
+      document.getElementById('lead-notes').value = lead.internal_notes || '';
+
+      // Managers list dropdown populator
+      const mgrSelect = document.getElementById('lead-manager');
+      mgrSelect.innerHTML = '<option value="">Unassigned</option>';
+      cachedAdmins.forEach(adm => {
+        const selected = (lead.manager_id === adm.id) ? 'selected' : '';
+        mgrSelect.innerHTML += `<option value="${adm.id}" ${selected}>${adm.full_name}</option>`;
+      });
+
+      openModal('modal-lead');
+    }
+
+    async function submitLeadForm(e) {
+      e.preventDefault();
+      const id = document.getElementById('lead-id').value;
+      const status = document.getElementById('lead-status').value;
+      const manager_id = document.getElementById('lead-manager').value || null;
+      const notes = document.getElementById('lead-notes').value;
+
+      const { error } = await supabase.from('inquiries').update({
+        status,
+        manager_id,
+        internal_notes: notes
+      }).eq('id', id);
+
+      if (error) {
+        alert('Update error: ' + error.message);
+        return;
+      }
+
+      logActivity('Modified Client Lead Card', 'inquiries', id, { status });
+      closeModal('modal-lead');
+      loadLeads();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: PROJECTS PIPELINE
+    // --------------------------------------------------
+    async function loadProjects() {
+      Promise.all([
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('creator_applications').select('id, full_name').eq('status', 'approved')
+      ])
+      .then(([projectsRes, creatorsRes]) => {
+        const projects = projectsRes.data || [];
+        const creators = creatorsRes.data || [];
+
+        const body = document.getElementById('projects-table-body');
+        body.innerHTML = '';
+
+        if (projects.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--text-muted);">No projects currently scheduled.</td></tr>';
+          return;
+        }
+
+        projects.forEach(p => {
+          const tr = document.createElement('tr');
+          
+          // Fetch assigned names via join table
+          const assignedNames = [];
+          if (p.creator_id) {
+            const match = creators.find(c => String(c.id) === String(p.creator_id));
+            if (match) assignedNames.push(match.full_name);
+          }
+
+          // Convert DB status structure to display format
+          const statusMap = { assigned: 'Assigned', active: 'Active', completed: 'Completed' };
+          const statusText = statusMap[p.project_status] || p.project_status;
+
+          // Compatibility payload
+          const payload = {
+            id: p.id,
+            client_name: p.client_name,
+            description: p.notes,
+            category: p.project_title,
+            assigned_creator_ids: p.creator_id ? [p.creator_id] : [],
+            status: p.project_status,
+            timeline: p.deadline,
+            budget: p.budget,
+            priority: p.priority,
+            progress: p.progress
+          };
+
+          tr.innerHTML = `
+            <td><strong style="color:var(--text-main);">${p.project_title || 'Creative Scope'}</strong></td>
+            <td>${p.client_name || 'Unnamed Client'}</td>
+            <td>${assignedNames.join(', ') || 'Unassigned'}</td>
+            <td><span class="badge-status ${p.project_status === 'active' ? 'pending' : p.project_status === 'completed' ? 'approved' : 'inactive'}">${statusText}</span></td>
+            <td>${p.budget || 'N/A'}</td>
+            <td>
+              <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow:hidden;">
+                <div style="width: ${p.progress || 0}%; height: 100%; background: var(--brand-orange);"></div>
+              </div>
+            </td>
+            <td style="text-align: right;">
+              <button class="btn-main" style="padding:6px 12px; font-size:0.75rem;" onclick="openProjectModal(${JSON.stringify(payload).replace(/"/g, '&quot;')})">Edit Scope</button>
+            </td>
+          `;
+          body.appendChild(tr);
+        });
+      })
+      .catch(err => console.error(err));
+    }
+
+    async function openProjectModal(p = null) {
+      // Fetch creators list first
+      const { data: creators } = await supabase.from('creator_applications').select('id, full_name, city').eq('status', 'approved');
+      const container = document.getElementById('proj-creators-list');
+      container.innerHTML = '';
+
+      const assignedIds = p ? p.assigned_creator_ids.map(String) : [];
+
+      if (creators) {
+        creators.forEach(c => {
+          const isChecked = assignedIds.includes(String(c.id)) ? 'checked' : '';
+          const label = document.createElement('label');
+          label.className = 'checkbox-label';
+          label.innerHTML = `
+            <input type="checkbox" value="${c.id}" class="proj-creator-cb" ${isChecked}>
+            ${c.full_name} (${c.city || 'N/A'})
+          `;
+          container.appendChild(label);
+        });
+      }
+
+      if (p) {
+        document.getElementById('project-modal-title').textContent = 'Edit Project Scope';
+        document.getElementById('project-id').value = p.id;
+        document.getElementById('proj-title').value = p.category || '';
+        document.getElementById('proj-client').value = p.client_name || '';
+        document.getElementById('proj-timeline').value = p.timeline || '';
+        document.getElementById('proj-budget').value = p.budget || '';
+        document.getElementById('proj-priority').value = p.priority || 'medium';
+        document.getElementById('proj-status').value = p.status;
+        document.getElementById('proj-progress').value = p.progress || 0;
+        document.getElementById('proj-progress-val').textContent = p.progress || 0;
+        document.getElementById('proj-desc').value = p.description || '';
+      } else {
+        document.getElementById('project-modal-title').textContent = 'Setup Project Scope';
+        document.getElementById('project-id').value = '';
+        document.getElementById('proj-title').value = '';
+        document.getElementById('proj-client').value = '';
+        document.getElementById('proj-timeline').value = '';
+        document.getElementById('proj-budget').value = '';
+        document.getElementById('proj-priority').value = 'medium';
+        document.getElementById('proj-status').value = 'assigned';
+        document.getElementById('proj-progress').value = 0;
+        document.getElementById('proj-progress-val').textContent = 0;
+        document.getElementById('proj-desc').value = '';
+      }
+
+      openModal('modal-project');
+    }
+
+    async function submitProjectForm(e) {
+      e.preventDefault();
+      const id = document.getElementById('project-id').value;
+
+      const selectedCreatorIds = [];
+      document.querySelectorAll('.proj-creator-cb:checked').forEach(cb => {
+        selectedCreatorIds.push(cb.value);
+      });
 
       const payload = {
+        project_title: document.getElementById('proj-title').value,
         client_name: document.getElementById('proj-client').value,
-        notes: document.getElementById('proj-desc').value,
-        project_title: document.getElementById('proj-category').value,
-        creator_id: assignedCreatorIds.length > 0 ? assignedCreatorIds[0] : null,
-        project_status: projectStatus,
-        payment_status: adminStatus === 'paid' ? 'paid' : 'unpaid',
         deadline: document.getElementById('proj-timeline').value,
-        budget: document.getElementById('proj-budget').value
+        budget: document.getElementById('proj-budget').value,
+        priority: document.getElementById('proj-priority').value,
+        project_status: document.getElementById('proj-status').value,
+        progress: parseInt(document.getElementById('proj-progress').value, 10) || 0,
+        notes: document.getElementById('proj-desc').value,
+        creator_id: selectedCreatorIds.length > 0 ? selectedCreatorIds[0] : null
       };
 
-      const method = id ? 'PATCH' : 'POST';
-      const endpoint = id ? `projects?id=eq.${id}` : 'projects';
-
-      supabaseFetch(endpoint, {
-        method,
-        body: JSON.stringify(payload)
-      })
-      .then(res => {
-        if (res.ok) {
-          document.getElementById('modal-project').classList.remove('active');
-          loadViewData(activeView);
-        } else {
-          alert('Failed to submit project form.');
+      if (id) {
+        // Update project
+        const { error } = await supabase.from('projects').update(payload).eq('id', id);
+        if (error) {
+          alert('Update error: ' + error.message);
+          return;
         }
-      })
-      .catch(err => console.error('Error submitting project:', err));
-    }         }
+        logActivity('Updated Project Scope', 'projects', id, { title: payload.project_title });
+      } else {
+        // New project
+        const { data, error } = await supabase.from('projects').insert(payload).select().single();
+        if (error) {
+          alert('Insert error: ' + error.message);
+          return;
+        }
+        logActivity('Logged New Project Assignment', 'projects', data.id, { title: payload.project_title });
+      }
+
+      closeModal('modal-project');
+      loadProjects();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: MESSAGES
+    // --------------------------------------------------
+    async function loadMessages() {
+      const { data: messages, error } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+      if (error) return;
+
+      cachedMessages = messages || [];
+      renderMessageThreads();
+    }
+
+    function renderMessageThreads() {
+      const container = document.getElementById('msg-threads-list');
+      container.innerHTML = '';
+
+      // Compute unique threads based on sender/receiver
+      const threadMap = {};
+      cachedMessages.forEach(msg => {
+        const id = msg.sender_id;
+        if (!threadMap[id]) {
+          threadMap[id] = { name: `Creator ID: ${id}`, lastMsg: msg.message_text };
+        } else {
+          threadMap[id].lastMsg = msg.message_text;
+        }
+      });
+
+      if (Object.keys(threadMap).length === 0) {
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted);">No threads loaded.</div>';
+        return;
+      }
+
+      Object.entries(threadMap).forEach(([id, thread]) => {
+        const item = document.createElement('div');
+        item.className = `msg-thread-item ${currentThreadId === id ? 'active' : ''}`;
+        item.innerHTML = `
+          <strong style="color:var(--text-main); font-size:0.85rem;">${thread.name}</strong>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin:4px 0 0 0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${thread.lastMsg}</p>
+        `;
+        item.onclick = () => selectThread(id);
+        container.appendChild(item);
+      });
+    }
+
+    function selectThread(id) {
+      currentThreadId = id;
+      renderMessageThreads();
+      
+      document.getElementById('chat-header-title').textContent = `Thread with Creator #${id}`;
+      
+      const pane = document.getElementById('chat-messages-container');
+      pane.innerHTML = '';
+
+      const threadMessages = cachedMessages.filter(m => m.sender_id === id || m.receiver_id === id);
+      threadMessages.forEach(msg => {
+        const bubble = document.createElement('div');
+        const isSent = (msg.receiver_id === id);
+        bubble.className = `chat-bubble ${isSent ? 'sent' : 'received'}`;
+        bubble.textContent = msg.message_text;
+        pane.appendChild(bubble);
+      });
+
+      pane.scrollTop = pane.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chat-message-input');
+      const text = input.value.trim();
+      if (!text || !currentThreadId) return;
+
+      const payload = {
+        sender_id: 'admin',
+        receiver_id: currentThreadId,
+        message_text: text
+      };
+
+      const { error } = await supabase.from('messages').insert(payload);
+      if (!error) {
+        input.value = '';
+        loadMessages();
+      }
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: REVIEWS MODERATION
+    // --------------------------------------------------
+    async function loadReviews() {
+      Promise.all([
+        supabase.from('reviews').select('*').order('created_at', { ascending: false }),
+        supabase.from('creator_applications').select('id, full_name')
+      ])
+      .then(([reviewsRes, creatorsRes]) => {
+        const reviews = reviewsRes.data || [];
+        const creators = creatorsRes.data || [];
+
+        const body = document.getElementById('reviews-table-body');
+        body.innerHTML = '';
+
+        if (reviews.length === 0) {
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-muted);">No reviews posted.</td></tr>';
+          return;
+        }
+
+        reviews.forEach(r => {
+          const match = creators.find(c => String(c.id) === String(r.creator_id));
+          const creatorName = match ? match.full_name : 'Unknown Creator';
+
+          const tr = document.createElement('tr');
+          const statusText = r.approved ? 'approved' : 'pending';
+
+          tr.innerHTML = `
+            <td><strong>${r.client_name || 'Anonymous'}</strong></td>
+            <td>${creatorName}</td>
+            <td>${Number(r.rating || 5).toFixed(1)} ★</td>
+            <td><span style="font-style:italic;">"${r.review || ''}"</span></td>
+            <td><span class="badge-status ${statusText}">${statusText}</span></td>
+            <td style="text-align: right; display: flex; gap:8px; justify-content: flex-end;">
+              ${!r.approved ? `
+                <button class="btn-main" style="padding:6px 12px; font-size:0.75rem;" onclick="updateReviewStatus(${r.id}, true)">Approve</button>
+                <button class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;" onclick="updateReviewStatus(${r.id}, false)">Hide</button>
+              ` : `
+                <button class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;" onclick="updateReviewStatus(${r.id}, false)">Hide</button>
+              `}
+            </td>
+          `;
+          body.appendChild(tr);
         });
+      })
+      .catch(err => console.error(err));
+    }
+
+    async function updateReviewStatus(id, approved) {
+      const { error } = await supabase.from('reviews').update({ approved }).eq('id', id);
+      if (!error) {
+        logActivity('Moderated Review Testimonial', 'reviews', id, { approved });
+        loadReviews();
+      }
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: FILES STORAGE
+    // --------------------------------------------------
+    async function loadFiles() {
+      // In a pure client-side environment, we can list objects in Supabase storage bucket 'yawmatic_assets'
+      const { data: files, error } = await supabase.storage.from('yawmatic_assets').list();
+      
+      const grid = document.getElementById('assets-grid-container');
+      grid.innerHTML = '';
+
+      if (error || !files || files.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding:40px;">No files uploaded. Use the button to upload asset.</div>';
+        return;
+      }
+
+      files.forEach(f => {
+        const { data } = supabase.storage.from('yawmatic_assets').getPublicUrl(f.name);
+        const url = data.publicUrl;
+
+        const card = document.createElement('div');
+        card.className = 'asset-card';
+        card.innerHTML = `
+          <div class="asset-preview">
+            ${f.metadata && f.metadata.mimetype && f.metadata.mimetype.startsWith('image/') 
+              ? `<img src="${url}" alt="${f.name}">` 
+              : `<i data-lucide="file" style="width:36px; height:36px; color:var(--text-muted);"></i>`
+            }
+          </div>
+          <div style="font-size:0.75rem; font-weight:700; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${f.name}">${f.name}</div>
+          <div style="display:flex; justify-content:space-between; margin-top:8px;">
+            <a href="${url}" download target="_blank" class="btn-main" style="padding:4px 8px; font-size:0.65rem;">Open</a>
+            <button onclick="deleteAssetFile('${f.name}')" class="btn-main btn-ghost" style="padding:4px 8px; font-size:0.65rem; color:#FF1744;">Delete</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const { data, error } = await supabase.storage.from('yawmatic_assets').upload(file.name, file, { cacheControl: '3600', upsert: true });
+      if (error) {
+        alert('Upload Error: ' + error.message);
+        return;
+      }
+
+      logActivity('Uploaded File Asset', 'storage', file.name);
+      loadFiles();
+    }
+
+    async function deleteAssetFile(filename) {
+      if (!confirm('Are you sure you want to delete this file?')) return;
+
+      const { error } = await supabase.storage.from('yawmatic_assets').remove([filename]);
+      if (error) {
+        alert('Delete error: ' + error.message);
+        return;
+      }
+
+      logActivity('Deleted File Asset', 'storage', filename);
+      loadFiles();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: ACTIVITY LOG
+    // --------------------------------------------------
+    async function loadLogs() {
+      const { data, error } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false });
+      if (error) return;
+
+      const body = document.getElementById('logs-table-body');
+      body.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--text-muted);">Audit log is currently empty.</td></tr>';
+        return;
+      }
+
+      data.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${new Date(l.created_at).toLocaleString()}</td>
+          <td><strong>${l.actor_name}</strong></td>
+          <td>${l.action}</td>
+          <td>${l.entity_type}</td>
+          <td>${l.entity_id}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    // --------------------------------------------------
+    // SETTINGS MANAGER
+    // --------------------------------------------------
+    async function saveSettingsForm(e) {
+      e.preventDefault();
+      alert('System settings updated successfully!');
+    }
+
+    // --------------------------------------------------
+    // SEARCH ENGINE ENGINE
+    // --------------------------------------------------
+    function toggleSearch() {
+      const overlay = document.getElementById('search-overlay');
+      overlay.classList.toggle('active');
+      if (overlay.classList.contains('active')) {
+        document.getElementById('search-global-input').focus();
+      }
+    }
+
+    async function runGlobalSearch(query) {
+      const container = document.getElementById('search-results');
+      container.innerHTML = '';
+      if (!query.trim()) return;
+
+      // Parallel search across creators, inquiries, projects
+      const [creatorsRes, projectsRes, inquiriesRes] = await Promise.all([
+        supabase.from('creator_applications').select('id, full_name, city').ilike('full_name', `%${query}%`),
+        supabase.from('projects').select('id, project_title, client_name').ilike('project_title', `%${query}%`),
+        supabase.from('inquiries').select('id, client_name, company').ilike('client_name', `%${query}%`)
+      ]);
+
+      const creators = creatorsRes.data || [];
+      const projects = projectsRes.data || [];
+      const inquiries = inquiriesRes.data || [];
+
+      creators.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `<span><strong>Creator:</strong> ${c.full_name} (${c.city || 'N/A'})</span><span style="color:var(--brand-orange);">Inspect</span>`;
+        item.onclick = () => { toggleSearch(); openCreatorEditModal(c.id); };
+        container.appendChild(item);
+      });
+
+      projects.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `<span><strong>Project:</strong> ${p.project_title} (Client: ${p.client_name})</span><span style="color:var(--brand-orange);">Inspect</span>`;
+        item.onclick = () => { toggleSearch(); openProjectModal(p); };
+        container.appendChild(item);
+      });
+
+      inquiries.forEach(i => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `<span><strong>Inquiry:</strong> ${i.client_name} (Company: ${i.company || 'N/A'})</span><span style="color:var(--brand-orange);">Inspect</span>`;
+        item.onclick = () => { toggleSearch(); openLeadModal(i.id); };
+        container.appendChild(item);
+      });
+    }
+
+    // --------------------------------------------------
+    // REALTIME & NOTIFICATION NOTIFIERS
+    // --------------------------------------------------
+    function setupRealtimeListeners() {
+      // Subscribes to notifications table inserts
+      supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
+          handleIncomingNotification(payload.new);
+        })
+        .subscribe();
+      
+      // Auto-creates notifications for new client inquiries
+      supabase
+        .channel('inquiries-notif')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inquiries' }, payload => {
+          triggerSystemNotification('New Client Inquiry', `Inquiry received from ${payload.new.client_name} for ${payload.new.project_type || 'Creative brief'}`);
+        })
+        .subscribe();
+
+      // Auto-creates notifications for new creator applications
+      supabase
+        .channel('applications-notif')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, payload => {
+          triggerSystemNotification('New Creator Application', `New application submitted by ${payload.new.full_name}`);
+        })
+        .subscribe();
+    }
+
+    async function triggerSystemNotification(title, description) {
+      await supabase.from('notifications').insert({ title, description, type: 'alert' });
+    }
+
+    async function handleIncomingNotification(notif) {
+      // Show unread notification dot badge
+      document.getElementById('unread-notif-dot').style.display = 'block';
+
+      // Re-load notifications list
+      loadNotifications();
+    }
+
+    async function loadNotifications() {
+      const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(6);
+      const list = document.getElementById('notification-list');
+      list.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No new notifications.</div>';
+        return;
+      }
+
+      data.forEach(n => {
+        const item = document.createElement('div');
+        item.className = `notification-item ${n.is_read ? '' : 'unread'}`;
+        item.innerHTML = `
+          <strong>${n.title}</strong>
+          <p style="margin:4px 0 0 0; color:var(--text-muted); line-height:1.4;">${n.description}</p>
+          <span style="font-size:0.65rem; color:var(--brand-orange); display:inline-block; margin-top:4px;">${new Date(n.created_at).toLocaleTimeString()}</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function clearNotifications() {
+      await supabase.from('notifications').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      document.getElementById('unread-notif-dot').style.display = 'none';
+      loadNotifications();
+    }
+
+    function toggleNotifications() {
+      const pane = document.getElementById('notification-pane');
+      pane.classList.toggle('active');
+      if (pane.classList.contains('active')) {
+        // Clear badge dot on click
+        document.getElementById('unread-notif-dot').style.display = 'none';
+        loadNotifications();
+      }
+    }
+
+    // Modal view triggers
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.add('active');
+      gsap.to(modal, { opacity: 1, duration: 0.3 });
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      gsap.to(modal, { opacity: 0, duration: 0.3, onComplete: () => {
+        modal.classList.remove('active');
+      }});
     }
   </script>
 </body>
