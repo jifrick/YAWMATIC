@@ -373,6 +373,7 @@ window.addEventListener('load', () => {
     if (document.getElementById('about-webgl-canvas')) initAboutWebGL();
     if (document.querySelector('.timeline-container')) initTimelineScroll();
     if (document.querySelector('.stat-card')) initStatsCounter();
+    initCustomSelects();
     setTimeout(() => {
       ScrollTrigger.refresh();
       document.querySelectorAll('.reveal-item').forEach(item => {
@@ -646,6 +647,132 @@ function triggerSiteTransition() {
   if (document.querySelector('.stat-card')) {
     initStatsCounter();
   }
+  initCustomSelects();
+}
+
+/* ----------------------------------------------------
+   CUSTOM SELECT DROPDOWNS — PREMIUM YAWMATIC DESIGN
+   ---------------------------------------------------- */
+function initCustomSelects() {
+  const selects = document.querySelectorAll('select.form-control, select.select-input');
+
+  selects.forEach(select => {
+    if (select.dataset.customSelect) return; // already initialised
+    select.dataset.customSelect = '1';
+
+    // ── Build wrapper ────────────────────────────────────────
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+
+    const getLabel = () => {
+      const opt = select.options[select.selectedIndex];
+      return opt ? opt.text : '';
+    };
+
+    // ── Trigger button ────────────────────────────────────────
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select__trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = `
+      <span class="custom-select__label">${getLabel()}</span>
+      <svg class="custom-select__chevron" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>`;
+
+    // ── Dropdown panel ────────────────────────────────────────
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select__dropdown';
+    dropdown.setAttribute('role', 'listbox');
+
+    const list = document.createElement('ul');
+    list.className = 'custom-select__options';
+
+    Array.from(select.options).forEach((opt, i) => {
+      const li = document.createElement('li');
+      li.className = 'custom-select__option' + (select.selectedIndex === i ? ' is-selected' : '');
+      li.textContent = opt.text;
+      li.dataset.value = opt.value;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(select.selectedIndex === i));
+      li.setAttribute('tabindex', '-1');
+
+      li.addEventListener('click', () => {
+        select.value = opt.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        trigger.querySelector('.custom-select__label').textContent = opt.text;
+        list.querySelectorAll('.custom-select__option').forEach(o => {
+          o.classList.remove('is-selected');
+          o.setAttribute('aria-selected', 'false');
+        });
+        li.classList.add('is-selected');
+        li.setAttribute('aria-selected', 'true');
+        close();
+        trigger.focus();
+      });
+
+      list.appendChild(li);
+    });
+
+    dropdown.appendChild(list);
+
+    // ── Open / close ────────────────────────────────────────────
+    const open = () => {
+      document.querySelectorAll('.custom-select-wrapper.is-open').forEach(w => {
+        if (w !== wrapper) {
+          w.classList.remove('is-open');
+          w.querySelector('.custom-select__trigger').setAttribute('aria-expanded', 'false');
+        }
+      });
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+    };
+
+    const close = () => {
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      wrapper.classList.contains('is-open') ? close() : open();
+    });
+
+    document.addEventListener('click', e => {
+      if (!wrapper.contains(e.target)) close();
+    });
+
+    // Keyboard navigation
+    trigger.addEventListener('keydown', e => {
+      const opts = [...list.querySelectorAll('.custom-select__option')];
+      const cur  = list.querySelector('.custom-select__option.is-selected');
+      const idx  = opts.indexOf(cur);
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); opts[idx >= 0 ? idx : 0]?.focus(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); open(); opts[Math.min(idx + 1, opts.length - 1)]?.focus(); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); open(); opts[Math.max(idx - 1, 0)]?.focus(); }
+      else if (e.key === 'Escape')    { close(); }
+    });
+
+    list.addEventListener('keydown', e => {
+      const opts    = [...list.querySelectorAll('.custom-select__option')];
+      const focused = document.activeElement;
+      const idx     = opts.indexOf(focused);
+      if (e.key === 'ArrowDown')      { e.preventDefault(); opts[Math.min(idx + 1, opts.length - 1)]?.focus(); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); opts[Math.max(idx - 1, 0)]?.focus(); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focused?.click(); }
+      else if (e.key === 'Escape')    { close(); trigger.focus(); }
+      else if (e.key === 'Tab')       { close(); }
+    });
+
+    // ── Assemble DOM ─────────────────────────────────────────
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);   // native select moves inside wrapper (hidden by CSS)
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(dropdown);
+  });
 }
 
 /* ----------------------------------------------------
