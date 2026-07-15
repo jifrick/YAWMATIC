@@ -1372,6 +1372,7 @@
     let cachedCategories = [];
     let cachedAdmins = [];
     let cachedMessages = [];
+    let cachedProjects = [];
     let currentThreadId = null;
 
     // Authentication Tab Management
@@ -2106,6 +2107,7 @@
     }
 
     // --------------------------------------------------
+    // --------------------------------------------------
     // VIEW HANDLER: PROJECTS PIPELINE
     // --------------------------------------------------
     async function loadProjects() {
@@ -2116,6 +2118,7 @@
       .then(([projectsRes, creatorsRes]) => {
         const projects = projectsRes.data || [];
         const creators = creatorsRes.data || [];
+        cachedProjects = projects;
 
         const body = document.getElementById('projects-table-body');
         body.innerHTML = '';
@@ -2139,20 +2142,6 @@
           const statusMap = { assigned: 'Assigned', active: 'Active', completed: 'Completed' };
           const statusText = statusMap[p.project_status] || p.project_status;
 
-          // Compatibility payload
-          const payload = {
-            id: p.id,
-            client_name: p.client_name,
-            description: p.notes,
-            category: p.project_title,
-            assigned_creator_ids: p.creator_id ? [p.creator_id] : [],
-            status: p.project_status,
-            timeline: p.deadline,
-            budget: p.budget,
-            priority: p.priority,
-            progress: p.progress
-          };
-
           tr.innerHTML = `
             <td><strong style="color:var(--text-main);">${p.project_title || 'Creative Scope'}</strong></td>
             <td>${p.client_name || 'Unnamed Client'}</td>
@@ -2165,13 +2154,33 @@
               </div>
             </td>
             <td style="text-align: right;">
-              <button class="btn-main" style="padding:6px 12px; font-size:0.75rem;" onclick="openProjectModal(${JSON.stringify(payload).replace(/"/g, '&quot;')})">Edit Scope</button>
+              <button class="btn-main" style="padding:6px 12px; font-size:0.75rem;" onclick="openProjectEdit(${p.id})">Edit Scope</button>
             </td>
           `;
           body.appendChild(tr);
         });
       })
       .catch(err => console.error(err));
+    }
+
+    function openProjectEdit(id) {
+      const p = cachedProjects.find(proj => String(proj.id) === String(id));
+      if (!p) return;
+      
+      const payload = {
+        id: p.id,
+        client_name: p.client_name,
+        description: p.notes,
+        category: p.project_title,
+        assigned_creator_ids: p.creator_id ? [p.creator_id] : [],
+        status: p.project_status,
+        timeline: p.deadline,
+        budget: p.budget,
+        priority: p.priority,
+        progress: p.progress
+      };
+      
+      openProjectModal(payload);
     }
 
     async function openProjectModal(p = null) {
