@@ -862,22 +862,58 @@
         availability: document.getElementById('app-availability').value
       };
 
-      fetch('/api/creators/apply', {
+      // Submit directly to Supabase REST API (no backend needed)
+      const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
+      const supabasePayload = {
+        full_name:        payload.fullName,
+        email:            payload.email,
+        phone:            payload.phone,
+        city:             payload.city,
+        country:          payload.country,
+        categories:       payload.categories,
+        years_experience: payload.yearsExperience,
+        equipment:        payload.equipment,
+        languages:        payload.languages,
+        portfolio_url:    payload.portfolioUrl,
+        instagram:        payload.instagram,
+        behance:          payload.behance,
+        dribbble:         payload.dribbble,
+        youtube:          payload.youtube,
+        vimeo:            payload.vimeo,
+        website:          payload.website,
+        bio:              payload.bio,
+        availability:     payload.availability,
+        status:           'pending'
+      };
+
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(supabasePayload)
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
+      .then(res => {
+          if (res.ok || res.status === 201) {
+            // Success — Supabase returns 201 Created with empty body
             renderSuccessState();
           } else {
-            alert(data.error || 'Registration failed.');
-            btnNext.disabled = false;
-            btnNext.textContent = 'Submit Application';
+            // Parse error body for useful message
+            return res.text().then(text => {
+              let msg = 'Submission failed. Please try again.';
+              try { msg = JSON.parse(text).message || msg; } catch (e) {}
+              alert(msg);
+              btnNext.disabled = false;
+              btnNext.textContent = 'Submit Application';
+            });
           }
         })
-        .catch(err => {
+        .catch(() => {
           alert('A network error occurred. Please try again.');
           btnNext.disabled = false;
           btnNext.textContent = 'Submit Application';
