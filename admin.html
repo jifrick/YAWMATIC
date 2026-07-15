@@ -774,8 +774,20 @@
     </div>
   </div>
 
-  <!-- ADMIN PAGE BUSINESS LOGIC -->
-  <script>
+  <!-- ADMIN PAGE BUSINESS L    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
+    function supabaseFetch(path, options = {}) {
+      const url = `${SUPABASE_URL}/rest/v1/${path}`;
+      const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      return fetch(url, { ...options, headers });
+    }
+
     let activeView = 'analytics';
     let cachedCreators = [];
     let cachedCategories = [];
@@ -844,11 +856,50 @@
     });
 
     function loadAllData() {
-      // Load categories once
-      fetch('/api/categories')
+      // Load categories from Supabase (fallback to static list if empty)
+      supabaseFetch('categories?select=*&order=display_order')
         .then(res => res.json())
         .then(data => {
-          cachedCategories = data;
+          if (data && data.length > 0) {
+            cachedCategories = data;
+          } else {
+            cachedCategories = [
+              { slug: 'photography',          name: 'Photography' },
+              { slug: 'videography',          name: 'Videography' },
+              { slug: 'drone-operator',       name: 'Drone Operator' },
+              { slug: 'video-editor',         name: 'Video Editor' },
+              { slug: 'motion-designer',      name: 'Motion Designer' },
+              { slug: 'graphic-designer',     name: 'Graphic Designer' },
+              { slug: 'brand-designer',       name: 'Brand Designer' },
+              { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
+              { slug: 'web-designer',         name: 'Web Designer' },
+              { slug: '3d-artist',            name: '3D Artist' },
+              { slug: 'content-creator',      name: 'Content Creator' },
+              { slug: 'social-media-manager', name: 'Social Media Manager' },
+              { slug: 'copywriter',           name: 'Copywriter' },
+              { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
+            ];
+          }
+          loadViewData(activeView);
+        })
+        .catch(() => {
+          // Robust static fallback
+          cachedCategories = [
+            { slug: 'photography',          name: 'Photography' },
+            { slug: 'videography',          name: 'Videography' },
+            { slug: 'drone-operator',       name: 'Drone Operator' },
+            { slug: 'video-editor',         name: 'Video Editor' },
+            { slug: 'motion-designer',      name: 'Motion Designer' },
+            { slug: 'graphic-designer',     name: 'Graphic Designer' },
+            { slug: 'brand-designer',       name: 'Brand Designer' },
+            { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
+            { slug: 'web-designer',         name: 'Web Designer' },
+            { slug: '3d-artist',            name: '3D Artist' },
+            { slug: 'content-creator',      name: 'Content Creator' },
+            { slug: 'social-media-manager', name: 'Social Media Manager' },
+            { slug: 'copywriter',           name: 'Copywriter' },
+            { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
+          ];
           loadViewData(activeView);
         });
     }
@@ -873,102 +924,143 @@
     // VIEW HANDLER: ANALYTICS
     // --------------------------------------------------
     function loadAnalytics() {
-      fetch('/api/admin/analytics')
-        .then(res => res.json())
-        .then(data => {
-          // Render stats boxes
-          const statsRow = document.getElementById('analytics-stats-row');
-          statsRow.innerHTML = `
-            <div class="stat-box">
-              <span class="stat-box__label">Approved Network</span>
-              <span class="stat-box__value">${data.stats.approvedCreators}</span>
-              <span class="stat-box__change">Active Creators</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-box__label">Pending Queue</span>
-              <span class="stat-box__value">${data.stats.pendingApplications}</span>
-              <span class="stat-box__change" style="color:#FFD600;">Needs Vetting</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-box__label">Project Inquiries</span>
-              <span class="stat-box__value">${data.stats.totalInquiries}</span>
-              <span class="stat-box__change">Routed briefs</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-box__label">Conversion Rate</span>
-              <span class="stat-box__value">${data.stats.conversionRate}</span>
-              <span class="stat-box__change">Inquiry Conversion</span>
-            </div>
-          `;
+      // Load both applications (queue/vetted) and inquiries to compute counts
+      Promise.all([
+        supabaseFetch('creator_applications?select=*').then(res => res.json()),
+        supabaseFetch('inquiries?select=id').then(res => res.json()),
+        supabaseFetch('projects?select=id').then(res => res.json())
+      ])
+      .then(([creators, inquiries, projects]) => {
+        const approved = creators.filter(c => c.status === 'approved');
+        const pending = creators.filter(c => c.status === 'pending');
+        
+        const approvedCount = approved.length;
+        const pendingCount = pending.length;
+        const inquiriesCount = inquiries ? inquiries.length : 0;
+        const projectsCount = projects ? projects.length : 0;
+        const conversionRate = inquiriesCount > 0 ? ((projectsCount / inquiriesCount) * 100).toFixed(0) + '%' : '0%';
 
-          // Render Category distribution bars
-          const catList = document.getElementById('chart-categories-list');
-          catList.innerHTML = '';
-          const maxCount = Math.max(...data.categoryDistribution.map(d => d.count), 1);
-          data.categoryDistribution.forEach(d => {
-            const barPct = (d.count / maxCount) * 100;
-            const row = document.createElement('div');
-            row.className = 'bar-row';
-            row.innerHTML = `
-              <div class="bar-row__labels">
-                <span>${d.name}</span>
-                <span>${d.count} creators</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width: ${barPct}%"></div>
-              </div>
-            `;
-            catList.appendChild(row);
-          });
+        // Render stats boxes
+        const statsRow = document.getElementById('analytics-stats-row');
+        statsRow.innerHTML = `
+          <div class="stat-box">
+            <span class="stat-box__label">Approved Network</span>
+            <span class="stat-box__value">${approvedCount}</span>
+            <span class="stat-box__change">Active Creators</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__label">Pending Queue</span>
+            <span class="stat-box__value">${pendingCount}</span>
+            <span class="stat-box__change" style="color:#FFD600;">Needs Vetting</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__label">Project Inquiries</span>
+            <span class="stat-box__value">${inquiriesCount}</span>
+            <span class="stat-box__change">Routed briefs</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-box__label">Conversion Rate</span>
+            <span class="stat-box__value">${conversionRate}</span>
+            <span class="stat-box__change">Inquiry Conversion</span>
+          </div>
+        `;
 
-          // Render Cities footprint bars
-          const cityList = document.getElementById('chart-cities-list');
-          cityList.innerHTML = '';
-          const maxCity = Math.max(...data.cityDistribution.map(d => d.count), 1);
-          data.cityDistribution.forEach(d => {
-            const barPct = (d.count / maxCity) * 100;
-            const row = document.createElement('div');
-            row.className = 'bar-row';
-            row.innerHTML = `
-              <div class="bar-row__labels">
-                <span>${d.city}</span>
-                <span>${d.count} creators</span>
-              </div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width: ${barPct}%"></div>
-              </div>
-            `;
-            cityList.appendChild(row);
+        // Compute category distribution count
+        const catMap = {};
+        approved.forEach(c => {
+          const cats = c.categories || [];
+          cats.forEach(slug => {
+            catMap[slug] = (catMap[slug] || 0) + 1;
           });
         });
+
+        // Render Category distribution bars
+        const catList = document.getElementById('chart-categories-list');
+        catList.innerHTML = '';
+        const maxCount = Math.max(...Object.values(catMap), 1);
+        
+        cachedCategories.forEach(cat => {
+          const count = catMap[cat.slug] || 0;
+          const barPct = (count / maxCount) * 100;
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-row__labels">
+              <span>${cat.name}</span>
+              <span>${count} creators</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${barPct}%"></div>
+            </div>
+          `;
+          catList.appendChild(row);
+        });
+
+        // Compute city distribution count
+        const cityMap = {};
+        approved.forEach(c => {
+          if (c.city) {
+            const normalized = c.city.trim().toLowerCase();
+            const formatted = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+            cityMap[formatted] = (cityMap[formatted] || 0) + 1;
+          }
+        });
+
+        // Render Cities footprint bars
+        const cityList = document.getElementById('chart-cities-list');
+        cityList.innerHTML = '';
+        const maxCity = Math.max(...Object.values(cityMap), 1);
+        
+        Object.entries(cityMap).forEach(([city, count]) => {
+          const barPct = (count / maxCity) * 100;
+          const row = document.createElement('div');
+          row.className = 'bar-row';
+          row.innerHTML = `
+            <div class="bar-row__labels">
+              <span>${city}</span>
+              <span>${count} creators</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${barPct}%"></div>
+            </div>
+          `;
+          cityList.appendChild(row);
+        });
+      })
+      .catch(err => console.error('Error loading analytics:', err));
     }
 
     // --------------------------------------------------
     // VIEW HANDLER: QUEUE (PENDING APPLICATIONS)
     // --------------------------------------------------
     function loadQueue() {
-      fetch('/api/admin/creators')
+      supabaseFetch('creator_applications?select=*&status=eq.pending&order=submitted_at.desc')
         .then(res => res.json())
         .then(data => {
           cachedCreators = data;
           const body = document.getElementById('queue-table-body');
           body.innerHTML = '';
 
-          const pending = data.filter(c => c.status === 'pending');
-          if (pending.length === 0) {
+          if (!data || data.length === 0) {
             body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--mist);">No pending applications in queue. Network is currently fully vetted.</td></tr>';
             return;
           }
 
-          pending.forEach(c => {
+          data.forEach(c => {
             const tr = document.createElement('tr');
-            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+            const primaryCat = (c.categories && c.categories.length > 0) 
+              ? c.categories[0].replace(/-/g, ' ') 
+              : 'Creative';
+            
+            const city = c.city || 'Unknown';
+            const country = c.country || 'Unknown';
+            
             tr.innerHTML = `
-              <td><strong style="color:var(--volt);">${c.full_name}</strong><br><span style="font-size:0.75rem;opacity:0.6;">${c.email}</span></td>
+              <td><strong style="color:var(--volt);">${c.full_name || 'Anonymous'}</strong><br><span style="font-size:0.75rem;opacity:0.6;">${c.email || ''}</span></td>
               <td style="text-transform: uppercase;">${primaryCat}</td>
-              <td>${c.city}, ${c.country}</td>
-              <td>${c.years_experience} Yrs</td>
-              <td>${new Date(c.created_at).toLocaleDateString()}</td>
+              <td style="text-transform: capitalize;">${city}, ${country}</td>
+              <td>${c.years_experience || 1} Yrs</td>
+              <td>${c.submitted_at ? new Date(c.submitted_at).toLocaleDateString() : 'N/A'}</td>
               <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
                 <button class="action-btn" onclick="openCreatorEditModal(${c.id})">Review Profile</button>
                 <button class="action-btn action-btn--approve" onclick="approveCreator(${c.id})">Approve</button>
@@ -977,211 +1069,256 @@
             `;
             body.appendChild(tr);
           });
-        });
+        })
+        .catch(err => console.error('Error loading application queue:', err));
     }
 
     // --------------------------------------------------
-    // VIEW HANDLER: CREATORS LISTING
+    // VIEW HANDLER: CREATORS LISTING (VETTED CREATORS)
     // --------------------------------------------------
     function loadCreators() {
-      fetch('/api/admin/creators')
+      supabaseFetch('creator_applications?select=*&status=eq.approved&order=full_name.asc')
         .then(res => res.json())
         .then(data => {
           cachedCreators = data;
           const body = document.getElementById('creators-table-body');
           body.innerHTML = '';
 
+          if (!data || data.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--mist);">No vetted creators in network. Approve applicants to build your roster.</td></tr>';
+            return;
+          }
+
           data.forEach(c => {
             const tr = document.createElement('tr');
-            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+            const primaryCat = (c.categories && c.categories.length > 0) 
+              ? c.categories[0].replace(/-/g, ' ') 
+              : 'Creative';
+            
+            const rating = Number(c.rating || 5.0).toFixed(1);
+            const availabilityText = c.availability || 'available';
+
             tr.innerHTML = `
-              <td><strong style="color:var(--volt);">${c.full_name}</strong><br><span style="font-size:0.75rem;opacity:0.6;">${c.city}</span></td>
+              <td><strong style="color:var(--volt);">${c.full_name || 'Anonymous'}</strong><br><span style="font-size:0.75rem;opacity:0.6;text-transform: capitalize;">${c.city || ''}</span></td>
               <td style="text-transform: uppercase;">${primaryCat}</td>
-              <td><span class="status-badge" style="background:none;border:none;padding:0;color:var(--volt);">${c.availability}</span></td>
-              <td>${c.rating.toFixed(1)} ★</td>
+              <td><span class="status-badge" style="background:none;border:none;padding:0;color:var(--volt);text-transform: capitalize;">${availabilityText}</span></td>
+              <td>${rating} ★</td>
               <td>
                 ${c.featured ? '<span style="color:var(--fire); font-size:0.8rem; margin-right:8px;">★ Featured</span>' : ''}
                 ${c.verified ? '<span style="color:#00E676; font-size:0.8rem;">✓ Vetted</span>' : ''}
               </td>
-              <td><span class="status-badge ${c.status}">${c.status}</span></td>
+              <td><span class="status-badge approved">Approved</span></td>
               <td style="text-align: right;">
                 <button class="action-btn" onclick="openCreatorEditModal(${c.id})">Modify Parameters</button>
               </td>
             `;
             body.appendChild(tr);
           });
-        });
+        })
+        .catch(err => console.error('Error loading vetted creators:', err));
     }
 
     // --------------------------------------------------
     // VIEW HANDLER: PROJECTS PIPELINE
     // --------------------------------------------------
     function loadProjects() {
-      fetch('/api/admin/projects')
-        .then(res => res.json())
-        .then(data => {
-          const body = document.getElementById('projects-table-body');
-          body.innerHTML = '';
+      Promise.all([
+        supabaseFetch('projects?select=*&order=created_at.desc').then(res => res.json()),
+        supabaseFetch('creator_applications?select=id,full_name&status=eq.approved').then(res => res.json())
+      ])
+      .then(([projects, creators]) => {
+        const body = document.getElementById('projects-table-body');
+        body.innerHTML = '';
 
-          if (data.length === 0) {
-            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--mist);">No logged projects. Assign creators to initiate pipeline tracking.</td></tr>';
-            return;
+        if (!projects || projects.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--mist);">No logged projects. Assign creators to initiate pipeline tracking.</td></tr>';
+          return;
+        }
+
+        projects.forEach(p => {
+          const tr = document.createElement('tr');
+          
+          // Map single project.creator_id to names array for compatibility
+          const assignedNames = [];
+          if (p.creator_id) {
+            const matching = creators.find(cr => String(cr.id) === String(p.creator_id));
+            assignedNames.push(matching ? matching.full_name : 'Unknown Creator');
           }
 
-          // Load creators list to resolve names
-          fetch('/api/admin/creators')
-            .then(res => res.json())
-            .then(creators => {
-              data.forEach(p => {
-                const tr = document.createElement('tr');
-                
-                // Map creator IDs to Names
-                const assignedNames = p.assigned_creator_ids.map(cid => {
-                  const matchingCreator = creators.find(cr => cr.id === cid);
-                  return matchingCreator ? matchingCreator.full_name : 'Unknown Creator';
-                });
+          // Compatibility wrapper payload for the edit button click handler
+          const compatPayload = {
+            id: p.id,
+            client_name: p.client_name,
+            description: p.notes,
+            category: p.project_title,
+            assigned_creator_ids: p.creator_id ? [p.creator_id] : [],
+            status: p.project_status === 'active' ? 'in_progress' : p.project_status === 'completed' ? 'delivered' : 'assigned',
+            timeline: p.deadline,
+            budget: p.budget
+          };
 
-                tr.innerHTML = `
-                  <td><strong style="color:var(--volt);">${p.client_name}</strong><br><span style="font-size:0.8rem;opacity:0.6;">${p.description.substring(0, 30)}...</span></td>
-                  <td>${p.category || 'Creative Scope'}</td>
-                  <td>${p.budget}</td>
-                  <td>${p.timeline}</td>
-                  <td>${assignedNames.join(', ') || 'No Assigned Creators'}</td>
-                  <td><span class="status-badge ${p.status === 'in_progress' ? 'pending' : p.status === 'delivered' ? 'approved' : p.status}">${p.status.replace('_', ' ')}</span></td>
-                  <td style="text-align: right;">
-                    <button class="action-btn" onclick="openProjectModal(${JSON.stringify(p).replace(/"/g, '&quot;')})">Edit Scope</button>
-                  </td>
-                `;
-                body.appendChild(tr);
-              });
-            });
+          tr.innerHTML = `
+            <td><strong style="color:var(--volt);">${p.client_name || 'Unnamed Client'}</strong><br><span style="font-size:0.8rem;opacity:0.6;">${(p.notes || '').substring(0, 30)}...</span></td>
+            <td>${p.project_title || 'Creative Scope'}</td>
+            <td>${p.budget || 'N/A'}</td>
+            <td>${p.deadline || 'N/A'}</td>
+            <td>${assignedNames.join(', ') || 'No Assigned Creators'}</td>
+            <td><span class="status-badge ${p.project_status === 'active' ? 'pending' : p.project_status === 'completed' ? 'approved' : 'inactive'}">${(p.project_status || '').replace('_', ' ')}</span></td>
+            <td style="text-align: right;">
+              <button class="action-btn" onclick="openProjectModal(${JSON.stringify(compatPayload).replace(/"/g, '&quot;')})">Edit Scope</button>
+            </td>
+          `;
+          body.appendChild(tr);
         });
+      })
+      .catch(err => console.error('Error loading projects:', err));
     }
 
     // --------------------------------------------------
     // VIEW HANDLER: REVIEWS TESTIMONIALS
     // --------------------------------------------------
     function loadReviews() {
-      fetch('/api/admin/reviews')
-        .then(res => res.json())
-        .then(data => {
-          const body = document.getElementById('reviews-table-body');
-          body.innerHTML = '';
+      Promise.all([
+        supabaseFetch('reviews?select=*&order=created_at.desc').then(res => res.json()),
+        supabaseFetch('creator_applications?select=id,full_name').then(res => res.json())
+      ])
+      .then(([reviews, creators]) => {
+        const body = document.getElementById('reviews-table-body');
+        body.innerHTML = '';
 
-          if (data.length === 0) {
-            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--mist);">No reviews logged for moderation.</td></tr>';
-            return;
-          }
+        if (!reviews || reviews.length === 0) {
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--mist);">No reviews logged for moderation.</td></tr>';
+          return;
+        }
 
-          data.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><strong>${r.creator_name}</strong></td>
-              <td>${r.client_name}</td>
-              <td>${r.rating.toFixed(1)} ★</td>
-              <td><span style="font-style:italic;">"${r.text.substring(0, 50)}..."</span></td>
-              <td><span class="status-badge ${r.status === 'pending' ? 'pending' : r.status === 'approved' ? 'approved' : 'inactive'}">${r.status}</span></td>
-              <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-                ${r.status === 'pending' ? `
-                  <button class="action-btn action-btn--approve" onclick="moderateReview(${r.id}, 'approved')">Approve</button>
-                  <button class="action-btn action-btn--reject" onclick="moderateReview(${r.id}, 'hidden')">Hide</button>
-                ` : `
-                  <button class="action-btn" onclick="moderateReview(${r.id}, '${r.status === 'approved' ? 'hidden' : 'approved'}')">
-                    ${r.status === 'approved' ? 'Hide Testimonial' : 'Approve'}
-                  </button>
-                `}
-              </td>
-            `;
-            body.appendChild(tr);
-          });
+        reviews.forEach(r => {
+          const matching = creators.find(cr => String(cr.id) === String(r.creator_id));
+          const creatorName = matching ? matching.full_name : 'Unknown Creator';
+
+          const tr = document.createElement('tr');
+          const statusText = r.approved ? 'approved' : 'pending';
+          const rating = Number(r.rating || 5).toFixed(1);
+
+          tr.innerHTML = `
+            <td><strong>${creatorName}</strong></td>
+            <td>${r.client_name || 'Anonymous'}</td>
+            <td>${rating} ★</td>
+            <td><span style="font-style:italic;">"${(r.review || '').substring(0, 50)}..."</span></td>
+            <td><span class="status-badge ${statusText}">${statusText}</span></td>
+            <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+              ${!r.approved ? `
+                <button class="action-btn action-btn--approve" onclick="moderateReview(${r.id}, 'approved')">Approve</button>
+                <button class="action-btn action-btn--reject" onclick="moderateReview(${r.id}, 'hidden')">Hide</button>
+              ` : `
+                <button class="action-btn" onclick="moderateReview(${r.id}, 'hidden')">
+                  Hide Testimonial
+                </button>
+              `}
+            </td>
+          `;
+          body.appendChild(tr);
         });
+      })
+      .catch(err => console.error('Error loading reviews:', err));
     }
 
     // --------------------------------------------------
-    // VIEW HANDLER: INQUIRIES LIST
+    // VIEW HANDLER: CLIENT INQUIRIES
     // --------------------------------------------------
     function loadInquiries() {
-      fetch('/api/admin/inquiries')
-        .then(res => res.json())
-        .then(data => {
-          const body = document.getElementById('inquiries-table-body');
-          body.innerHTML = '';
+      Promise.all([
+        supabaseFetch('inquiries?select=*&order=created_at.desc').then(res => res.json()),
+        supabaseFetch('creator_applications?select=id,full_name').then(res => res.json())
+      ])
+      .then(([inquiries, creators]) => {
+        const body = document.getElementById('inquiries-table-body');
+        body.innerHTML = '';
 
-          if (data.length === 0) {
-            body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--mist);">No client inquiries received. Inquiries logged on profile forms will show up here.</td></tr>';
-            return;
-          }
+        if (!inquiries || inquiries.length === 0) {
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:var(--mist);">No client inquiries received. Inquiries logged on profile forms will show up here.</td></tr>';
+          return;
+        }
 
-          data.forEach(i => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><strong style="color:var(--volt);">${i.name}</strong></td>
-              <td><a href="mailto:${i.email}" style="color:var(--fire);">${i.email}</a></td>
-              <td>${i.creator_name || '<span style="color:var(--fire); font-weight:700;">General Collective</span>'}</td>
-              <td><span style="font-size:0.85rem;">${i.project_details}</span></td>
-              <td>${new Date(i.created_at).toLocaleDateString()}</td>
-            `;
-            body.appendChild(tr);
-          });
+        inquiries.forEach(i => {
+          const matching = creators.find(cr => String(cr.id) === String(i.creator_id));
+          const creatorName = matching ? matching.full_name : null;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong style="color:var(--volt);">${i.client_name || 'Anonymous'}</strong></td>
+            <td><a href="mailto:${i.email}" style="color:var(--fire);">${i.email}</a></td>
+            <td>${creatorName || '<span style="color:var(--fire); font-weight:700;">General Collective</span>'}</td>
+            <td><span style="font-size:0.85rem;">${i.message || ''}</span></td>
+            <td>${i.created_at ? new Date(i.created_at).toLocaleDateString() : 'N/A'}</td>
+          `;
+          body.appendChild(tr);
         });
+      })
+      .catch(err => console.error('Error loading inquiries:', err));
     }
 
     // --------------------------------------------------
     // ACTIONS & MODALS CONTROLLER
     // --------------------------------------------------
     function approveCreator(id) {
-      fetch(`/api/admin/creators/${id}/approve`, { method: 'POST' })
-        .then(res => res.json())
-        .then(() => {
-          loadViewData(activeView);
-        });
+      supabaseFetch(`creator_applications?id=eq.${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'approved' })
+      })
+      .then(() => {
+        loadViewData(activeView);
+      })
+      .catch(err => console.error('Error approving creator:', err));
     }
 
     function rejectCreator(id) {
       if (confirm('Are you sure you want to reject this applicant?')) {
-        fetch(`/api/admin/creators/${id}/reject`, { method: 'POST' })
-          .then(res => res.json())
-          .then(() => {
-            loadViewData(activeView);
-          });
+        supabaseFetch(`creator_applications?id=eq.${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'rejected' })
+        })
+        .then(() => {
+          loadViewData(activeView);
+        })
+        .catch(err => console.error('Error rejecting creator:', err));
       }
     }
 
     function moderateReview(id, status) {
-      fetch(`/api/admin/reviews/${id}/moderate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+      const approved = (status === 'approved');
+      supabaseFetch(`reviews?id=eq.${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ approved })
       })
-        .then(res => res.json())
-        .then(() => {
-          loadViewData(activeView);
-        });
+      .then(() => {
+        loadViewData(activeView);
+      })
+      .catch(err => console.error('Error moderating review:', err));
     }
 
     // Modal Edit Profile Creator
     function openCreatorEditModal(id) {
-      const c = cachedCreators.find(cr => cr.id === id);
+      const c = cachedCreators.find(cr => String(cr.id) === String(id));
       if (!c) return;
 
       document.getElementById('edit-c-id').value = c.id;
-      document.getElementById('edit-c-name').value = c.full_name;
-      document.getElementById('edit-c-email').value = c.email;
+      document.getElementById('edit-c-name').value = c.full_name || '';
+      document.getElementById('edit-c-email').value = c.email || '';
       document.getElementById('edit-c-phone').value = c.phone || '';
-      document.getElementById('edit-c-city').value = c.city;
-      document.getElementById('edit-c-country').value = c.country;
-      document.getElementById('edit-c-experience').value = c.years_experience;
-      document.getElementById('edit-c-rating').value = c.rating;
-      document.getElementById('edit-c-availability').value = c.availability;
-      document.getElementById('edit-c-verified').checked = c.verified === 1;
-      document.getElementById('edit-c-featured').checked = c.featured === 1;
+      document.getElementById('edit-c-city').value = c.city || '';
+      document.getElementById('edit-c-country').value = c.country || '';
+      document.getElementById('edit-c-experience').value = c.years_experience || 1;
+      document.getElementById('edit-c-rating').value = c.rating || 5.0;
+      document.getElementById('edit-c-availability').value = c.availability || 'available';
+      document.getElementById('edit-c-verified').checked = !!c.verified;
+      document.getElementById('edit-c-featured').checked = !!c.featured;
       document.getElementById('edit-c-notes').value = c.internal_notes || '';
 
       // Populate categories checkboxes inside modal
       const catsBox = document.getElementById('edit-c-categories-container');
       catsBox.innerHTML = '';
       cachedCategories.forEach(cat => {
-        const isChecked = c.categories.includes(cat.slug) ? 'checked' : '';
+        const isChecked = (c.categories && c.categories.includes(cat.slug)) ? 'checked' : '';
         const label = document.createElement('label');
         label.className = 'checkbox-label';
         label.innerHTML = `
@@ -1211,49 +1348,47 @@
         city: document.getElementById('edit-c-city').value,
         country: document.getElementById('edit-c-country').value,
         categories,
-        years_experience: parseInt(document.getElementById('edit-c-experience').value, 10) || 0,
+        years_experience: parseInt(document.getElementById('edit-c-experience').value, 10) || 1,
         rating: parseFloat(document.getElementById('edit-c-rating').value) || 5.0,
         availability: document.getElementById('edit-c-availability').value,
-        verified: document.getElementById('edit-c-verified').checked ? 1 : 0,
-        featured: document.getElementById('edit-c-featured').checked ? 1 : 0,
+        verified: document.getElementById('edit-c-verified').checked,
+        featured: document.getElementById('edit-c-featured').checked,
         internal_notes: document.getElementById('edit-c-notes').value
       };
 
-      fetch(`/api/admin/creators/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      supabaseFetch(`creator_applications?id=eq.${id}`, {
+        method: 'PATCH',
         body: JSON.stringify(payload)
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('modal-edit-creator').classList.remove('active');
-            loadViewData(activeView);
-          } else {
-            alert(data.error || 'Failed to update creator.');
-          }
-        });
+      .then(res => {
+        if (res.ok) {
+          document.getElementById('modal-edit-creator').classList.remove('active');
+          loadViewData(activeView);
+        } else {
+          alert('Failed to update creator.');
+        }
+      })
+      .catch(err => console.error('Error updating creator:', err));
     }
 
     // Modal Add / Edit Project Scope
     function openProjectModal(p = null) {
-      // Fetch creators list first to populate checkbox list
-      fetch('/api/admin/creators')
+      // Fetch approved creators list first to populate selection checkbox list
+      supabaseFetch('creator_applications?select=id,full_name,city&status=eq.approved&order=full_name.asc')
         .then(res => res.json())
         .then(creators => {
-          const approved = creators.filter(c => c.status === 'approved');
           const container = document.getElementById('proj-creators-list');
           container.innerHTML = '';
 
-          const assignedIds = p ? p.assigned_creator_ids : [];
+          const assignedIds = p ? p.assigned_creator_ids.map(String) : [];
 
-          approved.forEach(c => {
-            const isChecked = assignedIds.includes(c.id) ? 'checked' : '';
+          creators.forEach(c => {
+            const isChecked = assignedIds.includes(String(c.id)) ? 'checked' : '';
             const label = document.createElement('label');
             label.className = 'checkbox-label';
             label.innerHTML = `
               <input type="checkbox" value="${c.id}" class="proj-creator-cb" ${isChecked}>
-              ${c.full_name} (${c.city})
+              ${c.full_name} (${c.city || ''})
             `;
             container.appendChild(label);
           });
@@ -1262,7 +1397,7 @@
           if (p) {
             document.getElementById('project-modal-title').textContent = 'Edit Project Scope';
             document.getElementById('project-id').value = p.id;
-            document.getElementById('proj-client').value = p.client_name;
+            document.getElementById('proj-client').value = p.client_name || '';
             document.getElementById('proj-desc').value = p.description || '';
             document.getElementById('proj-category').value = p.category || '';
             document.getElementById('proj-status').value = p.status;
@@ -1288,45 +1423,43 @@
 
       const assignedCreatorIds = [];
       document.querySelectorAll('.proj-creator-cb:checked').forEach(cb => {
-        assignedCreatorIds.push(parseInt(cb.value, 10));
+        assignedCreatorIds.push(cb.value);
       });
+
+      // Map admin status strings to valid project_status enum values
+      const adminStatus = document.getElementById('proj-status').value; // 'assigned', 'in_progress', 'delivered', 'paid'
+      let projectStatus = 'assigned';
+      if (adminStatus === 'in_progress') projectStatus = 'active';
+      else if (adminStatus === 'delivered' || adminStatus === 'paid') projectStatus = 'completed';
 
       const payload = {
         client_name: document.getElementById('proj-client').value,
-        description: document.getElementById('proj-desc').value,
-        category: document.getElementById('proj-category').value,
-        assigned_creator_ids: assignedCreatorIds,
-        status: document.getElementById('proj-status').value,
-        timeline: document.getElementById('proj-timeline').value,
+        notes: document.getElementById('proj-desc').value,
+        project_title: document.getElementById('proj-category').value,
+        creator_id: assignedCreatorIds.length > 0 ? assignedCreatorIds[0] : null,
+        project_status: projectStatus,
+        payment_status: adminStatus === 'paid' ? 'paid' : 'unpaid',
+        deadline: document.getElementById('proj-timeline').value,
         budget: document.getElementById('proj-budget').value
       };
 
-      const method = id ? 'PUT' : 'POST';
-      const endpoint = id ? `/api/admin/projects/${id}` : '/api/admin/projects';
+      const method = id ? 'PATCH' : 'POST';
+      const endpoint = id ? `projects?id=eq.${id}` : 'projects';
 
-      // Map snake case fields to camel case if creating new
-      const body = id ? payload : {
-        clientName: payload.client_name,
-        description: payload.description,
-        category: payload.category,
-        assignedCreatorIds: payload.assigned_creator_ids,
-        timeline: payload.timeline,
-        budget: payload.budget
-      };
-
-      fetch(endpoint, {
+      supabaseFetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('modal-project').classList.remove('active');
-            loadViewData(activeView);
-          } else {
-            alert(data.error || 'Failed to submit project.');
-          }
+      .then(res => {
+        if (res.ok) {
+          document.getElementById('modal-project').classList.remove('active');
+          loadViewData(activeView);
+        } else {
+          alert('Failed to submit project form.');
+        }
+      })
+      .catch(err => console.error('Error submitting project:', err));
+    }         }
         });
     }
   </script>
