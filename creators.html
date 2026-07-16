@@ -886,33 +886,41 @@
 
   <!-- Page-specific logic -->
   <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Fetch Featured Creators for horizontal scroll
-      fetch('/api/creators?featured=true&limit=8')
+      // 1. Fetch Featured Creators from Supabase where status = approved
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?featured=eq.true&status=eq.approved&limit=8`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
-        .then(data => {
+        .then(creators => {
           const grid = document.getElementById('featured-creators-grid');
           grid.innerHTML = ''; // clear loading state
           
-          if (!data.creators || data.creators.length === 0) {
+          if (!creators || creators.length === 0) {
             grid.innerHTML = '<div style="font-family: var(--font-display); color: var(--mist);">VETTED NETWORK IS SEEDING...</div>';
             return;
           }
 
-          data.creators.forEach(c => {
+          creators.forEach(c => {
             const card = document.createElement('a');
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            // Format category names beautifully
-            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
-            
+            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+            const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
+
             card.innerHTML = `
               <div class="creator-card__image-wrap">
-                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image">
                 <div class="creator-card__badge-row">
                   <div class="availability-pill">
-                    <span class="availability-dot ${c.availability}"></span>
+                    <span class="availability-dot ${c.availability || 'available'}"></span>
                     ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
                   </div>
                   ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
@@ -924,7 +932,7 @@
                   <span>${c.city}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}...</p>
                 <div class="creator-card__footer">
                   <div class="creator-card__socials">
                     ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
@@ -946,8 +954,13 @@
           }, 100);
         });
 
-      // 2. Fetch Categories
-      fetch('/api/categories')
+      // 2. Fetch Categories from Supabase
+      fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=display_order.asc`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('categories-grid-container');
@@ -981,26 +994,43 @@
             tile.innerHTML = `
               <div class="category-tile__icon-wrap">${svgIcon}</div>
               <h3 class="category-tile__name">${cat.name}</h3>
-              <span class="category-tile__count">${cat.creator_count} creators</span>
+              <span class="category-tile__count">Explore Vertical</span>
             `;
             container.appendChild(tile);
           });
         });
 
-      // 3. Fetch Locations
-      fetch('/api/locations')
+      // 3. Fetch Locations based on approved applications
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=city,country&status=eq.approved`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('locations-grid-container');
           container.innerHTML = '';
-          data.forEach(loc => {
+
+          // Deduplicate and count occurrences
+          const locCounts = {};
+          data.forEach(item => {
+            if (item.city && item.country) {
+              const key = `${item.city}|||${item.country}`;
+              locCounts[key] = (locCounts[key] || 0) + 1;
+            }
+          });
+
+          Object.keys(locCounts).forEach(key => {
+            const [city, country] = key.split('|||');
+            const count = locCounts[key];
             const tile = document.createElement('a');
-            tile.href = `/creators/browse?city=${encodeURIComponent(loc.city)}`;
+            tile.href = `/creators/browse?city=${encodeURIComponent(city)}`;
             tile.className = 'location-tile reveal-item';
             tile.innerHTML = `
-              <div class="location-tile__city">${loc.city}</div>
-              <div class="location-tile__country">${loc.country}</div>
-              <div class="location-tile__count">${loc.creator_count} Active Creators</div>
+              <div class="location-tile__city">${city}</div>
+              <div class="location-tile__country">${country}</div>
+              <div class="location-tile__count">${count} Active Creator${count > 1 ? 's' : ''}</div>
             `;
             container.appendChild(tile);
           });

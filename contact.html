@@ -165,21 +165,35 @@
   </nav>
 
   <!-- 11. CONTACT EXPERIENCE -->
-  <section class="contact-section" id="contact" style="height: 80vh; min-height: 500px; padding-top: 100px;">
+  <section class="contact-section" id="contact" style="min-height: 80vh; padding: 120px 20px 80px 20px;">
     <div class="contact-glow-bg"></div>
     
-    <h2 class="contact-headline">
+    <h2 class="contact-headline" style="margin-bottom: 20px;">
       Ready to Build<br>
       <span class="orange">Different?</span>
     </h2>
-    <p class="contact-subtext">
+    <p class="contact-subtext" style="margin-bottom: 40px;">
       Let's create something that matters. Reach out to start your project.
     </p>
 
-    <div class="magnetic-wrap">
-      <a href="mailto:hello@yawmatic.com?subject=Let's%20Build%20Something%20Great&body=Hi%20YAWMATIC%20Team,%0A%0AI'm%20interested%20in%20working%20with%20you%20on%20a%20new%20project.%0A%0AHere%20are%20some%20initial%20details:%0A-%20Project%20Type:%20%0A-%20Estimated%20Timeline:%20%0A-%20Budget%20Range:%20%0A%0ALooking%20forward%20to%20connecting!%0A%0ABest%20regards,%0A[Your%20Name]" class="btn btn--primary pulse-glow contact-btn magnetic" style="font-size: 1.2rem; padding: 20px 48px;">
-        LET'S BUILD →
-      </a>
+    <div style="max-width: 500px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 6px; text-align: left; box-shadow: 0 10px 40px rgba(0,0,0,0.25); position: relative; z-index: 10;">
+      <form id="form-contact-inquiry">
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-name">Your Full Name</label>
+          <input type="text" id="contact-name" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast);" placeholder="John Doe" required>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-email">Email Address</label>
+          <input type="email" id="contact-email" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast);" placeholder="john@company.com" required>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-details">Project Brief Details</label>
+          <textarea id="contact-details" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast); resize: vertical; min-height: 120px;" placeholder="Describe the creative brief, timeline expectations, and estimated budget..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary pulse-glow" style="width: 100%; justify-content: center; margin-top: 10px; font-size: 1.1rem; padding: 16px;">
+          LET'S BUILD →
+        </button>
+      </form>
     </div>
   </section>
 
@@ -232,5 +246,64 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="js/main.js"></script>
+
+  <!-- Contact Form Submission logic to Supabase -->
+  <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const contactForm = document.getElementById('form-contact-inquiry');
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('contact-name').value;
+        const email = document.getElementById('contact-email').value;
+        const details = document.getElementById('contact-details').value;
+
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            client_name: name,
+            email: email,
+            message: details,
+            status: 'new'
+          })
+        })
+        .then(res => {
+          if (res.ok || res.status === 201) {
+            contactForm.parentElement.innerHTML = `
+              <div style="text-align: center; padding: 40px 0;">
+                <span style="font-size: 3.5rem; color: var(--fire); display: block; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,90,31,0.2));">✓</span>
+                <h3 style="font-family: var(--font-display); font-size: 1.5rem; text-transform: uppercase; color: var(--volt); margin-bottom: 10px;">Message Received</h3>
+                <p style="font-size: 0.95rem; color: var(--mist); line-height: 1.6;">
+                  Thank you! Your inquiry was successfully routed to the YAWMATIC Control Center. A project manager will review the brief and contact you via email shortly.
+                </p>
+              </div>
+            `;
+          } else {
+            alert('Submission failed. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'LET\'S BUILD →';
+          }
+        })
+        .catch(err => {
+          alert('A network error occurred. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'LET\'S BUILD →';
+        });
+      });
+    });
+  </script>
 </body>
 </html>

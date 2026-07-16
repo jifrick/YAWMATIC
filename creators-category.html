@@ -293,6 +293,9 @@
 
   <!-- Category Script -->
   <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Get Category Slug from URL
       const pathParts = window.location.pathname.split('/');
@@ -302,13 +305,18 @@
       document.title = `${categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Creators — YAWMATIC`;
 
       // 2. Fetch Category detail for header
-      fetch('/api/categories')
+      fetch(`${SUPABASE_URL}/rest/v1/categories?slug=eq.${categorySlug}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
-          const cat = data.find(c => c.slug === categorySlug);
+          const cat = data && data[0];
           if (cat) {
             document.getElementById('category-title').textContent = `${cat.name} Creators`;
-            document.getElementById('category-creator-count').textContent = `Curating ${cat.creator_count} Vetted Professionals`;
+            document.getElementById('category-creator-count').textContent = `Curating Vetted Professionals`;
             document.getElementById('category-description').textContent = `Explore our hand-picked network of ${cat.name.toLowerCase()} experts ready to execute high-end agency briefs.`;
             
             // Set icon
@@ -335,15 +343,20 @@
           }
         });
 
-      // 3. Fetch Matching Creators
-      fetch(`/api/creators?category=${categorySlug}&limit=50`)
+      // 3. Fetch Matching Creators where status = approved
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?categories=cs.{${categorySlug}}&status=eq.approved&limit=50`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
-        .then(data => {
+        .then(creators => {
           const grid = document.getElementById('category-creators-grid');
           const empty = document.getElementById('category-empty');
           grid.innerHTML = '';
 
-          if (!data.creators || data.creators.length === 0) {
+          if (!creators || creators.length === 0) {
             grid.style.display = 'none';
             empty.style.display = 'block';
             return;
@@ -352,19 +365,23 @@
           grid.style.display = 'grid';
           empty.style.display = 'none';
 
-          data.creators.forEach(c => {
+          // Update header count based on results
+          document.getElementById('category-creator-count').textContent = `Curating ${creators.length} Vetted Professional${creators.length > 1 ? 's' : ''}`;
+
+          creators.forEach(c => {
             const card = document.createElement('a');
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+            const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
 
             card.innerHTML = `
               <div class="creator-card__image-wrap">
-                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image">
                 <div class="creator-card__badge-row">
                   <div class="availability-pill">
-                    <span class="availability-dot ${c.availability}"></span>
+                    <span class="availability-dot ${c.availability || 'available'}"></span>
                     ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
                   </div>
                   ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
@@ -376,7 +393,7 @@
                   <span>${c.city}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}...</p>
                 <div class="creator-card__footer">
                   <div class="creator-card__socials">
                     ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
@@ -393,7 +410,6 @@
           if (typeof ScrollTrigger !== 'undefined') {
             setTimeout(() => ScrollTrigger.refresh(), 100);
           }
-        });
     });
   </script>
 </body>

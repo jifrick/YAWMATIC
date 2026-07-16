@@ -791,6 +791,9 @@
 
   <!-- Profile Loader Logic -->
   <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
     let currentCreatorId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -798,28 +801,38 @@
       const pathParts = window.location.pathname.split('/');
       const slug = pathParts[pathParts.length - 1] || 'amal-krishna';
 
-      // 2. Fetch Profile details
-      fetch(`/api/creators/${slug}`)
+      // 2. Fetch Profile details from Supabase where status = approved
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?slug=eq.${slug}&status=eq.approved`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => {
           if (!res.ok) {
             throw new Error('Creator profile not found');
           }
           return res.json();
         })
-        .then(data => {
-          const c = data.creator;
+        .then(creators => {
+          const c = creators && creators[0];
+          if (!c) throw new Error('Creator profile not found');
+          
           currentCreatorId = c.id;
 
           // Set Title & Basic Details
           document.title = `${c.full_name} — Vetted Creative Creator`;
           document.getElementById('creator-fullname').textContent = c.full_name;
-          document.getElementById('creator-avatar').src = c.profile_image;
-          document.getElementById('creator-cover-image').src = c.cover_image;
-          document.getElementById('creator-location-badge').textContent = `${c.city}, ${c.country}`;
+          
+          const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
+          const coverUrl = c.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&h=400&fit=crop';
+          document.getElementById('creator-avatar').src = avatarUrl;
+          document.getElementById('creator-cover-image').src = coverUrl;
+          document.getElementById('creator-location-badge').textContent = `${c.city || ''}, ${c.country || ''}`;
 
           // Format category list
-          const formattedCats = c.categories.map(cat => cat.replace('-', ' ')).join(' & ');
-          document.getElementById('creator-category-badge').textContent = formattedCats;
+          const formattedCats = (c.categories || []).map(cat => cat.replace('-', ' ')).join(' & ');
+          document.getElementById('creator-category-badge').textContent = formattedCats.toUpperCase();
 
           if (c.verified) {
             document.getElementById('creator-vetted-badge').style.display = 'inline-block';
@@ -853,16 +866,16 @@
           // Render Bio Paragraphs
           const bioContainer = document.getElementById('creator-bio');
           bioContainer.innerHTML = '';
-          c.bio.split('\n\n').forEach(para => {
+          (c.bio || '').split('\n\n').forEach(para => {
             const p = document.createElement('p');
             p.textContent = para;
             bioContainer.appendChild(p);
           });
 
           // Render Meta Specification Card
-          document.getElementById('meta-experience').textContent = `${c.years_experience} Vetted Years`;
+          document.getElementById('meta-experience').textContent = `${c.years_experience || 0} Vetted Years`;
           document.getElementById('meta-availability').textContent = c.availability === 'available' ? 'Available For Projects' : c.availability === 'limited' ? 'Limited Availability' : 'Booked Until Next Cycle';
-          document.getElementById('meta-rating').textContent = `${c.rating.toFixed(1)} Stars Agency Rating`;
+          document.getElementById('meta-rating').textContent = `${Number(c.rating || 5.0).toFixed(1)} Stars Agency Rating`;
           
           const equipList = c.equipment && c.equipment.length > 0 ? c.equipment.join(', ') : 'Standard Creative Gear';
           document.getElementById('meta-equipment').textContent = equipList;
@@ -870,11 +883,11 @@
           const langList = c.languages && c.languages.length > 0 ? c.languages.join(', ') : 'English';
           document.getElementById('meta-languages').textContent = langList;
 
-          // Render Portfolio Gallery (Dynamically seed 5-6 sample high-end portfolio items based on category)
+          // Render Portfolio Gallery (Seed portfolio items based on category/files)
           const gallery = document.getElementById('portfolio-gallery-container');
           gallery.innerHTML = '';
 
-          const isVisual = c.categories.includes('photography') || c.categories.includes('videography') || c.categories.includes('drone-operator') || c.categories.includes('3d-artist');
+          const isVisual = (c.categories || []).includes('photography') || (c.categories || []).includes('videography') || (c.categories || []).includes('drone-operator') || (c.categories || []).includes('3d-artist');
           
           const portfolioItems = isVisual ? [
             { type: 'image', title: 'Architectural Shadows', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&h=600&fit=crop', wide: false },
@@ -918,31 +931,40 @@
             gallery.appendChild(card);
           });
 
-          // Render Reviews List
-          const reviewsContainer = document.getElementById('reviews-list-container');
-          reviewsContainer.innerHTML = '';
+          // 2.2 Fetch approved reviews for this creator from Supabase
+          fetch(`${SUPABASE_URL}/rest/v1/reviews?creator_id=eq.${c.id}&approved=eq.true`, {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          })
+            .then(res => res.json())
+            .then(reviews => {
+              const reviewsContainer = document.getElementById('reviews-list-container');
+              reviewsContainer.innerHTML = '';
 
-          if (!data.reviews || data.reviews.length === 0) {
-            reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">No client testimonials registered yet. Clients are audited directly by YAWMATIC.</div>';
-          } else {
-            data.reviews.forEach(r => {
-              const revCard = document.createElement('div');
-              revCard.className = 'review-card reveal-item';
-              revCard.innerHTML = `
-                <div class="review-card__header">
-                  <span class="review-card__client">${r.client_name}</span>
-                  <span class="review-card__stars">${'★'.repeat(Math.round(r.rating))}</span>
-                </div>
-                <p class="review-card__text">"${r.text}"</p>
-              `;
-              reviewsContainer.appendChild(revCard);
+              if (!reviews || reviews.length === 0) {
+                reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">No client testimonials registered yet. Clients are audited directly by YAWMATIC.</div>';
+              } else {
+                reviews.forEach(r => {
+                  const revCard = document.createElement('div');
+                  revCard.className = 'review-card reveal-item';
+                  revCard.innerHTML = `
+                    <div class="review-card__header">
+                      <span class="review-card__client">${r.client_name}</span>
+                      <span class="review-card__stars">${'★'.repeat(Math.round(r.rating || 5))}</span>
+                    </div>
+                    <p class="review-card__text">"${r.review || ''}"</p>
+                  `;
+                  reviewsContainer.appendChild(revCard);
+                });
+              }
+
+              // Trigger GSAP entry refreshes
+              if (typeof ScrollTrigger !== 'undefined') {
+                setTimeout(() => ScrollTrigger.refresh(), 100);
+              }
             });
-          }
-
-          // Trigger GSAP entry refreshes
-          if (typeof ScrollTrigger !== 'undefined') {
-            setTimeout(() => ScrollTrigger.refresh(), 100);
-          }
         })
         .catch(err => {
           document.body.innerHTML = `
@@ -955,7 +977,7 @@
           `;
         });
 
-      // 3. Setup Project Booking Inquiry Submission
+      // 3. Setup Project Booking Inquiry Submission directly to Supabase inquiries table
       const inquiryForm = document.getElementById('form-creator-inquiry');
       inquiryForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -968,19 +990,24 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting inquiry...';
 
-        fetch('/api/inquiries', {
+        fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
           body: JSON.stringify({
-            creatorId: currentCreatorId,
-            name,
+            creator_id: currentCreatorId,
+            client_name: name,
             email,
-            projectDetails
+            message: projectDetails,
+            status: 'new'
           })
         })
-          .then(res => res.json())
-          .then(resData => {
-            if (resData.success) {
+          .then(res => {
+            if (res.ok || res.status === 201) {
               inquiryForm.innerHTML = `
                 <div style="text-align:center; padding: 20px 0;">
                   <span style="font-size:3rem; color:var(--fire); margin-bottom:15px; display:block;">✓</span>
@@ -991,7 +1018,7 @@
                 </div>
               `;
             } else {
-              alert(resData.error || 'Submission failed.');
+              alert('Submission failed. Please try again.');
               submitBtn.disabled = false;
               submitBtn.textContent = 'Submit Project Inquiry';
             }
@@ -1003,32 +1030,37 @@
           });
       });
 
-      // 4. Setup Review Submission
+      // 4. Setup Review Submission directly to Supabase reviews table (for moderation)
       const reviewForm = document.getElementById('form-submit-review');
       reviewForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const clientName = document.getElementById('review-client-name').value;
-        const rating = document.getElementById('review-rating').value;
+        const rating = parseInt(document.getElementById('review-rating').value, 10) || 5;
         const text = document.getElementById('review-text').value;
 
         const submitBtn = reviewForm.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting testimonial...';
 
-        fetch('/api/reviews', {
+        fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
           body: JSON.stringify({
-            creatorId: currentCreatorId,
-            clientName,
+            creator_id: currentCreatorId,
+            client_name: clientName,
             rating,
-            text
+            review: text,
+            approved: false
           })
         })
-          .then(res => res.json())
-          .then(resData => {
-            if (resData.success) {
+          .then(res => {
+            if (res.ok || res.status === 201) {
               reviewForm.innerHTML = `
                 <div style="text-align:center; padding: 20px 0; background:rgba(255, 90, 31, 0.05); border:1px solid rgba(255, 90, 31, 0.15); border-radius:4px;">
                   <span style="font-size:2rem; color:var(--fire); display:block; margin-bottom:10px;">✓</span>
@@ -1039,7 +1071,7 @@
                 </div>
               `;
             } else {
-              alert(resData.error || 'Submission failed.');
+              alert('Submission failed. Please try again.');
               submitBtn.disabled = false;
               submitBtn.textContent = 'Submit Review for Moderation';
             }

@@ -620,6 +620,9 @@
 
   <!-- Page-specific dynamic search logic -->
   <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+
     let currentPage = 1;
     let totalPages = 1;
     const itemsPerPage = 6;
@@ -636,7 +639,12 @@
       }
 
       // 1. Fetch Categories for checkbox filter
-      fetch('/api/categories')
+      fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=display_order.asc`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('category-checkboxes-container');
@@ -664,12 +672,31 @@
           });
         });
 
-      // 2. Fetch Locations for selector filter
-      fetch('/api/locations')
+      // 2. Fetch Locations for selector filter from approved creator applications
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=city,country&status=eq.approved`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
         .then(res => res.json())
         .then(data => {
           const select = document.getElementById('filter-city');
+          
+          // Deduplicate locations
+          const seen = new Set();
+          const locations = [];
           data.forEach(loc => {
+            if (loc.city && loc.country) {
+              const key = `${loc.city}, ${loc.country}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                locations.push(loc);
+              }
+            }
+          });
+
+          locations.forEach(loc => {
             const opt = document.createElement('option');
             opt.value = loc.city;
             opt.textContent = `${loc.city}, ${loc.country}`;
@@ -753,15 +780,53 @@
         selectedCats.push(cb.value);
       });
 
-      // Build Query URL
-      let queryUrl = `/api/creators?page=${currentPage}&limit=${itemsPerPage}`;
-      if (search) queryUrl += `&search=${encodeURIComponent(search)}`;
-      if (city) queryUrl += `&city=${encodeURIComponent(city)}`;
-      if (availability) queryUrl += `&availability=${encodeURIComponent(availability)}`;
-      if (experience) queryUrl += `&experience_min=${experience}`;
-      if (verified) queryUrl += `&verified_only=true`;
-      if (sort) queryUrl += `&sort=${sort}`;
-      if (selectedCats.length > 0) queryUrl += `&category=${selectedCats.join(',')}`;
+      // Build Query URL for Supabase REST API
+      const params = new URLSearchParams();
+      params.set('status', 'eq.approved');
+      params.set('select', '*');
+      params.set('limit', String(itemsPerPage));
+      params.set('offset', String((currentPage - 1) * itemsPerPage));
+
+      // 1. Search filter
+      if (search) {
+        params.set('or', `(full_name.ilike.%${search}%,bio.ilike.%${search}%,city.ilike.%${search}%,equipment.cs.{${search}})`);
+      }
+
+      // 2. City filter
+      if (city) {
+        params.set('city', `eq.${city}`);
+      }
+
+      // 3. Availability filter
+      if (availability) {
+        params.set('availability', `eq.${availability}`);
+      }
+
+      // 4. Experience filter
+      if (experience) {
+        params.set('years_experience', `gte.${experience}`);
+      }
+
+      // 5. Verified filter
+      if (verified) {
+        params.set('verified', 'eq.true');
+      }
+
+      // 6. Category filter (overlaps)
+      if (selectedCats.length > 0) {
+        params.set('categories', `ov.{${selectedCats.join(',')}}`);
+      }
+
+      // 7. Sort ordering
+      if (sort === 'featured') {
+        params.set('order', 'featured.desc,rating.desc');
+      } else if (sort === 'newest') {
+        params.set('order', 'submitted_at.desc');
+      } else if (sort === 'experience') {
+        params.set('order', 'years_experience.desc');
+      } else if (sort === 'rating') {
+        params.set('order', 'rating.desc');
+      }
 
       // Update Browser Address Bar for SEO & Shareability
       const cleanParams = new URLSearchParams();
@@ -772,16 +837,27 @@
       window.history.replaceState(null, '', `/creators/browse${paramStr ? '?' + paramStr : ''}`);
 
       // Perform request
-      fetch(queryUrl)
-        .then(res => res.json())
-        .then(data => {
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?${params.toString()}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'count=exact'
+        }
+      })
+        .then(res => {
+          const range = res.headers.get('Content-Range');
+          if (range) {
+            const totalCount = parseInt(range.split('/')[1], 10);
+            totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+          }
+          return res.json();
+        })
+        .then(creators => {
           const grid = document.getElementById('directory-grid');
           const emptyState = document.getElementById('empty-state');
           grid.innerHTML = '';
-
-          totalPages = data.totalPages || 1;
           
-          if (!data.creators || data.creators.length === 0) {
+          if (!creators || creators.length === 0) {
             grid.style.display = 'none';
             emptyState.style.display = 'flex';
             document.getElementById('pagination-controls').style.display = 'none';
@@ -792,19 +868,22 @@
           emptyState.style.display = 'none';
           document.getElementById('pagination-controls').style.display = 'flex';
 
-          data.creators.forEach(c => {
+          creators.forEach(c => {
             const card = document.createElement('a');
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            const primaryCat = c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative';
+            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+            
+            // Fallback default avatar
+            const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
 
             card.innerHTML = `
               <div class="creator-card__image-wrap">
-                <img src="${c.profile_image}" alt="${c.full_name}" class="creator-card__image">
+                <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image">
                 <div class="creator-card__badge-row">
                   <div class="availability-pill">
-                    <span class="availability-dot ${c.availability}"></span>
+                    <span class="availability-dot ${c.availability || 'available'}"></span>
                     ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
                   </div>
                   ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
@@ -816,7 +895,7 @@
                   <span>${c.city}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${c.bio.substring(0, 75)}...</p>
+                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}...</p>
                 <div class="creator-card__footer">
                   <div class="creator-card__socials">
                     ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}

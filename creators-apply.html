@@ -866,6 +866,7 @@
       const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
+      const slug = payload.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const supabasePayload = {
         full_name:        payload.fullName,
         email:            payload.email,
@@ -885,7 +886,8 @@
         website:          payload.website,
         bio:              payload.bio,
         availability:     payload.availability,
-        status:           'pending'
+        status:           'pending',
+        slug:             slug
       };
 
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications`, {
