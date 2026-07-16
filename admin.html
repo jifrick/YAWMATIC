@@ -767,11 +767,6 @@
         <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Control Center Terminal</p>
       </div>
 
-      <div class="auth-tabs">
-        <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
-        <button id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-      </div>
-
       <form id="auth-form" onsubmit="handleAuthSubmit(event)">
         <div class="form-group">
           <label class="form-label" for="auth-email">Email Address</label>
@@ -782,7 +777,7 @@
           <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required>
         </div>
         <button type="submit" id="auth-submit-btn" class="btn-main" style="width: 100%; justify-content: center; margin-top: 10px;">
-          Authenticate
+          Log In
         </button>
       </form>
     </div>
@@ -1375,72 +1370,47 @@
     let cachedProjects = [];
     let currentThreadId = null;
 
-    // Authentication Tab Management
-    let authMode = 'login';
-    function switchAuthTab(mode) {
-      authMode = mode;
-      document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-      document.getElementById(`tab-${mode}`).classList.add('active');
-      document.getElementById('auth-submit-btn').textContent = (mode === 'login') ? 'Authenticate' : 'Register Account';
-    }
-
     // Handles Authentication Submission
     async function handleAuthSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('auth-email').value;
       const password = document.getElementById('auth-password').value;
       
-      if (authMode === 'login') {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-          alert('Auth Error: ' + error.message);
-          return;
-        }
-        await verifyUserRole(data.user);
-      } else {
-        // Sign Up Mode
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) {
-          alert('Registration Error: ' + error.message);
-          return;
-        }
-        
-        // Auto super admin assignment if database is completely empty
-        const { count } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true });
-        const defaultRole = (count === 0) ? 'super_admin' : 'creator';
-        
-        // Create matching database profile
-        const { error: profileError } = await supabaseClient.from('profiles').upsert({
-          id: data.user.id,
-          full_name: email.split('@')[0],
-          email: email,
-          role: defaultRole
-        });
+      const submitBtn = document.getElementById('auth-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying Credentials...';
 
-        if (profileError) {
-          alert('Profile setup error: ' + profileError.message);
-          return;
-        }
-
-        alert(`Sign up successful! Registered role: ${defaultRole}. Please Log In.`);
-        switchAuthTab('login');
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('Authentication Failed: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log In';
+        return;
       }
+      await verifyUserRole(data.user);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log In';
     }
 
     // Check permissions and load workspace
     async function verifyUserRole(user) {
       const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
       
+      const authForm = document.getElementById('auth-form');
       if (error || !profile) {
         alert('Permission Denied. No registered profile found.');
         await supabaseClient.auth.signOut();
+        authForm.style.opacity = '1';
+        authForm.style.pointerEvents = 'auto';
         return;
       }
 
-      const allowedRoles = ['super_admin', 'admin', 'project_manager', 'finance', 'moderator'];
+      const allowedRoles = ['super_admin', 'admin', 'project_manager', 'manager'];
       if (!allowedRoles.includes(profile.role)) {
-        alert(`Access Blocked. Control Center is restricted to Admins. Your role: ${profile.role}`);
+        alert(`Access Blocked. Control Center is restricted to Administrators. Your role: ${profile.role}`);
         await supabaseClient.auth.signOut();
+        authForm.style.opacity = '1';
+        authForm.style.pointerEvents = 'auto';
         return;
       }
 
@@ -1462,6 +1432,30 @@
       // Run business workspace logic
       initControlCenter();
     }
+
+    // Check for existing session on page load
+    async function checkActiveSession() {
+      const authForm = document.getElementById('auth-form');
+      authForm.style.opacity = '0.3';
+      authForm.style.pointerEvents = 'none';
+
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+          await verifyUserRole(session.user);
+        } else {
+          authForm.style.opacity = '1';
+          authForm.style.pointerEvents = 'auto';
+        }
+      } catch (err) {
+        console.error('Session check error:', err);
+        authForm.style.opacity = '1';
+        authForm.style.pointerEvents = 'auto';
+      }
+    }
+
+    // Call session check immediately on script execution
+    checkActiveSession();
 
     async function handleSignOut() {
       await supabaseClient.auth.signOut();
