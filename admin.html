@@ -769,11 +769,7 @@
 
       <form id="auth-form" onsubmit="handleAuthSubmit(event)">
         <div class="form-group">
-          <label class="form-label" for="auth-email">Email Address</label>
-          <input type="email" id="auth-email" class="form-control" placeholder="name@agency.com" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="auth-password">Password</label>
+          <label class="form-label" for="auth-password">Enter Password</label>
           <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required>
         </div>
         <button type="submit" id="auth-submit-btn" class="btn-main" style="width: 100%; justify-content: center; margin-top: 10px;">
@@ -1373,7 +1369,7 @@
     // Handles Authentication Submission
     async function handleAuthSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById('auth-email').value;
+      const email = 'yawmatic.in@gmail.com';
       const password = document.getElementById('auth-password').value;
       
       const submitBtn = document.getElementById('auth-submit-btn');
