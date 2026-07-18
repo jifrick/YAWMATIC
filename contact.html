@@ -67,6 +67,32 @@
     }
 
     /* Project Discovery Styling */
+    .contact-bg-text-decor {
+      position: absolute;
+      top: -12vw;
+      left: 50%;
+      transform: translateX(-50%) scale(1.4);
+      width: 100%;
+      text-align: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(8rem, 18vw, 18rem);
+      text-transform: uppercase;
+      color: #ffffff;
+      opacity: 0.08;
+      filter: blur(8px);
+      letter-spacing: 0.12em;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      white-space: nowrap;
+    }
+    @media (max-width: 768px) {
+      .contact-bg-text-decor {
+        top: -10vw;
+        font-size: clamp(6rem, 15vw, 10rem);
+      }
+    }
     .discovery-container {
       max-width: 800px;
       margin: 60px auto 0 auto;
@@ -453,8 +479,11 @@
   </nav>
 
   <!-- 11. PROJECT DISCOVERY EXPERIENCE -->
-  <section class="contact-section" id="contact" style="min-height: 90vh; padding: 180px 20px 120px 20px; background-color: #070708; position: relative;">
+  <section class="contact-section" id="contact" style="min-height: 90vh; padding: 180px 20px 120px 20px; background-color: #070708; position: relative; overflow: hidden;">
     <div class="contact-glow-bg"></div>
+    
+    <!-- Decorative Background Text -->
+    <div class="contact-bg-text-decor">LET'S BUILD</div>
     
     <div class="discovery-container" id="discovery-flow-container">
       

@@ -111,6 +111,22 @@
       width: 420px;
       flex-shrink: 0;
     }
+    .vetted-status-badge {
+      display: block;
+      background: rgba(255, 90, 31, 0.10);
+      border: 1px solid rgba(255, 90, 31, 0.30);
+      color: #FF5A1F;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      font-size: 13px;
+      width: fit-content;
+      margin-top: 24px;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
     .creator-card {
       width: 320px;
       background: var(--card-bg);
@@ -635,6 +651,7 @@
       <div class="featured-creators__header">
         <span class="overline">Vetted Talent</span>
         <h2 class="heading-large">Featured<br>Creators</h2>
+        <div id="vetted-status-badge" class="vetted-status-badge" style="display: none;">VETTED NETWORK IS SEEDING...</div>
         <p style="color: var(--mist); line-height: 1.6; margin-top: 10px;">
           Scroll horizontally to see hand-picked professionals who produce flagship results on client projects.
         </p>
@@ -892,6 +909,54 @@
 
     let supabaseClient;
 
+    function initializeDynamicReveals(container) {
+      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+      
+      const newRevealItems = container.querySelectorAll('.reveal-item');
+      gsap.set(newRevealItems, { y: 40, opacity: 0 });
+      newRevealItems.forEach(item => {
+        gsap.to(item, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 85%',
+            toggleActions: 'play none none none'
+          },
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          clearProps: 'transform'
+        });
+      });
+
+      // Add custom cursor hover listeners to new tiles
+      const cursorRing = document.getElementById('cursor-ring');
+      const cursorDot = document.getElementById('cursor-dot');
+      if (cursorRing && cursorDot) {
+        const hoverables = container.querySelectorAll('a, button, .magnetic');
+        hoverables.forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            cursorRing.style.width = '60px';
+            cursorRing.style.height = '60px';
+            cursorRing.style.borderColor = 'rgba(255, 90, 31, 0.8)';
+            cursorDot.style.width = '12px';
+            cursorDot.style.height = '12px';
+            cursorDot.style.backgroundColor = '#FFFFFF';
+          });
+          item.addEventListener('mouseleave', () => {
+            cursorRing.style.width = '40px';
+            cursorRing.style.height = '40px';
+            cursorRing.style.borderColor = 'var(--fire)';
+            cursorDot.style.width = '8px';
+            cursorDot.style.height = '8px';
+            cursorDot.style.backgroundColor = 'var(--fire)';
+          });
+        });
+      }
+      
+      ScrollTrigger.refresh();
+    }
+
     // 1. Fetch Featured Creators from Supabase where status = approved
     function loadFeaturedCreators() {
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications?featured=eq.true&status=eq.approved&limit=8`, {
@@ -903,12 +968,18 @@
         .then(res => res.json())
         .then(creators => {
           const grid = document.getElementById('featured-creators-grid');
+          const badge = document.getElementById('vetted-status-badge');
+          const headerHeading = document.querySelector('.featured-creators__header h2');
           grid.innerHTML = ''; // clear loading state
           
           if (!creators || creators.length === 0) {
-            grid.innerHTML = '<div style="font-family: var(--font-display); color: var(--mist);">VETTED NETWORK IS SEEDING...</div>';
+            if (badge) badge.style.display = 'block';
+            if (headerHeading) headerHeading.style.marginBottom = '0';
             return;
           }
+
+          if (badge) badge.style.display = 'none';
+          if (headerHeading) headerHeading.style.marginBottom = '';
 
           creators.forEach(c => {
             const card = document.createElement('a');
@@ -947,6 +1018,8 @@
             `;
             grid.appendChild(card);
           });
+
+          initializeDynamicReveals(grid);
 
           // Re-trigger scroll trigger calculations after injecting DOM elements
           setTimeout(() => {
@@ -1003,6 +1076,7 @@
             `;
             container.appendChild(tile);
           });
+          initializeDynamicReveals(container);
         });
     }
 
@@ -1041,6 +1115,7 @@
             `;
             container.appendChild(tile);
           });
+          initializeDynamicReveals(container);
         });
     }
 
