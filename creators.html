@@ -883,14 +883,17 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Page-specific logic -->
   <script>
     const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Fetch Featured Creators from Supabase where status = approved
+    let supabaseClient;
+
+    // 1. Fetch Featured Creators from Supabase where status = approved
+    function loadFeaturedCreators() {
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications?featured=eq.true&status=eq.approved&limit=8`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -953,8 +956,10 @@
             }
           }, 100);
         });
+    }
 
-      // 2. Fetch Categories from Supabase
+    // 2. Fetch Categories from Supabase
+    function loadCategories() {
       fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=display_order.asc`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -999,8 +1004,10 @@
             container.appendChild(tile);
           });
         });
+    }
 
-      // 3. Fetch Locations based on approved applications
+    // 3. Fetch Locations based on approved applications
+    function loadLocations() {
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=city,country&status=eq.approved`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -1035,6 +1042,27 @@
             container.appendChild(tile);
           });
         });
+    }
+
+    function setupRealtime() {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      // Subscribe to creator applications changes
+      supabaseClient
+        .channel('public-creators-hub')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, payload => {
+          console.log('Realtime update detected in creator_applications:', payload);
+          loadFeaturedCreators();
+          loadLocations();
+        })
+        .subscribe();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFeaturedCreators();
+      loadCategories();
+      loadLocations();
+      setupRealtime();
 
       // 4. FAQ accordion interaction
       const faqItems = document.querySelectorAll('.faq-item');

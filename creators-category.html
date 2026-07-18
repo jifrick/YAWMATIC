@@ -290,21 +290,18 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Category Script -->
   <script>
     const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Get Category Slug from URL
-      const pathParts = window.location.pathname.split('/');
-      const categorySlug = pathParts[pathParts.length - 1] || 'photography';
-      
-      // Update SEO title
-      document.title = `${categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Creators — YAWMATIC`;
+    let supabaseClient;
+    let categorySlug;
 
-      // 2. Fetch Category detail for header
+    // 1. Fetch Category detail for header
+    function loadCategoryDetail() {
       fetch(`${SUPABASE_URL}/rest/v1/categories?slug=eq.${categorySlug}`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -333,7 +330,7 @@
             } else if (cat.icon === 'pen-tool' || cat.icon === 'edit-3') {
               svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
             } else if (cat.icon === 'layers' || cat.icon === 'layout') {
-              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+              svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 17 22 12"></polyline></svg>`;
             } else if (cat.icon === 'globe') {
               svgIcon = `<svg style="width:100%;height:100%;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
             } else if (cat.icon === 'instagram') {
@@ -342,8 +339,10 @@
             iconWrap.innerHTML = svgIcon;
           }
         });
+    }
 
-      // 3. Fetch Matching Creators where status = approved
+    // 2. Fetch Matching Creators where status = approved
+    function loadCategoryCreators() {
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications?categories=cs.{${categorySlug}}&status=eq.approved&limit=50`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -410,6 +409,29 @@
           if (typeof ScrollTrigger !== 'undefined') {
             setTimeout(() => ScrollTrigger.refresh(), 100);
           }
+        });
+    }
+
+    function setupRealtime() {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseClient
+        .channel('public-category-creators')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, payload => {
+          console.log('Category catalog updated:', payload);
+          loadCategoryCreators();
+        })
+        .subscribe();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const pathParts = window.location.pathname.split('/');
+      categorySlug = pathParts[pathParts.length - 1] || 'photography';
+      
+      document.title = `${categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Creators — YAWMATIC`;
+
+      loadCategoryDetail();
+      loadCategoryCreators();
+      setupRealtime();
     });
   </script>
 </body>

@@ -2561,28 +2561,87 @@
     // --------------------------------------------------
     // REALTIME & NOTIFICATION NOTIFIERS
     // --------------------------------------------------
+    function getActiveView() {
+      const activeBtn = document.querySelector('.sidebar-btn.active');
+      return activeBtn ? activeBtn.dataset.view : 'dashboard';
+    }
+
     function setupRealtimeListeners() {
-      // Subscribes to notifications table inserts
+      // 1. Subscribe to creator_applications changes
       supabaseClient
-        .channel('schema-db-changes')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
-          handleIncomingNotification(payload.new);
-        })
-        .subscribe();
-      
-      // Auto-creates notifications for new client inquiries
-      supabaseClient
-        .channel('inquiries-notif')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inquiries' }, payload => {
-          triggerSystemNotification('New Client Inquiry', `Inquiry received from ${payload.new.client_name} for ${payload.new.project_type || 'Creative brief'}`);
+        .channel('realtime-applications')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, payload => {
+          console.log('Realtime change in creator_applications:', payload);
+          if (payload.eventType === 'INSERT') {
+            triggerSystemNotification('New Creator Application', `New application submitted by ${payload.new.full_name}`);
+          }
+          const activeView = getActiveView();
+          if (activeView === 'applications') loadApplications();
+          if (activeView === 'creators') loadCreators();
+          if (activeView === 'dashboard' || activeView === 'analytics') loadDashboard();
         })
         .subscribe();
 
-      // Auto-creates notifications for new creator applications
+      // 2. Subscribe to inquiries (Leads) changes
       supabaseClient
-        .channel('applications-notif')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'creator_applications' }, payload => {
-          triggerSystemNotification('New Creator Application', `New application submitted by ${payload.new.full_name}`);
+        .channel('realtime-inquiries')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'inquiries' }, payload => {
+          console.log('Realtime change in inquiries:', payload);
+          if (payload.eventType === 'INSERT') {
+            triggerSystemNotification('New Client Inquiry', `Inquiry received from ${payload.new.client_name} for ${payload.new.project_type || 'Creative brief'}`);
+          }
+          const activeView = getActiveView();
+          if (activeView === 'leads') loadLeads();
+          if (activeView === 'dashboard' || activeView === 'analytics') loadDashboard();
+        })
+        .subscribe();
+
+      // 3. Subscribe to projects changes
+      supabaseClient
+        .channel('realtime-projects')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => {
+          console.log('Realtime change in projects:', payload);
+          const activeView = getActiveView();
+          if (activeView === 'projects') loadProjects();
+          if (activeView === 'dashboard' || activeView === 'analytics') loadDashboard();
+        })
+        .subscribe();
+
+      // 4. Subscribe to messages changes
+      supabaseClient
+        .channel('realtime-messages')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+          console.log('Realtime change in messages:', payload);
+          const activeView = getActiveView();
+          if (activeView === 'messages') {
+            loadMessages();
+          }
+        })
+        .subscribe();
+
+      // 5. Subscribe to reviews changes
+      supabaseClient
+        .channel('realtime-reviews')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, payload => {
+          console.log('Realtime change in reviews:', payload);
+          if (payload.eventType === 'INSERT') {
+            triggerSystemNotification('New Creator Review', `A client submitted a review for moderation.`);
+          }
+          const activeView = getActiveView();
+          if (activeView === 'reviews') loadReviews();
+        })
+        .subscribe();
+
+      // 6. Subscribe to notifications changes to update the notification center
+      supabaseClient
+        .channel('realtime-notifications')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, payload => {
+          console.log('Realtime change in notifications:', payload);
+          if (payload.eventType === 'INSERT') {
+            handleIncomingNotification(payload.new);
+          } else {
+            loadNotifications();
+          }
         })
         .subscribe();
     }

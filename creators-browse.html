@@ -617,6 +617,7 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Page-specific dynamic search logic -->
   <script>
@@ -626,8 +627,18 @@
     let currentPage = 1;
     let totalPages = 1;
     const itemsPerPage = 6;
+    let supabaseClient;
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Supabase Realtime client
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseClient
+        .channel('public-creators-browse')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_applications' }, payload => {
+          console.log('Realtime catalog change:', payload);
+          fetchResults();
+        })
+        .subscribe();
       // Parse initial query params (e.g. if loaded via /creators/browse?city=Kochi)
       const urlParams = new URLSearchParams(window.location.search);
       const initialCity = urlParams.get('city') || '';

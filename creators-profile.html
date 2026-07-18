@@ -788,21 +788,19 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Profile Loader Logic -->
   <script>
     const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
+    let supabaseClient;
     let currentCreatorId = null;
+    let creatorSlug = '';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Get Creator Slug from URL
-      const pathParts = window.location.pathname.split('/');
-      const slug = pathParts[pathParts.length - 1] || 'amal-krishna';
-
-      // 2. Fetch Profile details from Supabase where status = approved
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?slug=eq.${slug}&status=eq.approved`, {
+    function loadProfile() {
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?slug=eq.${creatorSlug}&status=eq.approved`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -836,6 +834,8 @@
 
           if (c.verified) {
             document.getElementById('creator-vetted-badge').style.display = 'inline-block';
+          } else {
+            document.getElementById('creator-vetted-badge').style.display = 'none';
           }
 
           // Render Social Icons Row
@@ -931,51 +931,88 @@
             gallery.appendChild(card);
           });
 
-          // 2.2 Fetch approved reviews for this creator from Supabase
-          fetch(`${SUPABASE_URL}/rest/v1/reviews?creator_id=eq.${c.id}&approved=eq.true`, {
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          })
-            .then(res => res.json())
-            .then(reviews => {
-              const reviewsContainer = document.getElementById('reviews-list-container');
-              reviewsContainer.innerHTML = '';
-
-              if (!reviews || reviews.length === 0) {
-                reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">No client testimonials registered yet. Clients are audited directly by YAWMATIC.</div>';
-              } else {
-                reviews.forEach(r => {
-                  const revCard = document.createElement('div');
-                  revCard.className = 'review-card reveal-item';
-                  revCard.innerHTML = `
-                    <div class="review-card__header">
-                      <span class="review-card__client">${r.client_name}</span>
-                      <span class="review-card__stars">${'★'.repeat(Math.round(r.rating || 5))}</span>
-                    </div>
-                    <p class="review-card__text">"${r.review || ''}"</p>
-                  `;
-                  reviewsContainer.appendChild(revCard);
-                });
-              }
-
-              // Trigger GSAP entry refreshes
-              if (typeof ScrollTrigger !== 'undefined') {
-                setTimeout(() => ScrollTrigger.refresh(), 100);
-              }
-            });
+          // Fetch reviews
+          loadReviews(c.id);
         })
         .catch(err => {
           document.body.innerHTML = `
             <div class="section-padding" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
               <span class="overline">Profile Error</span>
               <h1 class="heading-large">Creator Not Found</h1>
-              <p style="color:var(--mist);margin-bottom:30px;">The creator profile matching "${slug}" is either inactive or does not exist in our vetted network.</p>
+              <p style="color:var(--mist);margin-bottom:30px;">The creator profile matching "${creatorSlug}" is either inactive or does not exist in our vetted network.</p>
               <a href="/creators/browse" class="btn btn--primary">Browse Curated Directory</a>
             </div>
           `;
         });
+    }
+
+    function loadReviews(creatorId) {
+      fetch(`${SUPABASE_URL}/rest/v1/reviews?creator_id=eq.${creatorId}&approved=eq.true`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      })
+        .then(res => res.json())
+        .then(reviews => {
+          const reviewsContainer = document.getElementById('reviews-list-container');
+          reviewsContainer.innerHTML = '';
+
+          if (!reviews || reviews.length === 0) {
+            reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">No client testimonials registered yet. Clients are audited directly by YAWMATIC.</div>';
+          } else {
+            reviews.forEach(r => {
+              const revCard = document.createElement('div');
+              revCard.className = 'review-card reveal-item';
+              revCard.innerHTML = `
+                <div class="review-card__header">
+                  <span class="review-card__client">${r.client_name}</span>
+                  <span class="review-card__stars">${'★'.repeat(Math.round(r.rating || 5))}</span>
+                </div>
+                <p class="review-card__text">"${r.review || ''}"</p>
+              `;
+              reviewsContainer.appendChild(revCard);
+            });
+          }
+
+          // Trigger GSAP entry refreshes
+          if (typeof ScrollTrigger !== 'undefined') {
+            setTimeout(() => ScrollTrigger.refresh(), 100);
+          }
+        });
+    }
+
+    function setupRealtime() {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      // 1. Subscribe to creator applications changes for this profile
+      supabaseClient
+        .channel('public-creator-profile')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'creator_applications', filter: `slug=eq.${creatorSlug}` }, payload => {
+          console.log('Realtime profile update detected:', payload);
+          loadProfile();
+        })
+        .subscribe();
+
+      // 2. Subscribe to reviews updates for this creator
+      supabaseClient
+        .channel('public-creator-reviews')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, payload => {
+          console.log('Realtime reviews update detected:', payload);
+          if (currentCreatorId) {
+            loadReviews(currentCreatorId);
+          }
+        })
+        .subscribe();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Get Creator Slug from URL
+      const pathParts = window.location.pathname.split('/');
+      creatorSlug = pathParts[pathParts.length - 1] || 'amal-krishna';
+
+      loadProfile();
+      setupRealtime();
 
       // 3. Setup Project Booking Inquiry Submission directly to Supabase inquiries table
       const inquiryForm = document.getElementById('form-creator-inquiry');
