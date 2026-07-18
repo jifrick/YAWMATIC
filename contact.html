@@ -65,6 +65,294 @@
       opacity: 0 !important;
       visibility: hidden !important;
     }
+
+    /* Project Discovery Styling */
+    .discovery-container {
+      max-width: 800px;
+      margin: 60px auto 0 auto;
+      text-align: left;
+      position: relative;
+      z-index: 10;
+      width: 100%;
+    }
+    .discovery-progress {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 50px;
+    }
+    .discovery-progress__segment {
+      flex: 1;
+      height: 3px;
+      background-color: #1a1a1c;
+      transition: background-color 0.4s ease;
+    }
+    .discovery-progress__segment.active {
+      background-color: #FF5A1F;
+    }
+    .discovery-hero {
+      font-family: 'Syne', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    @media (max-width: 768px) {
+      .discovery-hero {
+        font-size: 2.5rem;
+      }
+    }
+    .discovery-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.1rem;
+      color: #9f9fa3;
+      margin-bottom: 50px;
+      line-height: 1.5;
+    }
+    .discovery-step {
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .discovery-step.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .discovery-step__title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      border-bottom: 1px solid #1a1a1c;
+      padding-bottom: 12px;
+    }
+    .discovery-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .discovery-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #9f9fa3;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .discovery-input {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid #1a1a1c;
+      color: #ffffff;
+      padding: 18px 20px;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    .discovery-input:focus {
+      border-color: #FF5A1F;
+    }
+    .discovery-phone-row {
+      display: flex;
+      gap: 12px;
+    }
+    .discovery-phone-row select {
+      width: 130px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid #1a1a1c;
+      color: #ffffff;
+      padding: 0 16px;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+    }
+    .discovery-phone-row input {
+      flex: 1;
+    }
+    .discovery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .discovery-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid #1a1a1c;
+      padding: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .discovery-card:hover {
+      border-color: rgba(255, 90, 31, 0.4);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .discovery-card.selected {
+      border-color: #FF5A1F;
+      background: rgba(255, 90, 31, 0.04);
+    }
+    .discovery-card__label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #9f9fa3;
+      transition: color 0.3s ease;
+    }
+    .discovery-card.selected .discovery-card__label {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .discovery-card__indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: transparent;
+      border: 1px solid #1a1a1c;
+      transition: all 0.3s ease;
+    }
+    .discovery-card.selected .discovery-card__indicator {
+      background-color: #FF5A1F;
+      border-color: #FF5A1F;
+      box-shadow: 0 0 8px rgba(255,90,31,0.6);
+    }
+    .discovery-textarea {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid #1a1a1c;
+      color: #ffffff;
+      padding: 20px;
+      border-radius: 4px;
+      font-size: 1.1rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.3s ease;
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .discovery-textarea:focus {
+      border-color: #FF5A1F;
+    }
+    .discovery-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 40px;
+      border-top: 1px solid #1a1a1c;
+      padding-top: 30px;
+    }
+    .discovery-btn-prev {
+      background: none;
+      border: none;
+      color: #9f9fa3;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 10px 20px;
+      transition: color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .discovery-btn-prev:hover {
+      color: #ffffff;
+    }
+    .discovery-btn-next {
+      background: #FF5A1F;
+      color: #ffffff;
+      border: none;
+      padding: 16px 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .discovery-btn-next:hover {
+      background: #e04a13;
+      transform: translateY(-2px);
+    }
+    .discovery-btn-next:disabled {
+      background: #1a1a1c;
+      color: #555557;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .discovery-summary {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid #1a1a1c;
+      padding: 40px;
+      border-radius: 4px;
+      line-height: 1.8;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.2rem;
+      color: #9f9fa3;
+    }
+    .discovery-summary strong {
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255, 90, 31, 0.3);
+    }
+    .discovery-error-msg {
+      color: #FF5A1F;
+      font-size: 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      margin-top: 4px;
+      display: none;
+    }
+    .discovery-success {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .success-checkmark {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 40px auto;
+    }
+    .success-checkmark circle {
+      stroke: #FF5A1F;
+      stroke-width: 2;
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+      fill: none;
+    }
+    .success-checkmark path {
+      stroke: #FF5A1F;
+      stroke-width: 3;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+      fill: none;
+    }
+    @keyframes stroke {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
   </style>
 </head>
 <body class="loading">
@@ -164,35 +452,213 @@
     </div>
   </nav>
 
-  <!-- 11. CONTACT EXPERIENCE -->
-  <section class="contact-section" id="contact" style="min-height: 80vh; padding: 120px 20px 80px 20px;">
+  <!-- 11. PROJECT DISCOVERY EXPERIENCE -->
+  <section class="contact-section" id="contact" style="min-height: 90vh; padding: 120px 20px 120px 20px; display: flex; align-items: center; background-color: #070708; position: relative;">
     <div class="contact-glow-bg"></div>
     
-    <h2 class="contact-headline" style="margin-bottom: 20px;">
-      Ready to Build<br>
-      <span class="orange">Different?</span>
-    </h2>
-    <p class="contact-subtext" style="margin-bottom: 40px;">
-      Let's create something that matters. Reach out to start your project.
-    </p>
+    <div class="discovery-container" id="discovery-flow-container">
+      
+      <!-- Progress Bar -->
+      <div class="discovery-progress" id="discovery-progress-bar">
+        <div class="discovery-progress__segment active" data-step="1"></div>
+        <div class="discovery-progress__segment" data-step="2"></div>
+        <div class="discovery-progress__segment" data-step="3"></div>
+        <div class="discovery-progress__segment" data-step="4"></div>
+        <div class="discovery-progress__segment" data-step="5"></div>
+        <div class="discovery-progress__segment" data-step="6"></div>
+      </div>
 
-    <div style="max-width: 500px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--glass-border); padding: 40px; border-radius: 6px; text-align: left; box-shadow: 0 10px 40px rgba(0,0,0,0.25); position: relative; z-index: 10;">
-      <form id="form-contact-inquiry">
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
-          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-name">Your Full Name</label>
-          <input type="text" id="contact-name" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast);" placeholder="John Doe" required>
+      <!-- Hero Header -->
+      <div id="discovery-hero-section">
+        <h1 class="discovery-hero">
+          LET'S BUILD<br>
+          SOMETHING<br>
+          <span class="orange">EXTRAORDINARY.</span>
+        </h1>
+        <p class="discovery-sub">
+          Tell us about your vision. We'll craft the right digital experience together.
+        </p>
+      </div>
+
+      <!-- Discovery Form -->
+      <form id="discovery-form" novalidate>
+        
+        <!-- STEP 1: Who are you? -->
+        <div class="discovery-step active" id="step-1" data-step="1">
+          <h2 class="discovery-step__title">01 / Who are you?</h2>
+          
+          <div class="discovery-input-group">
+            <label class="discovery-label" for="disc-name">Full Name</label>
+            <input type="text" id="disc-name" class="discovery-input" placeholder="e.g. Alexander Mercer" required>
+            <span class="discovery-error-msg" id="err-name">Please enter your name.</span>
+          </div>
+
+          <div class="discovery-input-group">
+            <label class="discovery-label" for="disc-email">Email Address</label>
+            <input type="email" id="disc-email" class="discovery-input" placeholder="e.g. alex@company.com" required>
+            <span class="discovery-error-msg" id="err-email">Please enter a valid email address.</span>
+          </div>
+
+          <div class="discovery-input-group">
+            <label class="discovery-label" for="disc-phone">Phone Number</label>
+            <div class="discovery-phone-row">
+              <select id="disc-phone-prefix">
+                <option value="+91">+91 (IN)</option>
+                <option value="+1">+1 (US)</option>
+                <option value="+44">+44 (UK)</option>
+                <option value="+971">+971 (AE)</option>
+                <option value="+65">+65 (SG)</option>
+                <option value="+33">+33 (FR)</option>
+                <option value="+49">+49 (DE)</option>
+                <option value="+81">+81 (JP)</option>
+                <option value="+61">+61 (AU)</option>
+              </select>
+              <input type="tel" id="disc-phone" class="discovery-input" placeholder="e.g. 9876543210" required>
+            </div>
+            <span class="discovery-error-msg" id="err-phone">Please enter your phone number.</span>
+          </div>
+
+          <div class="discovery-input-group">
+            <label class="discovery-label" for="disc-company">Company / Organization</label>
+            <input type="text" id="disc-company" class="discovery-input" placeholder="e.g. Acme Corporation" required>
+            <span class="discovery-error-msg" id="err-company">Please enter your company name.</span>
+          </div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
-          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-email">Email Address</label>
-          <input type="email" id="contact-email" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast);" placeholder="john@company.com" required>
+
+        <!-- STEP 2: What do you need? -->
+        <div class="discovery-step" id="step-2" data-step="2">
+          <h2 class="discovery-step__title">02 / What do you need?</h2>
+          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">Select all that apply.</p>
+          
+          <div class="discovery-grid">
+            <div class="discovery-card multi-select" data-value="Website">
+              <span class="discovery-card__label">Website</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="Brand Identity">
+              <span class="discovery-card__label">Brand Identity</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="UI/UX Design">
+              <span class="discovery-card__label">UI/UX Design</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="Content Creation">
+              <span class="discovery-card__label">Content Creation</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="Video Production">
+              <span class="discovery-card__label">Video Production</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="Web Application">
+              <span class="discovery-card__label">Web Application</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card multi-select" data-value="Custom Solution">
+              <span class="discovery-card__label">Custom Solution</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+          </div>
+          <span class="discovery-error-msg" id="err-needs" style="margin-top: -20px; margin-bottom: 20px; display: block;">Please select at least one service.</span>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
-          <label style="font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--mist); text-transform: uppercase; letter-spacing: 0.5px;" for="contact-details">Project Brief Details</label>
-          <textarea id="contact-details" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); color: var(--volt); padding: 14px 16px; border-radius: 4px; font-size: 0.95rem; font-family: var(--font-body); outline: none; transition: var(--transition-fast); resize: vertical; min-height: 120px;" placeholder="Describe the creative brief, timeline expectations, and estimated budget..." required></textarea>
+
+        <!-- STEP 3: Project description -->
+        <div class="discovery-step" id="step-3" data-step="3">
+          <h2 class="discovery-step__title">03 / Tell us about your project</h2>
+          
+          <div class="discovery-input-group">
+            <label class="discovery-label" for="disc-details">Project Brief</label>
+            <textarea id="disc-details" class="discovery-textarea" placeholder="Describe your project, goals, audience, timeline, and anything you'd like us to know." required></textarea>
+            <span class="discovery-error-msg" id="err-details">Please describe your project brief.</span>
+          </div>
         </div>
-        <button type="submit" class="btn btn--primary pulse-glow" style="width: 100%; justify-content: center; margin-top: 10px; font-size: 1.1rem; padding: 16px;">
-          LET'S BUILD →
-        </button>
+
+        <!-- STEP 4: Budget -->
+        <div class="discovery-step" id="step-4" data-step="4">
+          <h2 class="discovery-step__title">04 / Budget Range</h2>
+          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">Select your estimated investment tier.</p>
+          
+          <div class="discovery-grid">
+            <div class="discovery-card single-select" data-group="budget" data-value="Below ₹50K">
+              <span class="discovery-card__label">Below ₹50K</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="budget" data-value="₹50K–₹1L">
+              <span class="discovery-card__label">₹50K–₹1L</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="budget" data-value="₹1L–₹3L">
+              <span class="discovery-card__label">₹1L–₹3L</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="budget" data-value="₹3L–₹5L">
+              <span class="discovery-card__label">₹3L–₹5L</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="budget" data-value="₹5L+">
+              <span class="discovery-card__label">₹5L+</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="budget" data-value="Not Sure Yet">
+              <span class="discovery-card__label">Not Sure Yet</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+          </div>
+          <span class="discovery-error-msg" id="err-budget" style="margin-top: -20px; margin-bottom: 20px; display: block;">Please select a budget range.</span>
+        </div>
+
+        <!-- STEP 5: Timeline -->
+        <div class="discovery-step" id="step-5" data-step="5">
+          <h2 class="discovery-step__title">05 / Launch Timeline</h2>
+          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">When does this project need to launch?</p>
+          
+          <div class="discovery-grid">
+            <div class="discovery-card single-select" data-group="timeline" data-value="ASAP">
+              <span class="discovery-card__label">ASAP</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="timeline" data-value="Within 2 Weeks">
+              <span class="discovery-card__label">Within 2 Weeks</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="timeline" data-value="Within 1 Month">
+              <span class="discovery-card__label">Within 1 Month</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="timeline" data-value="1–3 Months">
+              <span class="discovery-card__label">1–3 Months</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+            <div class="discovery-card single-select" data-group="timeline" data-value="Flexible">
+              <span class="discovery-card__label">Flexible</span>
+              <div class="discovery-card__indicator"></div>
+            </div>
+          </div>
+          <span class="discovery-error-msg" id="err-timeline" style="margin-top: -20px; margin-bottom: 20px; display: block;">Please select a timeline.</span>
+        </div>
+
+        <!-- STEP 6: Review Summary -->
+        <div class="discovery-step" id="step-6" data-step="6">
+          <h2 class="discovery-step__title">06 / Review & Submit</h2>
+          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">Please review your request details below.</p>
+          
+          <div class="discovery-summary" id="disc-summary-text">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Footer Navigation -->
+        <div class="discovery-nav">
+          <button type="button" class="discovery-btn-prev" id="btn-prev-step" style="visibility: hidden;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back
+          </button>
+          <button type="button" class="discovery-btn-next" id="btn-next-step">
+            Next Step
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </div>
       </form>
     </div>
   </section>
@@ -247,63 +713,328 @@
   <!-- Custom Shared JavaScript -->
   <script src="js/main.js"></script>
 
-  <!-- Contact Form Submission logic to Supabase -->
+  <!-- Project Discovery Onboarding script -->
   <script>
     const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
+    const state = {
+      name: '',
+      email: '',
+      phonePrefix: '+91',
+      phoneNum: '',
+      company: '',
+      needs: [],
+      details: '',
+      budget: '',
+      timeline: ''
+    };
+    let currentStep = 1;
+    const totalSteps = 6;
+    let supabaseClient;
+
     document.addEventListener('DOMContentLoaded', () => {
-      const contactForm = document.getElementById('form-contact-inquiry');
-      contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+      // Connect buttons
+      const btnNext = document.getElementById('btn-next-step');
+      const btnPrev = document.getElementById('btn-prev-step');
 
-        const name = document.getElementById('contact-name').value;
-        const email = document.getElementById('contact-email').value;
-        const details = document.getElementById('contact-details').value;
-
-        const submitBtn = contactForm.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Sending...';
-
-        fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            client_name: name,
-            email: email,
-            message: details,
-            status: 'new'
-          })
-        })
-        .then(res => {
-          if (res.ok || res.status === 201) {
-            contactForm.parentElement.innerHTML = `
-              <div style="text-align: center; padding: 40px 0;">
-                <span style="font-size: 3.5rem; color: var(--fire); display: block; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,90,31,0.2));">✓</span>
-                <h3 style="font-family: var(--font-display); font-size: 1.5rem; text-transform: uppercase; color: var(--volt); margin-bottom: 10px;">Message Received</h3>
-                <p style="font-size: 0.95rem; color: var(--mist); line-height: 1.6;">
-                  Thank you! Your inquiry was successfully routed to the YAWMATIC Control Center. A project manager will review the brief and contact you via email shortly.
-                </p>
-              </div>
-            `;
-          } else {
-            alert('Submission failed. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'LET\'S BUILD →';
+      btnNext.addEventListener('click', () => {
+        if (currentStep < totalSteps) {
+          if (validateStep(currentStep)) {
+            goToStep(currentStep + 1);
           }
-        })
-        .catch(err => {
-          alert('A network error occurred. Please try again.');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'LET\'S BUILD →';
+        } else {
+          // Final Submit
+          handleDiscoverySubmit();
+        }
+      });
+
+      btnPrev.addEventListener('click', () => {
+        if (currentStep > 1) {
+          goToStep(currentStep - 1);
+        }
+      });
+
+      // Bind inputs focus state auto validation / error removal
+      const inputs = document.querySelectorAll('.discovery-input, .discovery-textarea');
+      inputs.forEach(input => {
+        input.addEventListener('input', () => {
+          hideErrors();
+        });
+      });
+
+      // Multi select card clicks
+      document.querySelectorAll('.discovery-card.multi-select').forEach(card => {
+        card.addEventListener('click', () => {
+          const val = card.dataset.value;
+          if (card.classList.contains('selected')) {
+            card.classList.remove('selected');
+            state.needs = state.needs.filter(n => n !== val);
+          } else {
+            card.classList.add('selected');
+            state.needs.push(val);
+          }
+          hideErrors();
+        });
+      });
+
+      // Single select card clicks
+      document.querySelectorAll('.discovery-card.single-select').forEach(card => {
+        card.addEventListener('click', () => {
+          const group = card.dataset.group;
+          const val = card.dataset.value;
+          
+          document.querySelectorAll(`.discovery-card.single-select[data-group="${group}"]`).forEach(c => {
+            c.classList.remove('selected');
+          });
+          
+          card.classList.add('selected');
+          state[group] = val;
+          hideErrors();
         });
       });
     });
+
+    function validateStep(stepNum) {
+      let isValid = true;
+      hideErrors();
+
+      if (stepNum === 1) {
+        const name = document.getElementById('disc-name').value.trim();
+        const email = document.getElementById('disc-email').value.trim();
+        const phone = document.getElementById('disc-phone').value.trim();
+        const company = document.getElementById('disc-company').value.trim();
+
+        if (!name) {
+          document.getElementById('err-name').style.display = 'block';
+          isValid = false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+          document.getElementById('err-email').style.display = 'block';
+          isValid = false;
+        }
+        if (!phone) {
+          document.getElementById('err-phone').style.display = 'block';
+          isValid = false;
+        }
+        if (!company) {
+          document.getElementById('err-company').style.display = 'block';
+          isValid = false;
+        }
+
+        if (isValid) {
+          state.name = name;
+          state.email = email;
+          state.phonePrefix = document.getElementById('disc-phone-prefix').value;
+          state.phoneNum = phone;
+          state.company = company;
+        }
+      } else if (stepNum === 2) {
+        if (state.needs.length === 0) {
+          document.getElementById('err-needs').style.display = 'block';
+          isValid = false;
+        }
+      } else if (stepNum === 3) {
+        const details = document.getElementById('disc-details').value.trim();
+        if (!details) {
+          document.getElementById('err-details').style.display = 'block';
+          isValid = false;
+        } else {
+          state.details = details;
+        }
+      } else if (stepNum === 4) {
+        if (!state.budget) {
+          document.getElementById('err-budget').style.display = 'block';
+          isValid = false;
+        }
+      } else if (stepNum === 5) {
+        if (!state.timeline) {
+          document.getElementById('err-timeline').style.display = 'block';
+          isValid = false;
+        }
+      }
+      
+      return isValid;
+    }
+
+    function hideErrors() {
+      document.querySelectorAll('.discovery-error-msg').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+
+    function compileSummary() {
+      const summaryText = `
+        I am <strong>${escapeHtml(state.name)}</strong> representing <strong>${escapeHtml(state.company)}</strong>. 
+        You can contact me at <strong>${escapeHtml(state.email)}</strong> or via <strong>${escapeHtml(state.phonePrefix)} ${escapeHtml(state.phoneNum)}</strong>. 
+        <br><br>
+        I want to collaborate on <strong>${escapeHtml(state.needs.join(', '))}</strong> services, for which we have set aside an estimated budget of <strong>${escapeHtml(state.budget)}</strong>. 
+        We are targeting a launch timeline of <strong>${escapeHtml(state.timeline)}</strong>.
+        <br><br>
+        <strong>Project details and brief description:</strong><br>
+        <span style="font-size:1.1rem; color:#ffffff; font-style:italic;">"${escapeHtml(state.details)}"</span>
+      `;
+      document.getElementById('disc-summary-text').innerHTML = summaryText;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function goToStep(nextStep) {
+      const currentEl = document.getElementById(`step-${currentStep}`);
+      const nextEl = document.getElementById(`step-${nextStep}`);
+      
+      // GSAP transition
+      gsap.timeline()
+        .to(currentEl, {
+          opacity: 0,
+          y: -20,
+          scale: 0.98,
+          duration: 0.25,
+          onComplete: () => {
+            currentEl.classList.remove('active');
+            nextEl.classList.add('active');
+            
+            // If Step 6, compile summary
+            if (nextStep === 6) {
+              compileSummary();
+            }
+          }
+        })
+        .fromTo(nextEl, {
+          opacity: 0,
+          y: 20,
+          scale: 1.02
+        }, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.35,
+          ease: 'power2.out'
+        });
+
+      // Update navigation buttons
+      currentStep = nextStep;
+      updateProgressBar();
+
+      const prevBtn = document.getElementById('btn-prev-step');
+      const nextBtn = document.getElementById('btn-next-step');
+
+      if (currentStep === 1) {
+        prevBtn.style.visibility = 'hidden';
+      } else {
+        prevBtn.style.visibility = 'visible';
+      }
+
+      if (currentStep === totalSteps) {
+        nextBtn.innerHTML = `
+          Submit Request
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        `;
+      } else {
+        nextBtn.innerHTML = `
+          Next Step
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        `;
+      }
+    }
+
+    function updateProgressBar() {
+      document.querySelectorAll('.discovery-progress__segment').forEach((el, index) => {
+        if (index < currentStep) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    function handleDiscoverySubmit() {
+      const submitBtn = document.getElementById('btn-next-step');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting Request...';
+
+      // Post to Supabase inquiries table
+      fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          client_name: state.name,
+          email: state.email,
+          phone: `${state.phonePrefix} ${state.phoneNum}`,
+          company: state.company,
+          project_type: state.needs.join(', '),
+          budget: state.budget,
+          message: `Timeline: ${state.timeline}\n\nProject Brief:\n${state.details}`,
+          status: 'new'
+        })
+      })
+      .then(res => {
+        if (res.ok || res.status === 201) {
+          showSuccessScreen();
+        } else {
+          alert('Submission failed. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+      })
+      .catch(err => {
+        alert('A network error occurred. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Request';
+      });
+    }
+
+    function showSuccessScreen() {
+      const container = document.getElementById('discovery-flow-container');
+      
+      // Fade out the hero header if visible
+      const hero = document.getElementById('discovery-hero-section');
+      if (hero) {
+        gsap.to(hero, { opacity: 0, height: 0, overflow: 'hidden', duration: 0.3 });
+      }
+
+      gsap.to(container, {
+        opacity: 0,
+        y: -30,
+        duration: 0.3,
+        onComplete: () => {
+          container.innerHTML = `
+            <div class="discovery-success">
+              <svg class="success-checkmark" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="25" />
+                <path fill="none" class="success-checkmark check" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+              </svg>
+              <h1 class="discovery-hero" style="font-size:3rem; margin-bottom:16px;">Thank You.</h1>
+              <p class="discovery-sub" style="font-size:1.2rem; margin-bottom:8px; color:#ffffff;">We've received your project inquiry.</p>
+              <p class="discovery-sub" style="margin-bottom:40px; max-width:500px; margin-left:auto; margin-right:auto;">
+                Our team will carefully review your request and get back to you shortly.
+              </p>
+              <a href="/" class="discovery-btn-next" style="display:inline-flex; text-decoration:none; margin:0 auto; width:max-content; justify-content:center;">
+                Back to Home
+              </a>
+            </div>
+          `;
+          
+          gsap.fromTo(container, {
+            opacity: 0,
+            y: 30
+          }, {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: 'power2.out'
+          });
+        }
+      });
+    }
   </script>
 </body>
 </html>
