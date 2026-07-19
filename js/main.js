@@ -2165,7 +2165,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ----------------------------------------------------
-   RESPONSIVE MOBILE NAVIGATION INJECTION
+   RESPONSIVE MOBILE NAVIGATION INJECTION (FULL SCREEN LUXURY OVERLAY)
    ---------------------------------------------------- */
 function injectMobileNav() {
   const navbar = document.querySelector('.navbar');
@@ -2186,28 +2186,52 @@ function injectMobileNav() {
   `;
   navbar.appendChild(hamburger);
 
-  // Create Mobile Menu Overlay
+  // Create Full-Screen Mobile Menu Overlay
   const mobileMenu = document.createElement('div');
   mobileMenu.className = 'mobile-menu';
   mobileMenu.id = 'mobile-menu';
   mobileMenu.innerHTML = `
     <div class="mobile-menu__overlay"></div>
     <div class="mobile-menu__content">
-      <ul class="mobile-menu__links">
-        <li><a href="/" class="mobile-menu__link">Home</a></li>
-        <li><a href="/about" class="mobile-menu__link">About</a></li>
-        <li><a href="/services" class="mobile-menu__link">Services</a></li>
-        <li><a href="/work" class="mobile-menu__link">Work</a></li>
-        <li><a href="/process" class="mobile-menu__link">Process</a></li>
-        <li><a href="/creators" class="mobile-menu__link">Creators</a></li>
-        <li><a href="/contact" class="mobile-menu__link mobile-menu__link--btn btn btn--primary">Let's Talk →</a></li>
-      </ul>
+      <div class="mobile-menu__header">
+        <a href="/" class="mobile-menu__brand">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 32px; height: 32px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <button class="mobile-menu__close" id="mobile-menu-close" aria-label="Close Menu">✕</button>
+      </div>
+
+      <div class="mobile-menu__body">
+        <ul class="mobile-menu__links">
+          <li><a href="/" class="mobile-menu__link"><span class="mobile-menu__num">01</span><span class="mobile-menu__text">Home</span></a></li>
+          <li><a href="/about" class="mobile-menu__link"><span class="mobile-menu__num">02</span><span class="mobile-menu__text">About</span></a></li>
+          <li><a href="/services" class="mobile-menu__link"><span class="mobile-menu__num">03</span><span class="mobile-menu__text">Services</span></a></li>
+          <li><a href="/work" class="mobile-menu__link"><span class="mobile-menu__num">04</span><span class="mobile-menu__text">Work</span></a></li>
+          <li><a href="/process" class="mobile-menu__link"><span class="mobile-menu__num">05</span><span class="mobile-menu__text">Process</span></a></li>
+          <li><a href="/creators" class="mobile-menu__link"><span class="mobile-menu__num">06</span><span class="mobile-menu__text">Creators</span></a></li>
+        </ul>
+        
+        <div class="mobile-menu__cta-wrap">
+          <a href="/contact" class="btn btn--primary mobile-menu__cta-btn">Start A Project →</a>
+        </div>
+      </div>
+
+      <div class="mobile-menu__footer">
+        <span class="mobile-menu__tagline">THINK FUTURE. BUILD DIFFERENT.</span>
+      </div>
     </div>
   `;
   document.body.appendChild(mobileMenu);
 
+  const closeBtn = mobileMenu.querySelector('#mobile-menu-close');
   const overlay = mobileMenu.querySelector('.mobile-menu__overlay');
-  const links = mobileMenu.querySelectorAll('.mobile-menu__link');
+  const links = mobileMenu.querySelectorAll('.mobile-menu__link, .mobile-menu__cta-btn');
 
   function toggleMenu() {
     const isOpen = mobileMenu.classList.contains('is-open');
@@ -2221,10 +2245,19 @@ function injectMobileNav() {
       hamburger.classList.add('is-active');
       document.body.classList.add('no-scroll');
       if (typeof lenis !== 'undefined' && lenis) lenis.stop();
+
+      // Trigger GSAP staggered link entrance if available
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo('.mobile-menu__link', 
+          { opacity: 0, y: 25 }, 
+          { opacity: 1, y: 0, stagger: 0.05, duration: 0.45, ease: 'power3.out', overwrite: 'auto' }
+        );
+      }
     }
   }
 
   hamburger.addEventListener('click', toggleMenu);
+  if (closeBtn) closeBtn.addEventListener('click', toggleMenu);
   overlay.addEventListener('click', toggleMenu);
   links.forEach(link => {
     link.addEventListener('click', () => {
