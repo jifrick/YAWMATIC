@@ -2122,9 +2122,376 @@ button {
   color: #FFFFFF;
 }
 
-/* Between-option divider (thin rule every N items if needed) */
 .custom-select__divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.05);
   margin: 4px 8px;
+}
+
+/* ====================================================
+   MOBILE & TABLET RESPONSIVENESS SYSTEM (<= 1024px)
+   ==================================================== */
+@media (max-width: 1024px) {
+  /* Scroll locking & custom cursor visibility */
+  body.no-scroll {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+  
+  .custom-cursor-dot, 
+  .custom-cursor-ring {
+    display: none !important;
+  }
+  
+  a, button, select, input, textarea, .custom-select__option, .custom-select__trigger {
+    cursor: pointer !important;
+  }
+
+  /* Section Padding */
+  .section-padding {
+    padding: 80px 5% !important;
+  }
+
+  /* Buttons & Touch Targets */
+  .btn, button, a.btn {
+    min-height: 44px;
+    padding: 12px 28px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hamburger Menu Button */
+  .navbar__hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+  }
+  
+  .hamburger-line {
+    width: 100%;
+    height: 2px;
+    background-color: var(--volt);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: left center;
+  }
+  
+  .navbar__hamburger.is-active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(2px, -1px);
+  }
+  
+  .navbar__hamburger.is-active .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .navbar__hamburger.is-active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(2px, 1px);
+  }
+
+  .navbar__menu {
+    display: none !important;
+  }
+
+  .navbar > .magnetic-wrap:last-child {
+    display: none !important; /* Hide Let's Talk desktop CTA in navbar */
+  }
+
+  .navbar {
+    padding: 20px 5% !important;
+  }
+
+  /* Mobile Menu Drawer Container */
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999;
+    pointer-events: none;
+    visibility: hidden;
+    transition: visibility 0.4s ease;
+  }
+  
+  .mobile-menu.is-open {
+    pointer-events: auto;
+    visibility: visible;
+  }
+  
+  .mobile-menu__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 15, 16, 0.95);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .mobile-menu.is-open .mobile-menu__overlay {
+    opacity: 1;
+  }
+  
+  .mobile-menu__content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(360px, 85%);
+    height: 100%;
+    background: #0f0f10;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    transform: translateX(100%);
+    transition: transform 0.4s var(--ease-premium);
+    display: flex;
+    align-items: center;
+    padding: 80px 40px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .mobile-menu.is-open .mobile-menu__content {
+    transform: translateX(0);
+  }
+  
+  .mobile-menu__links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 100%;
+  }
+  
+  .mobile-menu__link {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--mist);
+    transition: var(--transition-fast);
+    display: block;
+    text-decoration: none;
+  }
+  
+  .mobile-menu__link:hover, 
+  .mobile-menu__link.active {
+    color: var(--volt);
+    padding-left: 10px;
+    border-left: 3px solid var(--fire);
+  }
+  
+  .mobile-menu__link--btn {
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 15px;
+    border-left: none !important;
+  }
+  
+  .mobile-menu__link--btn:hover {
+    padding-left: 0 !important;
+  }
+
+  /* Hero Section */
+  .hero-section {
+    padding: 0 5% !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 30px !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    padding-top: 110px !important;
+    padding-bottom: 50px !important;
+  }
+
+  .hero__content {
+    width: 100% !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+
+  .hero__headline {
+    font-size: clamp(2.4rem, 6vw, 4.2rem) !important;
+    line-height: 1.05 !important;
+    margin-bottom: 16px !important;
+  }
+
+  .hero__subtext {
+    margin-bottom: 30px !important;
+    max-width: 540px !important;
+  }
+
+  .hero__ctas {
+    justify-content: center !important;
+  }
+
+  .hero__webgl-container {
+    width: 100% !important;
+    height: 42vh !important;
+    position: relative !important;
+    order: -1 !important;
+    margin-bottom: 10px;
+  }
+
+  .hero__orbit-overlay {
+    width: 320px !important;
+    height: 320px !important;
+  }
+
+  /* Brand Vision Split & Capabilities stagger */
+  .about-split {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 40px !important;
+  }
+
+  .about__left, 
+  .about__right {
+    width: 100% !important;
+  }
+
+  .about__right {
+    height: auto !important;
+  }
+
+  .about-webgl-container {
+    width: 300px !important;
+    height: 300px !important;
+    margin: 0 auto;
+  }
+
+  .capabilities-grid .capability-card:nth-child(even) {
+    top: 0 !important;
+  }
+
+  /* Featured Work Card Stacking */
+  .featured-work-container {
+    min-height: auto !important;
+    height: auto !important;
+    padding: 80px 5% !important;
+    overflow: visible !important;
+  }
+
+  .horizontal-scroll-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 0 !important;
+    gap: 24px !important;
+    transform: none !important;
+  }
+
+  .featured-work__header-card {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 16px !important;
+    text-align: center !important;
+    align-items: center !important;
+  }
+
+  .work-card {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 30px 24px !important;
+  }
+
+  /* Ecosystem Stacking */
+  .ecosystem-container {
+    height: auto !important;
+    min-height: 450px !important;
+    flex-direction: column !important;
+    gap: 30px !important;
+    justify-content: center !important;
+    padding: 40px 0 !important;
+  }
+
+  .ecosystem-node {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+  }
+
+  .ecosystem-node--center {
+    min-width: auto !important;
+    width: 100% !important;
+    max-width: 300px !important;
+  }
+
+  .ecosystem-svg {
+    display: none !important;
+  }
+
+  /* Forms & inputs */
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* intl-tel-input touch sizing */
+  .iti__country {
+    padding: 10px 14px !important;
+  }
+
+  /* Dashboard Admin View responsiveness overrides */
+  .cc-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    z-index: 10002 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .cc-sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  .cc-main {
+    width: 100vw !important;
+  }
+
+  .cc-header {
+    padding: 16px 20px !important;
+  }
+
+  .cc-content {
+    padding: 20px !important;
+  }
+
+  .pipeline-container {
+    height: auto !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .pipeline-column {
+    flex: 1 1 auto !important;
+  }
+
+  .msg-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+
+  .msg-threads {
+    max-height: 250px;
+  }
 }

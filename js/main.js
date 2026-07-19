@@ -61,7 +61,7 @@ function highlightActiveLink() {
   if (path === '' || path === '/index.html') path = '/';
   if (path.endsWith('/') && path.length > 1) path = path.slice(0, -1);
 
-  const menuLinks = document.querySelectorAll('.navbar__menu .navbar__link, .footer__menu .footer__link');
+  const menuLinks = document.querySelectorAll('.navbar__menu .navbar__link, .footer__menu .footer__link, .mobile-menu__link');
   menuLinks.forEach(link => {
     let href = link.getAttribute('href');
     if (href === '') href = '/';
@@ -191,7 +191,7 @@ document.addEventListener('click', (e) => {
    SMOOTH SCROLLING (Lenis)
    ---------------------------------------------------- */
 let lenis;
-if (!isMobile) {
+if (window.innerWidth > 1024) {
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -335,6 +335,7 @@ let pageLoaded = false;
 let loaderTimelineComplete = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  injectMobileNav();
   if (isInternalNavigation) {
     // Internal nav: loader already hidden above — just set nav logo visible
     const navLogo = document.querySelector('.navbar__logo');
@@ -783,7 +784,7 @@ const cursorRing = document.getElementById('cursor-ring');
 let mouseX = 0, mouseY = 0;
 let ringX = 0, ringY = 0;
 
-if (!isMobile && cursorDot && cursorRing) {
+if (window.innerWidth > 1024 && cursorDot && cursorRing) {
   window.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -1521,6 +1522,11 @@ function initHorizontalScroll() {
     existingTrigger.kill(true);
   }
 
+  if (window.innerWidth <= 1024) {
+    gsap.set(container, { clearProps: 'all' });
+    return;
+  }
+
   gsap.to(container, {
     x: () => -(container.scrollWidth - window.innerWidth),
     ease: 'none',
@@ -2157,3 +2163,74 @@ document.addEventListener('visibilitychange', () => {
     ScrollTrigger.refresh();
   }
 });
+
+/* ----------------------------------------------------
+   RESPONSIVE MOBILE NAVIGATION INJECTION
+   ---------------------------------------------------- */
+function injectMobileNav() {
+  const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+
+  // Prevent double injection
+  if (document.getElementById('nav-hamburger')) return;
+
+  // Create Hamburger Button
+  const hamburger = document.createElement('button');
+  hamburger.className = 'navbar__hamburger';
+  hamburger.id = 'nav-hamburger';
+  hamburger.setAttribute('aria-label', 'Toggle Menu');
+  hamburger.innerHTML = `
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  `;
+  navbar.appendChild(hamburger);
+
+  // Create Mobile Menu Overlay
+  const mobileMenu = document.createElement('div');
+  mobileMenu.className = 'mobile-menu';
+  mobileMenu.id = 'mobile-menu';
+  mobileMenu.innerHTML = `
+    <div class="mobile-menu__overlay"></div>
+    <div class="mobile-menu__content">
+      <ul class="mobile-menu__links">
+        <li><a href="/" class="mobile-menu__link">Home</a></li>
+        <li><a href="/about" class="mobile-menu__link">About</a></li>
+        <li><a href="/services" class="mobile-menu__link">Services</a></li>
+        <li><a href="/work" class="mobile-menu__link">Work</a></li>
+        <li><a href="/process" class="mobile-menu__link">Process</a></li>
+        <li><a href="/creators" class="mobile-menu__link">Creators</a></li>
+        <li><a href="/contact" class="mobile-menu__link mobile-menu__link--btn btn btn--primary">Let's Talk →</a></li>
+      </ul>
+    </div>
+  `;
+  document.body.appendChild(mobileMenu);
+
+  const overlay = mobileMenu.querySelector('.mobile-menu__overlay');
+  const links = mobileMenu.querySelectorAll('.mobile-menu__link');
+
+  function toggleMenu() {
+    const isOpen = mobileMenu.classList.contains('is-open');
+    if (isOpen) {
+      mobileMenu.classList.remove('is-open');
+      hamburger.classList.remove('is-active');
+      document.body.classList.remove('no-scroll');
+      if (typeof lenis !== 'undefined' && lenis) lenis.start();
+    } else {
+      mobileMenu.classList.add('is-open');
+      hamburger.classList.add('is-active');
+      document.body.classList.add('no-scroll');
+      if (typeof lenis !== 'undefined' && lenis) lenis.stop();
+    }
+  }
+
+  hamburger.addEventListener('click', toggleMenu);
+  overlay.addEventListener('click', toggleMenu);
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      if (mobileMenu.classList.contains('is-open')) {
+        toggleMenu();
+      }
+    });
+  });
+}
