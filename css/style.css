@@ -2210,7 +2210,12 @@ button {
   }
 
   .navbar {
-    padding: max(20px, env(safe-area-inset-top)) 6% 20px 6% !important;
+    padding: max(18px, env(safe-area-inset-top)) 6% 18px 6% !important;
+  }
+
+  .navbar__logo {
+    transform: scale(0.88) !important;
+    transform-origin: left center !important;
   }
 
   /* Mobile Menu Full-Screen Container */
@@ -2378,35 +2383,35 @@ button {
     color: var(--fire);
   }
 
-  /* Hero Section Mobile Order & Luxury Whitespace */
+  /* Hero Section Mobile Refined Composition & Vertical Rhythm */
   .hero-pin-wrapper {
     height: auto !important;
     min-height: 100vh !important;
   }
 
   .hero-section {
-    padding: max(100px, calc(80px + env(safe-area-inset-top))) 6% max(40px, env(safe-area-inset-bottom)) 6% !important;
+    padding: max(75px, calc(65px + env(safe-area-inset-top))) 6% max(30px, env(safe-area-inset-bottom)) 6% !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
     align-items: center !important;
-    gap: 36px !important;
+    gap: 16px !important;
     height: auto !important;
     min-height: 100vh !important;
   }
 
   .hero__webgl-container {
     width: 100% !important;
-    height: 36vh !important;
-    min-height: 240px !important;
-    max-height: 320px !important;
+    height: 28vh !important;
+    min-height: 200px !important;
+    max-height: 260px !important;
     position: relative !important;
     order: 1 !important;
     margin: 0 auto !important;
   }
 
   .hero__orbit-overlay {
-    width: 280px !important;
-    height: 280px !important;
+    width: 250px !important;
+    height: 250px !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) rotateX(75deg) !important;
@@ -2421,25 +2426,27 @@ button {
   }
 
   .hero__headline {
-    font-size: clamp(2.2rem, 7vw, 3.8rem) !important;
+    font-size: clamp(2.1rem, 6.8vw, 3.6rem) !important;
     line-height: 1.08 !important;
     letter-spacing: -0.02em !important;
-    margin-bottom: 16px !important;
+    margin-top: 0 !important;
+    margin-bottom: 14px !important;
   }
 
   .hero__subtext {
-    font-size: clamp(0.95rem, 3.5vw, 1.15rem) !important;
-    line-height: 1.65 !important;
+    font-size: clamp(0.92rem, 3.4vw, 1.1rem) !important;
+    line-height: 1.68 !important;
     color: var(--mist) !important;
-    max-width: 540px !important;
-    margin: 0 auto 32px auto !important;
+    max-width: 330px !important;
+    width: 88% !important;
+    margin: 0 auto 36px auto !important;
   }
 
   .hero__ctas {
     flex-direction: column !important;
     width: 100% !important;
-    max-width: 400px !important;
-    gap: 14px !important;
+    max-width: 360px !important;
+    gap: 16px !important;
     margin: 0 auto !important;
   }
 
@@ -2461,7 +2468,7 @@ button {
     left: auto !important;
     transform: none !important;
     order: 3 !important;
-    margin-top: 24px !important;
+    margin-top: 20px !important;
     margin-bottom: 20px !important;
     align-self: center !important;
   }
