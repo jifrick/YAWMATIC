@@ -2219,209 +2219,51 @@ button {
     padding: max(18px, env(safe-area-inset-top)) 6% 18px 6% !important;
   }
 
+  /* Wordmark reduced by ~20% on mobile to act as a signature logo */
   .navbar__logo {
-    transform: scale(0.88) !important;
+    transform: scale(0.70) !important;
     transform-origin: left center !important;
   }
 
-  /* Mobile Menu Full-Screen Container */
-  .mobile-menu {
-    display: block !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 99999;
-    pointer-events: none;
-    visibility: hidden;
-    transition: visibility 0.4s ease;
-  }
-  
-  .mobile-menu.is-open {
-    pointer-events: auto;
-    visibility: visible;
-  }
-  
-  .mobile-menu__overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(9, 9, 10, 0.98);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-  
-  .mobile-menu.is-open .mobile-menu__overlay {
-    opacity: 1;
-  }
-  
-  .mobile-menu__content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: max(24px, env(safe-area-inset-top)) 6% max(32px, env(safe-area-inset-bottom)) 6%;
-    z-index: 2;
-    transform: translateY(20px);
-    opacity: 0;
-    transition: transform 0.4s var(--ease-premium), opacity 0.4s ease;
-  }
-  
-  .mobile-menu.is-open .mobile-menu__content {
-    transform: translateY(0);
-    opacity: 1;
+  .mobile-menu__brand .logo-wordmark-img {
+    height: 1.15em !important;
   }
 
-  .mobile-menu__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .mobile-menu__brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .mobile-menu__close {
-    background: transparent;
-    border: 1px solid var(--glass-border);
-    color: var(--volt);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: var(--transition-fast);
-  }
-
-  .mobile-menu__close:hover {
-    border-color: var(--fire);
-    color: var(--fire);
-  }
-
-  .mobile-menu__body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    gap: 32px;
-    padding: 30px 0;
-  }
-
-  .mobile-menu__links {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-  }
-
-  .mobile-menu__link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 6.5vw, 2.6rem);
-    font-weight: 800;
-    text-transform: uppercase;
-    color: var(--mist);
-    transition: var(--transition-fast);
-    text-decoration: none;
-  }
-
-  .mobile-menu__num {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--fire);
-    letter-spacing: 1px;
-    opacity: 0.8;
-  }
-
-  .mobile-menu__link:hover,
-  .mobile-menu__link.active {
-    color: var(--volt);
-    transform: translateX(8px);
-  }
-
-  .mobile-menu__link.active .mobile-menu__text {
-    color: var(--volt);
-  }
-
-  .mobile-menu__cta-wrap {
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .mobile-menu__cta-btn {
-    width: 100% !important;
-    min-height: 52px !important;
-    justify-content: center !important;
-    font-size: 1rem !important;
-  }
-
-  .mobile-menu__footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 20px;
-    text-align: center;
-  }
-
-  .mobile-menu__tagline {
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--fire);
-  }
-
-  /* Hero Section Mobile Refined Composition & Vertical Rhythm */
+  /* Mobile Hero Container & Vertical Rhythm */
   .hero-pin-wrapper {
     height: auto !important;
     min-height: 100vh !important;
   }
 
   .hero-section {
-    padding: max(75px, calc(65px + env(safe-area-inset-top))) 6% max(30px, env(safe-area-inset-bottom)) 6% !important;
+    padding: max(70px, calc(60px + env(safe-area-inset-top))) 6% max(24px, env(safe-area-inset-bottom)) 6% !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 12px !important;
     height: auto !important;
     min-height: 100vh !important;
   }
 
   .hero__webgl-container {
     width: 100% !important;
-    height: 28vh !important;
+    height: 240px !important;
     min-height: 200px !important;
     max-height: 260px !important;
     position: relative !important;
     order: 1 !important;
-    margin: 0 auto !important;
+    margin: 0 auto 10px auto !important;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
   }
 
   .hero__orbit-overlay {
-    width: 250px !important;
-    height: 250px !important;
+    width: 220px !important;
+    height: 220px !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) rotateX(75deg) !important;
+    opacity: 0.6 !important;
   }
 
   .hero__content {
@@ -2430,30 +2272,32 @@ button {
     align-items: center !important;
     order: 2 !important;
     margin: 0 auto !important;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
   }
 
   .hero__headline {
-    font-size: clamp(2.1rem, 6.8vw, 3.6rem) !important;
+    font-size: clamp(2.0rem, 6.4vw, 3.2rem) !important;
     line-height: 1.08 !important;
     letter-spacing: -0.02em !important;
     margin-top: 0 !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 12px !important;
   }
 
   .hero__subtext {
-    font-size: clamp(0.92rem, 3.4vw, 1.1rem) !important;
-    line-height: 1.68 !important;
+    font-size: clamp(0.9rem, 3.2vw, 1.05rem) !important;
+    line-height: 1.65 !important;
     color: var(--mist) !important;
-    max-width: 330px !important;
-    width: 88% !important;
-    margin: 0 auto 36px auto !important;
+    max-width: 320px !important;
+    width: 90% !important;
+    margin: 0 auto 28px auto !important;
   }
 
   .hero__ctas {
     flex-direction: column !important;
     width: 100% !important;
     max-width: 360px !important;
-    gap: 16px !important;
+    gap: 12px !important;
     margin: 0 auto !important;
   }
 
@@ -2469,15 +2313,20 @@ button {
     font-size: 1rem !important;
   }
 
+  .hero__cards-container {
+    display: none !important; /* Hide desktop floating cards on mobile for clutter-free hero */
+  }
+
   .hero__scroll-explore {
     position: relative !important;
     bottom: auto !important;
     left: auto !important;
     transform: none !important;
     order: 3 !important;
-    margin-top: 20px !important;
+    margin-top: 14px !important;
     margin-bottom: 20px !important;
     align-self: center !important;
+    opacity: 0.7 !important;
   }
 
   /* Prevent iOS Auto-Zoom on Form Input Focus */

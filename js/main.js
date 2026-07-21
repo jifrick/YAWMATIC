@@ -1003,7 +1003,161 @@ if (tiltCards.length > 0) {
 }
 
 /* ----------------------------------------------------
-   01. HERO THREE.JS SCENE CREATION
+   VIEWPORT CANVAS OBSERVER (PAUSE RAF WHEN OFF-SCREEN)
+   ---------------------------------------------------- */
+function setupCanvasObserver(canvas, startFn, pauseFn) {
+  if (!canvas || !('IntersectionObserver' in window)) {
+    startFn();
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        startFn();
+      } else {
+        pauseFn();
+      }
+    });
+  }, { threshold: 0.01 });
+
+  observer.observe(canvas);
+}
+
+/* ----------------------------------------------------
+   BESPOKE MOBILE 3D HERO ENGINE (YAWMATIC KINETIC BEACON)
+   ---------------------------------------------------- */
+let mobileHeroRenderer, mobileHeroScene, mobileHeroCamera, mobileHeroAnimId;
+let mobileBeaconGroup, mobileRing1, mobileRing2;
+let isMobileHeroRendering = false;
+
+function initMobileHeroWebGL() {
+  const container = document.getElementById('hero');
+  const canvas = document.getElementById('webgl-cube-canvas');
+  if (!canvas || !container) return;
+
+  // GPU-Optimized Renderer (No shadow map overhead, max 1.5 pixel ratio)
+  mobileHeroRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  mobileHeroRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  mobileHeroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  mobileHeroRenderer.shadowMap.enabled = false;
+
+  // Scene & Camera
+  mobileHeroScene = new THREE.Scene();
+  mobileHeroCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 50);
+  mobileHeroCamera.position.set(0, 0, 6.2);
+  mobileHeroCamera.lookAt(0, 0, 0);
+
+  // Minimal Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.15);
+  mobileHeroScene.add(ambient);
+
+  const coreLight = new THREE.PointLight(0xFF5A1F, 2.2, 8);
+  coreLight.position.set(0, 0, 0);
+  mobileHeroScene.add(coreLight);
+
+  const goldLight = new THREE.PointLight(0xFFD66B, 1.5, 6);
+  goldLight.position.set(0, 0.4, 1);
+  mobileHeroScene.add(goldLight);
+
+  // Master Beacon Group
+  mobileBeaconGroup = new THREE.Group();
+  mobileHeroScene.add(mobileBeaconGroup);
+
+  // 1. Central Y-Core Emblem Symbol
+  const coreSymbolGroup = createYCoreSymbol();
+  coreSymbolGroup.scale.set(1.15, 1.15, 1.15);
+  mobileBeaconGroup.add(coreSymbolGroup);
+
+  // 2. Dual Synchronized Orbital Energy Rings
+  const torusGeo1 = new THREE.TorusGeometry(1.65, 0.014, 12, 64);
+  const torusMat1 = new THREE.MeshBasicMaterial({ color: 0xFF5A1F, transparent: true, opacity: 0.45 });
+  mobileRing1 = new THREE.Mesh(torusGeo1, torusMat1);
+  mobileRing1.rotation.set(Math.PI * 0.35, Math.PI * 0.1, 0);
+  mobileBeaconGroup.add(mobileRing1);
+
+  const torusGeo2 = new THREE.TorusGeometry(2.10, 0.010, 12, 64);
+  const torusMat2 = new THREE.MeshBasicMaterial({ color: 0xFF6A00, transparent: true, opacity: 0.30 });
+  mobileRing2 = new THREE.Mesh(torusGeo2, torusMat2);
+  mobileRing2.rotation.set(-Math.PI * 0.40, -Math.PI * 0.2, Math.PI * 0.15);
+  mobileBeaconGroup.add(mobileRing2);
+
+  // 3. Micro Particle Halo (16 soft particles)
+  const pTexture = createCircleParticleTexture();
+  const pGeo = new THREE.BufferGeometry();
+  const pCount = 16;
+  const pPositions = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 1.8 + Math.random() * 1.2;
+    pPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    pPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pPositions[i * 3 + 2] = r * Math.cos(phi);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0xFF6A00,
+    size: 0.14,
+    transparent: true,
+    opacity: 0.5,
+    map: pTexture,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const mobileParticlePoints = new THREE.Points(pGeo, pMat);
+  mobileBeaconGroup.add(mobileParticlePoints);
+
+  // Resize handler
+  const resizeMobileHandler = () => {
+    if (!mobileHeroRenderer) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    mobileHeroCamera.aspect = w / h;
+    mobileHeroCamera.updateProjectionMatrix();
+    mobileHeroRenderer.setSize(w, h);
+  };
+  window.addEventListener('resize', resizeMobileHandler);
+
+  // Render loop with viewport pausing support
+  let clock = new THREE.Clock();
+  function renderMobileHeroScene() {
+    if (!isMobileHeroRendering) return;
+    const elapsed = clock.getElapsedTime();
+
+    mobileBeaconGroup.position.y = Math.sin(elapsed * 1.8) * 0.06;
+    mobileBeaconGroup.rotation.y = elapsed * 0.25;
+
+    mobileRing1.rotation.z = elapsed * 0.35;
+    mobileRing2.rotation.z = -elapsed * 0.45;
+    mobileParticlePoints.rotation.y = -elapsed * 0.15;
+
+    mobileHeroRenderer.render(mobileHeroScene, mobileHeroCamera);
+    mobileHeroAnimId = requestAnimationFrame(renderMobileHeroScene);
+  }
+
+  function startMobileRender() {
+    if (!isMobileHeroRendering) {
+      isMobileHeroRendering = true;
+      clock.start();
+      renderMobileHeroScene();
+    }
+  }
+
+  function pauseMobileRender() {
+    isMobileHeroRendering = false;
+    if (mobileHeroAnimId) cancelAnimationFrame(mobileHeroAnimId);
+  }
+
+  // Viewport Observer (Pause rendering when scrolled out of view)
+  setupCanvasObserver(canvas, startMobileRender, pauseMobileRender);
+
+  window.addEventListener('beforeunload', () => {
+    window.removeEventListener('resize', resizeMobileHandler);
+    if (mobileHeroRenderer) mobileHeroRenderer.dispose();
+  });
+}
+
+/* ----------------------------------------------------
+   01. HERO THREE.JS SCENE CREATION (DESKTOP > 1024PX ONLY)
    ---------------------------------------------------- */
 let heroRenderer, heroScene, heroCamera;
 let cubeParentGroup, cubeGroup;
@@ -1018,6 +1172,12 @@ function initHeroWebGL() {
   const container = document.getElementById('hero');
   const canvas = document.getElementById('webgl-cube-canvas');
   if (!canvas || !container) return;
+
+  // Execute Mobile Hero Engine on screens <= 1024px
+  if (window.innerWidth <= 1024) {
+    initMobileHeroWebGL();
+    return;
+  }
 
   let heroTl;
 
@@ -1701,12 +1861,12 @@ function initTechWebGL() {
   };
   window.addEventListener('resize', resizeTechHandler);
 
+  let isTechRendering = false;
+  let techAnimId;
   let clock = new THREE.Clock();
+
   function renderTechScene() {
-    if (document.hidden) {
-      requestAnimationFrame(renderTechScene);
-      return;
-    }
+    if (!isTechRendering) return;
 
     const elapsed = clock.getElapsedTime();
     
@@ -1721,9 +1881,23 @@ function initTechWebGL() {
     techPoints.rotation.x = elapsed * 0.015;
 
     techRenderer.render(techScene, techCamera);
-    requestAnimationFrame(renderTechScene);
+    techAnimId = requestAnimationFrame(renderTechScene);
   }
-  renderTechScene();
+
+  function startTechRender() {
+    if (!isTechRendering) {
+      isTechRendering = true;
+      clock.start();
+      renderTechScene();
+    }
+  }
+
+  function pauseTechRender() {
+    isTechRendering = false;
+    if (techAnimId) cancelAnimationFrame(techAnimId);
+  }
+
+  setupCanvasObserver(techCanvas, startTechRender, pauseTechRender);
 
   window.addEventListener('beforeunload', () => {
     window.removeEventListener('resize', resizeTechHandler);
@@ -2027,12 +2201,11 @@ function initAboutWebGL() {
   };
   window.addEventListener('resize', resizeAboutHandler);
 
-  let t1 = 0, t2 = 0.3, t3 = 0.6;
+  let isAboutRendering = false;
+  let aboutAnimId;
+
   function animateAboutScene() {
-    if (document.hidden) {
-      requestAnimationFrame(animateAboutScene);
-      return;
-    }
+    if (!isAboutRendering) return;
 
     aboutSceneGroup.rotation.x += (targetRotX - aboutSceneGroup.rotation.x) * 0.08;
     aboutSceneGroup.rotation.y += (targetRotY - aboutSceneGroup.rotation.y) * 0.08;
@@ -2078,9 +2251,22 @@ function initAboutWebGL() {
     }
 
     aboutRenderer.render(aboutScene, aboutCamera);
-    requestAnimationFrame(animateAboutScene);
+    aboutAnimId = requestAnimationFrame(animateAboutScene);
   }
-  animateAboutScene();
+
+  function startAboutRender() {
+    if (!isAboutRendering) {
+      isAboutRendering = true;
+      animateAboutScene();
+    }
+  }
+
+  function pauseAboutRender() {
+    isAboutRendering = false;
+    if (aboutAnimId) cancelAnimationFrame(aboutAnimId);
+  }
+
+  setupCanvasObserver(canvas, startAboutRender, pauseAboutRender);
 
   window.addEventListener('beforeunload', () => {
     window.removeEventListener('resize', resizeAboutHandler);
