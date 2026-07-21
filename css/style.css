@@ -2128,6 +2128,12 @@ button {
   margin: 4px 8px;
 }
 
+/* Mobile Navigation Element Defaults (Hidden on Desktop > 1024px) */
+.mobile-menu,
+.navbar__hamburger {
+  display: none !important;
+}
+
 /* ====================================================
    MOBILE & TABLET RESPONSIVENESS SYSTEM (<= 1024px)
    ==================================================== */
@@ -2169,7 +2175,7 @@ button {
 
   /* Hamburger Menu Button */
   .navbar__hamburger {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     justify-content: space-between;
     width: 24px;
@@ -2220,6 +2226,7 @@ button {
 
   /* Mobile Menu Full-Screen Container */
   .mobile-menu {
+    display: block !important;
     position: fixed;
     top: 0;
     left: 0;
