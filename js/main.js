@@ -1024,6 +1024,121 @@ function setupCanvasObserver(canvas, startFn, pauseFn) {
 }
 
 /* ----------------------------------------------------
+   SHARED 3D Y-CORE SYMBOL CREATOR
+   ---------------------------------------------------- */
+function createYCoreSymbol() {
+  const group = new THREE.Group();
+
+  const yMat = new THREE.MeshStandardMaterial({
+    color:              0xffb84d,
+    emissive:           0xffd66b,
+    emissiveIntensity:  1.2,
+    roughness:          0.18,
+    metalness:          0.82
+  });
+
+  const strutMat = new THREE.MeshStandardMaterial({
+    color:              0x121213,
+    roughness:          0.85,
+    metalness:          0.15
+  });
+
+  const cageGeo = new THREE.OctahedronGeometry(0.42, 0);
+  const cageEdges = new THREE.EdgesGeometry(cageGeo);
+  const cageMat = new THREE.LineBasicMaterial({
+    color: 0x333335,
+    transparent: true,
+    opacity: 0.7
+  });
+  const cage = new THREE.LineSegments(cageEdges, cageMat);
+  group.add(cage);
+
+  const st = 0.025;
+  const sl = 0.375;
+
+  const strutXGeo = new THREE.BoxGeometry(sl, st, st);
+  const strutX1 = new THREE.Mesh(strutXGeo, strutMat);
+  strutX1.position.set(sl/2, 0, 0);
+  const strutX2 = new THREE.Mesh(strutXGeo, strutMat);
+  strutX2.position.set(-sl/2, 0, 0);
+  group.add(strutX1);
+  group.add(strutX2);
+
+  const strutYGeo = new THREE.BoxGeometry(st, sl, st);
+  const strutY1 = new THREE.Mesh(strutYGeo, strutMat);
+  strutY1.position.set(0, sl/2, 0);
+  const strutY2 = new THREE.Mesh(strutYGeo, strutMat);
+  strutY2.position.set(0, -sl/2, 0);
+  group.add(strutY1);
+  group.add(strutY2);
+
+  const strutZGeo = new THREE.BoxGeometry(st, st, sl);
+  const strutZ1 = new THREE.Mesh(strutZGeo, strutMat);
+  strutZ1.position.set(0, 0, sl/2);
+  const strutZ2 = new THREE.Mesh(strutZGeo, strutMat);
+  strutZ2.position.set(0, 0, -sl/2);
+  group.add(strutZ1);
+  group.add(strutZ2);
+
+  const glyphGroup = new THREE.Group();
+  glyphGroup.position.set(0, 0, 0.18);
+  group.add(glyphGroup);
+
+  const sw    = 0.13;
+  const sd    = 0.13;
+  const armL  = 0.35;
+  const stemL = 0.33;
+  const angle = Math.PI / 4;
+
+  const stemGeo = new THREE.BoxGeometry(sw, stemL, sd);
+  const stem    = new THREE.Mesh(stemGeo, yMat);
+  stem.position.set(0, -(stemL / 2) - 0.006, 0);
+  glyphGroup.add(stem);
+
+  const armGeo = new THREE.BoxGeometry(sw, armL, sd);
+  const offX   = (armL / 2) * Math.sin(angle);
+  const offY   = (armL / 2) * Math.cos(angle);
+
+  const leftArm = new THREE.Mesh(armGeo, yMat.clone());
+  leftArm.position.set(-offX, offY + 0.006, 0);
+  leftArm.rotation.z = angle;
+  glyphGroup.add(leftArm);
+
+  const rightArm = new THREE.Mesh(armGeo, yMat.clone());
+  rightArm.position.set(offX, offY + 0.006, 0);
+  rightArm.rotation.z = -angle;
+  glyphGroup.add(rightArm);
+
+  const nodeGeo = new THREE.SphereGeometry(0.09, 16, 16);
+  const nodeMat = new THREE.MeshStandardMaterial({
+    color:              0xffd66b,
+    emissive:           0xff9a1f,
+    emissiveIntensity:  1.5,
+    roughness:          0.1,
+    metalness:          0.9
+  });
+  const node = new THREE.Mesh(nodeGeo, nodeMat);
+  node.position.set(0, 0, 0);
+  glyphGroup.add(node);
+
+  goldCoreLight = new THREE.PointLight(0xffb84d, 1.2, 3.0);
+  goldCoreLight.position.set(0, 0, 0);
+  glyphGroup.add(goldCoreLight);
+
+  const haloGeo = new THREE.SphereGeometry(0.20, 16, 16);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color:       0xff9a1f,
+    transparent: true,
+    opacity:     0.08
+  });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  glyphGroup.add(halo);
+  group.userData.haloMat = haloMat;
+
+  return group;
+}
+
+/* ----------------------------------------------------
    BESPOKE MOBILE 3D HERO ENGINE (YAWMATIC KINETIC BEACON)
    ---------------------------------------------------- */
 let mobileHeroRenderer, mobileHeroScene, mobileHeroCamera, mobileHeroAnimId;
@@ -1238,118 +1353,6 @@ function initHeroWebGL() {
       transparent: true,
       opacity: opacity
     });
-  }
-
-  function createYCoreSymbol() {
-    const group = new THREE.Group();
-
-    const yMat = new THREE.MeshStandardMaterial({
-      color:              0xffb84d,
-      emissive:           0xffd66b,
-      emissiveIntensity:  1.2,
-      roughness:          0.18,
-      metalness:          0.82
-    });
-
-    const strutMat = new THREE.MeshStandardMaterial({
-      color:              0x121213,
-      roughness:          0.85,
-      metalness:          0.15
-    });
-
-    const cageGeo = new THREE.OctahedronGeometry(0.42, 0);
-    const cageEdges = new THREE.EdgesGeometry(cageGeo);
-    const cageMat = new THREE.LineBasicMaterial({
-      color: 0x333335,
-      transparent: true,
-      opacity: 0.7
-    });
-    const cage = new THREE.LineSegments(cageEdges, cageMat);
-    group.add(cage);
-
-    const st = 0.025;
-    const sl = 0.375;
-
-    const strutXGeo = new THREE.BoxGeometry(sl, st, st);
-    const strutX1 = new THREE.Mesh(strutXGeo, strutMat);
-    strutX1.position.set(sl/2, 0, 0);
-    const strutX2 = new THREE.Mesh(strutXGeo, strutMat);
-    strutX2.position.set(-sl/2, 0, 0);
-    group.add(strutX1);
-    group.add(strutX2);
-
-    const strutYGeo = new THREE.BoxGeometry(st, sl, st);
-    const strutY1 = new THREE.Mesh(strutYGeo, strutMat);
-    strutY1.position.set(0, sl/2, 0);
-    const strutY2 = new THREE.Mesh(strutYGeo, strutMat);
-    strutY2.position.set(0, -sl/2, 0);
-    group.add(strutY1);
-    group.add(strutY2);
-
-    const strutZGeo = new THREE.BoxGeometry(st, st, sl);
-    const strutZ1 = new THREE.Mesh(strutZGeo, strutMat);
-    strutZ1.position.set(0, 0, sl/2);
-    const strutZ2 = new THREE.Mesh(strutZGeo, strutMat);
-    strutZ2.position.set(0, 0, -sl/2);
-    group.add(strutZ1);
-    group.add(strutZ2);
-
-    const glyphGroup = new THREE.Group();
-    glyphGroup.position.set(0, 0, 0.18);
-    group.add(glyphGroup);
-
-    const sw    = 0.13;
-    const sd    = 0.13;
-    const armL  = 0.35;
-    const stemL = 0.33;
-    const angle = Math.PI / 4;
-
-    const stemGeo = new THREE.BoxGeometry(sw, stemL, sd);
-    const stem    = new THREE.Mesh(stemGeo, yMat);
-    stem.position.set(0, -(stemL / 2) - 0.006, 0);
-    glyphGroup.add(stem);
-
-    const armGeo = new THREE.BoxGeometry(sw, armL, sd);
-    const offX   = (armL / 2) * Math.sin(angle);
-    const offY   = (armL / 2) * Math.cos(angle);
-
-    const leftArm = new THREE.Mesh(armGeo, yMat.clone());
-    leftArm.position.set(-offX, offY + 0.006, 0);
-    leftArm.rotation.z = angle;
-    glyphGroup.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, yMat.clone());
-    rightArm.position.set(offX, offY + 0.006, 0);
-    rightArm.rotation.z = -angle;
-    glyphGroup.add(rightArm);
-
-    const nodeGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    const nodeMat = new THREE.MeshStandardMaterial({
-      color:              0xffd66b,
-      emissive:           0xff9a1f,
-      emissiveIntensity:  1.5,
-      roughness:          0.1,
-      metalness:          0.9
-    });
-    const node = new THREE.Mesh(nodeGeo, nodeMat);
-    node.position.set(0, 0, 0);
-    glyphGroup.add(node);
-
-    goldCoreLight = new THREE.PointLight(0xffb84d, 1.2, 3.0);
-    goldCoreLight.position.set(0, 0, 0);
-    glyphGroup.add(goldCoreLight);
-
-    const haloGeo = new THREE.SphereGeometry(0.20, 16, 16);
-    const haloMat = new THREE.MeshBasicMaterial({
-      color:       0xff9a1f,
-      transparent: true,
-      opacity:     0.08
-    });
-    const halo = new THREE.Mesh(haloGeo, haloMat);
-    glyphGroup.add(halo);
-    group.userData.haloMat = haloMat;
-
-    return group;
   }
 
   const CUBIE_SIZE  = 0.75;
