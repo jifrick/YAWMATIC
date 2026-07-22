@@ -78,9 +78,23 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 15px;
     }
-    @media(max-width: 600px) {
-      .apply-card { padding: 24px 16px; }
-      .form-row-2col { grid-template-columns: 1fr !important; gap: 15px !important; }
+    @media(max-width: 1024px) {
+      .apply-card {
+        padding: 24px 16px !important;
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+      .form-row-2col {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+      }
+      .form-control, input, select, textarea {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
     }
 
     /* Step Progress Indicator */

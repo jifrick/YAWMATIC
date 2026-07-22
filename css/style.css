@@ -2177,6 +2177,18 @@ button {
     gap: 15px !important;
   }
 
+  .apply-card {
+    padding: 24px 16px !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+  }
+
+  .form-control, input, select, textarea {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
   /* Ensure top section under navbar on mobile has generous space from wordmark */
   section:first-of-type,
   main > section:first-of-type,
