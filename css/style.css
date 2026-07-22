@@ -2231,20 +2231,25 @@ button {
     height: 1.15em !important;
   }
 
-  /* Mobile Hero Container & Clean Composition */
+  /* Mobile Hero Container & Full Viewport Composition (100dvh) */
   .hero-pin-wrapper {
-    height: auto !important;
-    min-height: auto !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    position: relative !important;
+    overflow: hidden !important;
   }
 
   .hero-section {
-    padding: max(68px, calc(56px + env(safe-area-inset-top))) 6% max(20px, env(safe-area-inset-bottom)) 6% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    padding: max(64px, calc(52px + env(safe-area-inset-top))) 6% max(16px, calc(8px + env(safe-area-inset-bottom))) 6% !important;
+    display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: space-between !important;
     align-items: center !important;
     gap: 0 !important;
-    height: auto !important;
-    min-height: auto !important;
   }
 
   .hero__webgl-container,
@@ -2256,8 +2261,12 @@ button {
     width: 100% !important;
     text-align: center !important;
     align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    flex: 1 !important;
     order: 1 !important;
-    margin: 0 auto !important;
+    margin: auto 0 !important;
     will-change: auto;
     transform: none !important; /* Sharp alignment without blur or offset under header */
   }
@@ -2270,21 +2279,21 @@ button {
   }
 
   .hero__headline {
-    font-size: clamp(2.7rem, 9.5vw, 4.2rem) !important;
+    font-size: clamp(2.5rem, 8.8vw, 4rem) !important;
     line-height: 1.04 !important;
     letter-spacing: -0.03em !important;
     margin-top: 0 !important;
-    margin-bottom: 18px !important;
+    margin-bottom: clamp(12px, 2.5vh, 20px) !important;
     text-transform: uppercase;
   }
 
   .hero__subtext {
-    font-size: clamp(0.95rem, 3.6vw, 1.15rem) !important;
-    line-height: 1.65 !important;
+    font-size: clamp(0.9rem, 3.4vw, 1.1rem) !important;
+    line-height: 1.6 !important;
     color: var(--mist) !important;
     max-width: 340px !important;
     width: 92% !important;
-    margin: 0 auto 26px auto !important;
+    margin: 0 auto clamp(18px, 3.5vh, 28px) auto !important;
   }
 
   .hero__ctas {
@@ -2292,7 +2301,7 @@ button {
     width: 100% !important;
     max-width: 360px !important;
     gap: 12px !important;
-    margin: 0 auto 28px auto !important;
+    margin: 0 auto !important;
   }
 
   .hero__ctas .magnetic-wrap {
@@ -2302,9 +2311,9 @@ button {
 
   .hero__ctas .btn {
     width: 100% !important;
-    min-height: 52px !important;
+    min-height: 50px !important;
     justify-content: center !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
   }
 
   .hero__cards-container {
@@ -2317,15 +2326,17 @@ button {
     left: auto !important;
     transform: none !important;
     order: 2 !important;
-    margin-top: 0 !important;
-    margin-bottom: 12px !important;
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
     align-self: center !important;
     opacity: 0.7 !important;
+    flex-shrink: 0 !important;
   }
 
-  /* Reduce empty vertical space before vision section */
+  /* Next section begins cleanly below the viewport fold */
   #vision.section-padding {
-    padding-top: clamp(32px, 5vw, 44px) !important;
+    padding-top: clamp(60px, 10vw, 90px) !important;
   }
 
   /* Prevent iOS Auto-Zoom on Form Input Focus */
