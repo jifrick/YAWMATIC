@@ -902,25 +902,45 @@ if (magneticElements.length > 0) {
    ---------------------------------------------------- */
 const revealItems = document.querySelectorAll('.reveal-item');
 if (revealItems.length > 0) {
-  // Set initial hidden state via GSAP (overrides CSS opacity:0)
-  gsap.set(revealItems, { opacity: 0, y: 40 });
+  if (window.innerWidth <= 1024) {
+    // Native high-performance IntersectionObserver for mobile scroll smoothness (0% CPU overhead)
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
 
-  revealItems.forEach(item => {
-    ScrollTrigger.create({
-      trigger: item,
-      start: 'top 88%',
-      once: true,
-      onEnter: () => {
-        gsap.to(item, {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          clearProps: 'transform'
-        });
-      }
+    revealItems.forEach(item => {
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(30px)';
+      item.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+      revealObserver.observe(item);
     });
-  });
+  } else {
+    // Set initial hidden state via GSAP (overrides CSS opacity:0)
+    gsap.set(revealItems, { opacity: 0, y: 40 });
+
+    revealItems.forEach(item => {
+      ScrollTrigger.create({
+        trigger: item,
+        start: 'top 88%',
+        once: true,
+        onEnter: () => {
+          gsap.to(item, {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: 'power3.out',
+            clearProps: 'transform'
+          });
+        }
+      });
+    });
+  }
 }
 
 /* ----------------------------------------------------
@@ -1818,7 +1838,7 @@ let techPoints;
 const techCanvas = document.getElementById('tech-particles-canvas');
 
 function initTechWebGL() {
-  if (!techCanvas) return;
+  if (!techCanvas || window.innerWidth <= 1024) return;
   
   techRenderer = new THREE.WebGLRenderer({ canvas: techCanvas, antialias: true, alpha: true });
   techRenderer.setSize(techCanvas.clientWidth, techCanvas.clientHeight);
@@ -1923,39 +1943,58 @@ if (techCanvas) {
    ---------------------------------------------------- */
 function initStatsCounter() {
   const statCards = document.querySelectorAll('.stat-card');
-  statCards.forEach((card, index) => {
+  if (statCards.length === 0) return;
+
+  const triggerStats = (card, index) => {
     const targetNum = parseInt(card.getAttribute('data-target-num'));
     const numElem = card.querySelector('.stat-card__number');
+    if (!numElem) return;
 
-    ScrollTrigger.create({
-      trigger: card,
-      start: 'top 85%',
-      onEnter: () => {
-        let count = 0;
-        const duration = 2000; 
-        const steps = 60;
-        const increment = targetNum / steps;
-        const stepTime = duration / steps;
-        
-        const counterInterval = setInterval(() => {
-          count += increment;
-          if (count >= targetNum) {
-            count = targetNum;
-            clearInterval(counterInterval);
-          }
-          
-          if (index === 0) {
-            numElem.innerText = Math.floor(count) + '+';
-          } else if (index === 1) {
-            numElem.innerText = Math.floor(count) + '%';
-          } else {
-            numElem.innerText = Math.floor(count);
-          }
-        }, stepTime);
-      },
-      once: true
+    let count = 0;
+    const duration = 2000; 
+    const steps = 60;
+    const increment = targetNum / steps;
+    const stepTime = duration / steps;
+    
+    const counterInterval = setInterval(() => {
+      count += increment;
+      if (count >= targetNum) {
+        count = targetNum;
+        clearInterval(counterInterval);
+      }
+      
+      if (index === 0) {
+        numElem.innerText = Math.floor(count) + '+';
+      } else if (index === 1) {
+        numElem.innerText = Math.floor(count) + '%';
+      } else {
+        numElem.innerText = Math.floor(count);
+      }
+    }, stepTime);
+  };
+
+  if (window.innerWidth <= 1024) {
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const index = Array.from(statCards).indexOf(entry.target);
+          triggerStats(entry.target, index);
+          statsObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    statCards.forEach(card => statsObserver.observe(card));
+  } else {
+    statCards.forEach((card, index) => {
+      ScrollTrigger.create({
+        trigger: card,
+        start: 'top 85%',
+        onEnter: () => triggerStats(card, index),
+        once: true
+      });
     });
-  });
+  }
 }
 
 /* ----------------------------------------------------
@@ -1980,7 +2019,7 @@ const curve3 = new THREE.EllipseCurve(0, 0, 2.25, 1.55, 0, 2 * Math.PI, false, 0
 function initAboutWebGL() {
   const container = document.getElementById('about-interactive-logo');
   const canvas = document.getElementById('about-webgl-canvas');
-  if (!canvas || !container) return;
+  if (!canvas || !container || window.innerWidth <= 1024) return;
 
   // Renderer
   aboutRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });

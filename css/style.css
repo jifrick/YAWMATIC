@@ -2167,6 +2167,12 @@ button {
     cursor: pointer !important;
   }
 
+  html, body {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: auto !important;
+    overflow-x: hidden !important;
+  }
+
   /* Section Padding */
   .section-padding {
     padding: clamp(50px, 8vw, 80px) 6% !important;
