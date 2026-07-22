@@ -7,6 +7,21 @@ gsap.registerPlugin(ScrollTrigger);
 const isMobile = window.innerWidth <= 768;
 
 /* ----------------------------------------------------
+   INTERNAL NAVIGATION DETECTION
+   Skip loader when navigating between pages inside the site.
+   sessionStorage persists across nav clicks but clears on
+   tab close. F5 / hard refresh does NOT set this flag.
+   ---------------------------------------------------- */
+const isInternalNavigation = sessionStorage.getItem('skipLoader') === '1';
+if (isInternalNavigation) {
+  sessionStorage.removeItem('skipLoader');
+  // Immediately unhide content — do not wait for DOMContentLoaded
+  document.body.classList.remove('loading');
+  const _loader = document.getElementById('page-loader');
+  if (_loader) _loader.style.display = 'none';
+}
+
+/* ----------------------------------------------------
    ACTIVE PAGE HIGH LIGHTING
    ---------------------------------------------------- */
 function highlightActiveLink() {
@@ -46,7 +61,7 @@ function highlightActiveLink() {
   if (path === '' || path === '/index.html') path = '/';
   if (path.endsWith('/') && path.length > 1) path = path.slice(0, -1);
 
-  const menuLinks = document.querySelectorAll('.navbar__menu .navbar__link, .footer__menu .footer__link');
+  const menuLinks = document.querySelectorAll('.navbar__menu .navbar__link, .footer__menu .footer__link, .mobile-menu__link');
   menuLinks.forEach(link => {
     let href = link.getAttribute('href');
     if (href === '') href = '/';
@@ -166,7 +181,8 @@ document.addEventListener('click', (e) => {
     if (targetUrl) {
       e.preventDefault();
       sessionStorage.setItem('currentCleanRoute', href);
-      pageTransition(targetUrl);
+      sessionStorage.setItem('skipLoader', '1'); // signal next page to skip loader
+      window.location.href = targetUrl;
     }
   }
 });
@@ -175,7 +191,7 @@ document.addEventListener('click', (e) => {
    SMOOTH SCROLLING (Lenis)
    ---------------------------------------------------- */
 let lenis;
-if (!isMobile) {
+if (window.innerWidth > 1024) {
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -319,6 +335,14 @@ let pageLoaded = false;
 let loaderTimelineComplete = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  injectMobileNav();
+  if (isInternalNavigation) {
+    // Internal nav: loader already hidden above — just set nav logo visible
+    const navLogo = document.querySelector('.navbar__logo');
+    if (navLogo) gsap.set(navLogo, { opacity: 1 });
+    highlightActiveLink();
+    return; // skip loader init entirely
+  }
   const navLogo = document.querySelector('.navbar__logo');
   if (navLogo) {
     gsap.set(navLogo, { opacity: 0 });
@@ -328,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fallback logic
-if (document.readyState === 'interactive' || document.readyState === 'complete') {
+if (!isInternalNavigation && (document.readyState === 'interactive' || document.readyState === 'complete')) {
   const navLogo = document.querySelector('.navbar__logo');
   if (navLogo && navLogo.style.opacity !== '0') {
     gsap.set(navLogo, { opacity: 0 });
@@ -339,10 +363,30 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
 
 window.addEventListener('load', () => {
   pageLoaded = true;
-  // Initialize Three.js WebGL hero scene if canvas exists on load
   if (document.getElementById('webgl-cube-canvas')) {
     initHeroWebGL();
   }
+
+  if (isInternalNavigation) {
+    // Internal nav: skip loader transition, initialize page features directly
+    highlightActiveLink();
+    if (document.getElementById('horizontal-scroll-container')) initHorizontalScroll();
+    if (document.getElementById('about-webgl-canvas')) initAboutWebGL();
+    if (document.querySelector('.timeline-container')) initTimelineScroll();
+    if (document.querySelector('.stat-card')) initStatsCounter();
+    initCustomSelects();
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+      document.querySelectorAll('.reveal-item').forEach(item => {
+        const rect = item.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.92) {
+          gsap.to(item, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', clearProps: 'transform', overwrite: 'auto' });
+        }
+      });
+    }, 150);
+    return;
+  }
+
   if (loaderTimelineComplete) {
     triggerSiteTransition();
   }
@@ -358,7 +402,13 @@ function runLoaderTimeline() {
   const pulse = document.getElementById('loader-pulse-rect');
   const wordmark = document.getElementById('loader-wordmark');
   
-  if (!path || !dot) return;
+  if (!path || !dot) {
+    // Loader SVG not in DOM yet (React SPA case) — mark complete immediately
+    // so triggerSiteTransition() fires via the window.load handler
+    loaderTimelineComplete = true;
+    if (pageLoaded) triggerSiteTransition();
+    return;
+  }
 
   const pathLength = path.getTotalLength();
   
@@ -469,8 +519,25 @@ function triggerSiteTransition() {
       loader.style.display = 'none';
       loader.style.backgroundColor = '';
       
+      // Refresh ScrollTrigger after DOM settles, then fire any items already in viewport
       ScrollTrigger.refresh();
-      setTimeout(() => ScrollTrigger.refresh(), 100);
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+        // Manually trigger onEnter for all reveal-items already visible in viewport
+        document.querySelectorAll('.reveal-item').forEach(item => {
+          const rect = item.getBoundingClientRect();
+          if (rect.top < window.innerHeight * 0.92) {
+            gsap.to(item, {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              ease: 'power3.out',
+              clearProps: 'transform',
+              overwrite: 'auto'
+            });
+          }
+        });
+      }, 150);
     }
   });
 
@@ -581,6 +648,132 @@ function triggerSiteTransition() {
   if (document.querySelector('.stat-card')) {
     initStatsCounter();
   }
+  initCustomSelects();
+}
+
+/* ----------------------------------------------------
+   CUSTOM SELECT DROPDOWNS — PREMIUM YAWMATIC DESIGN
+   ---------------------------------------------------- */
+function initCustomSelects() {
+  const selects = document.querySelectorAll('select.form-control, select.select-input');
+
+  selects.forEach(select => {
+    if (select.dataset.customSelect) return; // already initialised
+    select.dataset.customSelect = '1';
+
+    // ── Build wrapper ────────────────────────────────────────
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+
+    const getLabel = () => {
+      const opt = select.options[select.selectedIndex];
+      return opt ? opt.text : '';
+    };
+
+    // ── Trigger button ────────────────────────────────────────
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select__trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = `
+      <span class="custom-select__label">${getLabel()}</span>
+      <svg class="custom-select__chevron" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>`;
+
+    // ── Dropdown panel ────────────────────────────────────────
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select__dropdown';
+    dropdown.setAttribute('role', 'listbox');
+
+    const list = document.createElement('ul');
+    list.className = 'custom-select__options';
+
+    Array.from(select.options).forEach((opt, i) => {
+      const li = document.createElement('li');
+      li.className = 'custom-select__option' + (select.selectedIndex === i ? ' is-selected' : '');
+      li.textContent = opt.text;
+      li.dataset.value = opt.value;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', String(select.selectedIndex === i));
+      li.setAttribute('tabindex', '-1');
+
+      li.addEventListener('click', () => {
+        select.value = opt.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        trigger.querySelector('.custom-select__label').textContent = opt.text;
+        list.querySelectorAll('.custom-select__option').forEach(o => {
+          o.classList.remove('is-selected');
+          o.setAttribute('aria-selected', 'false');
+        });
+        li.classList.add('is-selected');
+        li.setAttribute('aria-selected', 'true');
+        close();
+        trigger.focus();
+      });
+
+      list.appendChild(li);
+    });
+
+    dropdown.appendChild(list);
+
+    // ── Open / close ────────────────────────────────────────────
+    const open = () => {
+      document.querySelectorAll('.custom-select-wrapper.is-open').forEach(w => {
+        if (w !== wrapper) {
+          w.classList.remove('is-open');
+          w.querySelector('.custom-select__trigger').setAttribute('aria-expanded', 'false');
+        }
+      });
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+    };
+
+    const close = () => {
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+    };
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      wrapper.classList.contains('is-open') ? close() : open();
+    });
+
+    document.addEventListener('click', e => {
+      if (!wrapper.contains(e.target)) close();
+    });
+
+    // Keyboard navigation
+    trigger.addEventListener('keydown', e => {
+      const opts = [...list.querySelectorAll('.custom-select__option')];
+      const cur  = list.querySelector('.custom-select__option.is-selected');
+      const idx  = opts.indexOf(cur);
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); opts[idx >= 0 ? idx : 0]?.focus(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); open(); opts[Math.min(idx + 1, opts.length - 1)]?.focus(); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); open(); opts[Math.max(idx - 1, 0)]?.focus(); }
+      else if (e.key === 'Escape')    { close(); }
+    });
+
+    list.addEventListener('keydown', e => {
+      const opts    = [...list.querySelectorAll('.custom-select__option')];
+      const focused = document.activeElement;
+      const idx     = opts.indexOf(focused);
+      if (e.key === 'ArrowDown')      { e.preventDefault(); opts[Math.min(idx + 1, opts.length - 1)]?.focus(); }
+      else if (e.key === 'ArrowUp')   { e.preventDefault(); opts[Math.max(idx - 1, 0)]?.focus(); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focused?.click(); }
+      else if (e.key === 'Escape')    { close(); trigger.focus(); }
+      else if (e.key === 'Tab')       { close(); }
+    });
+
+    // ── Assemble DOM ─────────────────────────────────────────
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);   // native select moves inside wrapper (hidden by CSS)
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(dropdown);
+  });
 }
 
 /* ----------------------------------------------------
@@ -591,7 +784,7 @@ const cursorRing = document.getElementById('cursor-ring');
 let mouseX = 0, mouseY = 0;
 let ringX = 0, ringY = 0;
 
-if (!isMobile && cursorDot && cursorRing) {
+if (window.innerWidth > 1024 && cursorDot && cursorRing) {
   window.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
@@ -709,20 +902,23 @@ if (magneticElements.length > 0) {
    ---------------------------------------------------- */
 const revealItems = document.querySelectorAll('.reveal-item');
 if (revealItems.length > 0) {
-  gsap.set(revealItems, { y: 40 });
-  
+  // Set initial hidden state via GSAP (overrides CSS opacity:0)
+  gsap.set(revealItems, { opacity: 0, y: 40 });
+
   revealItems.forEach(item => {
-    gsap.to(item, {
-      scrollTrigger: {
-        trigger: item,
-        start: 'top 85%',
-        toggleActions: 'play none none none'
-      },
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: 'power3.out',
-      clearProps: 'transform'
+    ScrollTrigger.create({
+      trigger: item,
+      start: 'top 88%',
+      once: true,
+      onEnter: () => {
+        gsap.to(item, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          clearProps: 'transform'
+        });
+      }
     });
   });
 }
@@ -807,7 +1003,276 @@ if (tiltCards.length > 0) {
 }
 
 /* ----------------------------------------------------
-   01. HERO THREE.JS SCENE CREATION
+   VIEWPORT CANVAS OBSERVER (PAUSE RAF WHEN OFF-SCREEN)
+   ---------------------------------------------------- */
+function setupCanvasObserver(canvas, startFn, pauseFn) {
+  if (!canvas || !('IntersectionObserver' in window)) {
+    startFn();
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        startFn();
+      } else {
+        pauseFn();
+      }
+    });
+  }, { threshold: 0.01 });
+
+  observer.observe(canvas);
+}
+
+/* ----------------------------------------------------
+   SHARED 3D Y-CORE SYMBOL CREATOR
+   ---------------------------------------------------- */
+function createYCoreSymbol() {
+  const group = new THREE.Group();
+
+  const yMat = new THREE.MeshStandardMaterial({
+    color:              0xffb84d,
+    emissive:           0xffd66b,
+    emissiveIntensity:  1.2,
+    roughness:          0.18,
+    metalness:          0.82
+  });
+
+  const strutMat = new THREE.MeshStandardMaterial({
+    color:              0x121213,
+    roughness:          0.85,
+    metalness:          0.15
+  });
+
+  const cageGeo = new THREE.OctahedronGeometry(0.42, 0);
+  const cageEdges = new THREE.EdgesGeometry(cageGeo);
+  const cageMat = new THREE.LineBasicMaterial({
+    color: 0x333335,
+    transparent: true,
+    opacity: 0.7
+  });
+  const cage = new THREE.LineSegments(cageEdges, cageMat);
+  group.add(cage);
+
+  const st = 0.025;
+  const sl = 0.375;
+
+  const strutXGeo = new THREE.BoxGeometry(sl, st, st);
+  const strutX1 = new THREE.Mesh(strutXGeo, strutMat);
+  strutX1.position.set(sl/2, 0, 0);
+  const strutX2 = new THREE.Mesh(strutXGeo, strutMat);
+  strutX2.position.set(-sl/2, 0, 0);
+  group.add(strutX1);
+  group.add(strutX2);
+
+  const strutYGeo = new THREE.BoxGeometry(st, sl, st);
+  const strutY1 = new THREE.Mesh(strutYGeo, strutMat);
+  strutY1.position.set(0, sl/2, 0);
+  const strutY2 = new THREE.Mesh(strutYGeo, strutMat);
+  strutY2.position.set(0, -sl/2, 0);
+  group.add(strutY1);
+  group.add(strutY2);
+
+  const strutZGeo = new THREE.BoxGeometry(st, st, sl);
+  const strutZ1 = new THREE.Mesh(strutZGeo, strutMat);
+  strutZ1.position.set(0, 0, sl/2);
+  const strutZ2 = new THREE.Mesh(strutZGeo, strutMat);
+  strutZ2.position.set(0, 0, -sl/2);
+  group.add(strutZ1);
+  group.add(strutZ2);
+
+  const glyphGroup = new THREE.Group();
+  glyphGroup.position.set(0, 0, 0.18);
+  group.add(glyphGroup);
+
+  const sw    = 0.13;
+  const sd    = 0.13;
+  const armL  = 0.35;
+  const stemL = 0.33;
+  const angle = Math.PI / 4;
+
+  const stemGeo = new THREE.BoxGeometry(sw, stemL, sd);
+  const stem    = new THREE.Mesh(stemGeo, yMat);
+  stem.position.set(0, -(stemL / 2) - 0.006, 0);
+  glyphGroup.add(stem);
+
+  const armGeo = new THREE.BoxGeometry(sw, armL, sd);
+  const offX   = (armL / 2) * Math.sin(angle);
+  const offY   = (armL / 2) * Math.cos(angle);
+
+  const leftArm = new THREE.Mesh(armGeo, yMat.clone());
+  leftArm.position.set(-offX, offY + 0.006, 0);
+  leftArm.rotation.z = angle;
+  glyphGroup.add(leftArm);
+
+  const rightArm = new THREE.Mesh(armGeo, yMat.clone());
+  rightArm.position.set(offX, offY + 0.006, 0);
+  rightArm.rotation.z = -angle;
+  glyphGroup.add(rightArm);
+
+  const nodeGeo = new THREE.SphereGeometry(0.09, 16, 16);
+  const nodeMat = new THREE.MeshStandardMaterial({
+    color:              0xffd66b,
+    emissive:           0xff9a1f,
+    emissiveIntensity:  1.5,
+    roughness:          0.1,
+    metalness:          0.9
+  });
+  const node = new THREE.Mesh(nodeGeo, nodeMat);
+  node.position.set(0, 0, 0);
+  glyphGroup.add(node);
+
+  goldCoreLight = new THREE.PointLight(0xffb84d, 1.2, 3.0);
+  goldCoreLight.position.set(0, 0, 0);
+  glyphGroup.add(goldCoreLight);
+
+  const haloGeo = new THREE.SphereGeometry(0.20, 16, 16);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color:       0xff9a1f,
+    transparent: true,
+    opacity:     0.08
+  });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  glyphGroup.add(halo);
+  group.userData.haloMat = haloMat;
+
+  return group;
+}
+
+/* ----------------------------------------------------
+   BESPOKE MOBILE 3D HERO ENGINE (YAWMATIC KINETIC BEACON)
+   ---------------------------------------------------- */
+let mobileHeroRenderer, mobileHeroScene, mobileHeroCamera, mobileHeroAnimId;
+let mobileBeaconGroup, mobileRing1, mobileRing2;
+let isMobileHeroRendering = false;
+
+function initMobileHeroWebGL() {
+  const container = document.getElementById('hero');
+  const canvas = document.getElementById('webgl-cube-canvas');
+  if (!canvas || !container) return;
+
+  // GPU-Optimized Renderer (No shadow map overhead, max 1.5 pixel ratio)
+  mobileHeroRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  mobileHeroRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  mobileHeroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  mobileHeroRenderer.shadowMap.enabled = false;
+
+  // Scene & Camera
+  mobileHeroScene = new THREE.Scene();
+  mobileHeroCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 50);
+  mobileHeroCamera.position.set(0, 0, 6.2);
+  mobileHeroCamera.lookAt(0, 0, 0);
+
+  // Minimal Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.15);
+  mobileHeroScene.add(ambient);
+
+  const coreLight = new THREE.PointLight(0xFF5A1F, 2.2, 8);
+  coreLight.position.set(0, 0, 0);
+  mobileHeroScene.add(coreLight);
+
+  const goldLight = new THREE.PointLight(0xFFD66B, 1.5, 6);
+  goldLight.position.set(0, 0.4, 1);
+  mobileHeroScene.add(goldLight);
+
+  // Master Beacon Group
+  mobileBeaconGroup = new THREE.Group();
+  mobileHeroScene.add(mobileBeaconGroup);
+
+  // 1. Central Y-Core Emblem Symbol
+  const coreSymbolGroup = createYCoreSymbol();
+  coreSymbolGroup.scale.set(1.15, 1.15, 1.15);
+  mobileBeaconGroup.add(coreSymbolGroup);
+
+  // 2. Dual Synchronized Orbital Energy Rings
+  const torusGeo1 = new THREE.TorusGeometry(1.65, 0.014, 12, 64);
+  const torusMat1 = new THREE.MeshBasicMaterial({ color: 0xFF5A1F, transparent: true, opacity: 0.45 });
+  mobileRing1 = new THREE.Mesh(torusGeo1, torusMat1);
+  mobileRing1.rotation.set(Math.PI * 0.35, Math.PI * 0.1, 0);
+  mobileBeaconGroup.add(mobileRing1);
+
+  const torusGeo2 = new THREE.TorusGeometry(2.10, 0.010, 12, 64);
+  const torusMat2 = new THREE.MeshBasicMaterial({ color: 0xFF6A00, transparent: true, opacity: 0.30 });
+  mobileRing2 = new THREE.Mesh(torusGeo2, torusMat2);
+  mobileRing2.rotation.set(-Math.PI * 0.40, -Math.PI * 0.2, Math.PI * 0.15);
+  mobileBeaconGroup.add(mobileRing2);
+
+  // 3. Micro Particle Halo (16 soft particles)
+  const pTexture = createCircleParticleTexture();
+  const pGeo = new THREE.BufferGeometry();
+  const pCount = 16;
+  const pPositions = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 1.8 + Math.random() * 1.2;
+    pPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    pPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pPositions[i * 3 + 2] = r * Math.cos(phi);
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0xFF6A00,
+    size: 0.14,
+    transparent: true,
+    opacity: 0.5,
+    map: pTexture,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+  const mobileParticlePoints = new THREE.Points(pGeo, pMat);
+  mobileBeaconGroup.add(mobileParticlePoints);
+
+  // Resize handler
+  const resizeMobileHandler = () => {
+    if (!mobileHeroRenderer) return;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    mobileHeroCamera.aspect = w / h;
+    mobileHeroCamera.updateProjectionMatrix();
+    mobileHeroRenderer.setSize(w, h);
+  };
+  window.addEventListener('resize', resizeMobileHandler);
+
+  // Render loop with viewport pausing support
+  let clock = new THREE.Clock();
+  function renderMobileHeroScene() {
+    if (!isMobileHeroRendering) return;
+    const elapsed = clock.getElapsedTime();
+
+    mobileBeaconGroup.position.y = Math.sin(elapsed * 1.8) * 0.06;
+    mobileBeaconGroup.rotation.y = elapsed * 0.25;
+
+    mobileRing1.rotation.z = elapsed * 0.35;
+    mobileRing2.rotation.z = -elapsed * 0.45;
+    mobileParticlePoints.rotation.y = -elapsed * 0.15;
+
+    mobileHeroRenderer.render(mobileHeroScene, mobileHeroCamera);
+    mobileHeroAnimId = requestAnimationFrame(renderMobileHeroScene);
+  }
+
+  function startMobileRender() {
+    if (!isMobileHeroRendering) {
+      isMobileHeroRendering = true;
+      clock.start();
+      renderMobileHeroScene();
+    }
+  }
+
+  function pauseMobileRender() {
+    isMobileHeroRendering = false;
+    if (mobileHeroAnimId) cancelAnimationFrame(mobileHeroAnimId);
+  }
+
+  // Viewport Observer (Pause rendering when scrolled out of view)
+  setupCanvasObserver(canvas, startMobileRender, pauseMobileRender);
+
+  window.addEventListener('beforeunload', () => {
+    window.removeEventListener('resize', resizeMobileHandler);
+    if (mobileHeroRenderer) mobileHeroRenderer.dispose();
+  });
+}
+
+/* ----------------------------------------------------
+   01. HERO THREE.JS SCENE CREATION (DESKTOP > 1024PX ONLY)
    ---------------------------------------------------- */
 let heroRenderer, heroScene, heroCamera;
 let cubeParentGroup, cubeGroup;
@@ -822,6 +1287,12 @@ function initHeroWebGL() {
   const container = document.getElementById('hero');
   const canvas = document.getElementById('webgl-cube-canvas');
   if (!canvas || !container) return;
+
+  // Execute Mobile Hero Engine on screens <= 1024px
+  if (window.innerWidth <= 1024) {
+    // 3D animation removed on mobile/tablet for performance and clutter-free experience
+    return;
+  }
 
   let heroTl;
 
@@ -882,118 +1353,6 @@ function initHeroWebGL() {
       transparent: true,
       opacity: opacity
     });
-  }
-
-  function createYCoreSymbol() {
-    const group = new THREE.Group();
-
-    const yMat = new THREE.MeshStandardMaterial({
-      color:              0xffb84d,
-      emissive:           0xffd66b,
-      emissiveIntensity:  1.2,
-      roughness:          0.18,
-      metalness:          0.82
-    });
-
-    const strutMat = new THREE.MeshStandardMaterial({
-      color:              0x121213,
-      roughness:          0.85,
-      metalness:          0.15
-    });
-
-    const cageGeo = new THREE.OctahedronGeometry(0.42, 0);
-    const cageEdges = new THREE.EdgesGeometry(cageGeo);
-    const cageMat = new THREE.LineBasicMaterial({
-      color: 0x333335,
-      transparent: true,
-      opacity: 0.7
-    });
-    const cage = new THREE.LineSegments(cageEdges, cageMat);
-    group.add(cage);
-
-    const st = 0.025;
-    const sl = 0.375;
-
-    const strutXGeo = new THREE.BoxGeometry(sl, st, st);
-    const strutX1 = new THREE.Mesh(strutXGeo, strutMat);
-    strutX1.position.set(sl/2, 0, 0);
-    const strutX2 = new THREE.Mesh(strutXGeo, strutMat);
-    strutX2.position.set(-sl/2, 0, 0);
-    group.add(strutX1);
-    group.add(strutX2);
-
-    const strutYGeo = new THREE.BoxGeometry(st, sl, st);
-    const strutY1 = new THREE.Mesh(strutYGeo, strutMat);
-    strutY1.position.set(0, sl/2, 0);
-    const strutY2 = new THREE.Mesh(strutYGeo, strutMat);
-    strutY2.position.set(0, -sl/2, 0);
-    group.add(strutY1);
-    group.add(strutY2);
-
-    const strutZGeo = new THREE.BoxGeometry(st, st, sl);
-    const strutZ1 = new THREE.Mesh(strutZGeo, strutMat);
-    strutZ1.position.set(0, 0, sl/2);
-    const strutZ2 = new THREE.Mesh(strutZGeo, strutMat);
-    strutZ2.position.set(0, 0, -sl/2);
-    group.add(strutZ1);
-    group.add(strutZ2);
-
-    const glyphGroup = new THREE.Group();
-    glyphGroup.position.set(0, 0, 0.18);
-    group.add(glyphGroup);
-
-    const sw    = 0.13;
-    const sd    = 0.13;
-    const armL  = 0.35;
-    const stemL = 0.33;
-    const angle = Math.PI / 4;
-
-    const stemGeo = new THREE.BoxGeometry(sw, stemL, sd);
-    const stem    = new THREE.Mesh(stemGeo, yMat);
-    stem.position.set(0, -(stemL / 2) - 0.006, 0);
-    glyphGroup.add(stem);
-
-    const armGeo = new THREE.BoxGeometry(sw, armL, sd);
-    const offX   = (armL / 2) * Math.sin(angle);
-    const offY   = (armL / 2) * Math.cos(angle);
-
-    const leftArm = new THREE.Mesh(armGeo, yMat.clone());
-    leftArm.position.set(-offX, offY + 0.006, 0);
-    leftArm.rotation.z = angle;
-    glyphGroup.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, yMat.clone());
-    rightArm.position.set(offX, offY + 0.006, 0);
-    rightArm.rotation.z = -angle;
-    glyphGroup.add(rightArm);
-
-    const nodeGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    const nodeMat = new THREE.MeshStandardMaterial({
-      color:              0xffd66b,
-      emissive:           0xff9a1f,
-      emissiveIntensity:  1.5,
-      roughness:          0.1,
-      metalness:          0.9
-    });
-    const node = new THREE.Mesh(nodeGeo, nodeMat);
-    node.position.set(0, 0, 0);
-    glyphGroup.add(node);
-
-    goldCoreLight = new THREE.PointLight(0xffb84d, 1.2, 3.0);
-    goldCoreLight.position.set(0, 0, 0);
-    glyphGroup.add(goldCoreLight);
-
-    const haloGeo = new THREE.SphereGeometry(0.20, 16, 16);
-    const haloMat = new THREE.MeshBasicMaterial({
-      color:       0xff9a1f,
-      transparent: true,
-      opacity:     0.08
-    });
-    const halo = new THREE.Mesh(haloGeo, haloMat);
-    glyphGroup.add(halo);
-    group.userData.haloMat = haloMat;
-
-    return group;
   }
 
   const CUBIE_SIZE  = 0.75;
@@ -1326,6 +1685,11 @@ function initHorizontalScroll() {
     existingTrigger.kill(true);
   }
 
+  if (window.innerWidth <= 1024) {
+    gsap.set(container, { clearProps: 'all' });
+    return;
+  }
+
   gsap.to(container, {
     x: () => -(container.scrollWidth - window.innerWidth),
     ease: 'none',
@@ -1500,12 +1864,12 @@ function initTechWebGL() {
   };
   window.addEventListener('resize', resizeTechHandler);
 
+  let isTechRendering = false;
+  let techAnimId;
   let clock = new THREE.Clock();
+
   function renderTechScene() {
-    if (document.hidden) {
-      requestAnimationFrame(renderTechScene);
-      return;
-    }
+    if (!isTechRendering) return;
 
     const elapsed = clock.getElapsedTime();
     
@@ -1520,9 +1884,23 @@ function initTechWebGL() {
     techPoints.rotation.x = elapsed * 0.015;
 
     techRenderer.render(techScene, techCamera);
-    requestAnimationFrame(renderTechScene);
+    techAnimId = requestAnimationFrame(renderTechScene);
   }
-  renderTechScene();
+
+  function startTechRender() {
+    if (!isTechRendering) {
+      isTechRendering = true;
+      clock.start();
+      renderTechScene();
+    }
+  }
+
+  function pauseTechRender() {
+    isTechRendering = false;
+    if (techAnimId) cancelAnimationFrame(techAnimId);
+  }
+
+  setupCanvasObserver(techCanvas, startTechRender, pauseTechRender);
 
   window.addEventListener('beforeunload', () => {
     window.removeEventListener('resize', resizeTechHandler);
@@ -1587,6 +1965,7 @@ let aboutRenderer, aboutScene, aboutCamera;
 let aboutSceneGroup;
 let aboutOrbit1, aboutOrbit2, aboutOrbit3;
 let particle1, particle2, particle3;
+let t1 = 0, t2 = 0, t3 = 0;
 let trail1 = [], trail2 = [], trail3 = [];
 const maxTrailPoints = 14;
 let trailMeshes1 = [], trailMeshes2 = [], trailMeshes3 = [];
@@ -1826,12 +2205,11 @@ function initAboutWebGL() {
   };
   window.addEventListener('resize', resizeAboutHandler);
 
-  let t1 = 0, t2 = 0.3, t3 = 0.6;
+  let isAboutRendering = false;
+  let aboutAnimId;
+
   function animateAboutScene() {
-    if (document.hidden) {
-      requestAnimationFrame(animateAboutScene);
-      return;
-    }
+    if (!isAboutRendering) return;
 
     aboutSceneGroup.rotation.x += (targetRotX - aboutSceneGroup.rotation.x) * 0.08;
     aboutSceneGroup.rotation.y += (targetRotY - aboutSceneGroup.rotation.y) * 0.08;
@@ -1877,9 +2255,22 @@ function initAboutWebGL() {
     }
 
     aboutRenderer.render(aboutScene, aboutCamera);
-    requestAnimationFrame(animateAboutScene);
+    aboutAnimId = requestAnimationFrame(animateAboutScene);
   }
-  animateAboutScene();
+
+  function startAboutRender() {
+    if (!isAboutRendering) {
+      isAboutRendering = true;
+      animateAboutScene();
+    }
+  }
+
+  function pauseAboutRender() {
+    isAboutRendering = false;
+    if (aboutAnimId) cancelAnimationFrame(aboutAnimId);
+  }
+
+  setupCanvasObserver(canvas, startAboutRender, pauseAboutRender);
 
   window.addEventListener('beforeunload', () => {
     window.removeEventListener('resize', resizeAboutHandler);
@@ -1962,3 +2353,107 @@ document.addEventListener('visibilitychange', () => {
     ScrollTrigger.refresh();
   }
 });
+
+/* ----------------------------------------------------
+   RESPONSIVE MOBILE NAVIGATION INJECTION (FULL SCREEN LUXURY OVERLAY)
+   ---------------------------------------------------- */
+function injectMobileNav() {
+  const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+
+  // Prevent double injection
+  if (document.getElementById('nav-hamburger')) return;
+
+  // Create Hamburger Button
+  const hamburger = document.createElement('button');
+  hamburger.className = 'navbar__hamburger';
+  hamburger.id = 'nav-hamburger';
+  hamburger.setAttribute('aria-label', 'Toggle Menu');
+  hamburger.innerHTML = `
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  `;
+  navbar.appendChild(hamburger);
+
+  // Create Full-Screen Mobile Menu Overlay
+  const mobileMenu = document.createElement('div');
+  mobileMenu.className = 'mobile-menu';
+  mobileMenu.id = 'mobile-menu';
+  mobileMenu.innerHTML = `
+    <div class="mobile-menu__overlay"></div>
+    <div class="mobile-menu__content">
+      <div class="mobile-menu__header">
+        <a href="/" class="mobile-menu__brand">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 32px; height: 32px;">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <button class="mobile-menu__close" id="mobile-menu-close" aria-label="Close Menu">✕</button>
+      </div>
+
+      <div class="mobile-menu__body">
+        <ul class="mobile-menu__links">
+          <li><a href="/" class="mobile-menu__link"><span class="mobile-menu__num">01</span><span class="mobile-menu__text">Home</span></a></li>
+          <li><a href="/about" class="mobile-menu__link"><span class="mobile-menu__num">02</span><span class="mobile-menu__text">About</span></a></li>
+          <li><a href="/services" class="mobile-menu__link"><span class="mobile-menu__num">03</span><span class="mobile-menu__text">Services</span></a></li>
+          <li><a href="/work" class="mobile-menu__link"><span class="mobile-menu__num">04</span><span class="mobile-menu__text">Work</span></a></li>
+          <li><a href="/process" class="mobile-menu__link"><span class="mobile-menu__num">05</span><span class="mobile-menu__text">Process</span></a></li>
+          <li><a href="/creators" class="mobile-menu__link"><span class="mobile-menu__num">06</span><span class="mobile-menu__text">Creators</span></a></li>
+        </ul>
+        
+        <div class="mobile-menu__cta-wrap">
+          <a href="/contact" class="btn btn--primary mobile-menu__cta-btn">Start A Project →</a>
+        </div>
+      </div>
+
+      <div class="mobile-menu__footer">
+        <span class="mobile-menu__tagline">THINK FUTURE. BUILD DIFFERENT.</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(mobileMenu);
+
+  const closeBtn = mobileMenu.querySelector('#mobile-menu-close');
+  const overlay = mobileMenu.querySelector('.mobile-menu__overlay');
+  const links = mobileMenu.querySelectorAll('.mobile-menu__link, .mobile-menu__cta-btn');
+
+  function toggleMenu() {
+    const isOpen = mobileMenu.classList.contains('is-open');
+    if (isOpen) {
+      mobileMenu.classList.remove('is-open');
+      hamburger.classList.remove('is-active');
+      document.body.classList.remove('no-scroll');
+      if (typeof lenis !== 'undefined' && lenis) lenis.start();
+    } else {
+      mobileMenu.classList.add('is-open');
+      hamburger.classList.add('is-active');
+      document.body.classList.add('no-scroll');
+      if (typeof lenis !== 'undefined' && lenis) lenis.stop();
+
+      // Trigger GSAP staggered link entrance if available
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo('.mobile-menu__link', 
+          { opacity: 0, y: 25 }, 
+          { opacity: 1, y: 0, stagger: 0.05, duration: 0.45, ease: 'power3.out', overwrite: 'auto' }
+        );
+      }
+    }
+  }
+
+  hamburger.addEventListener('click', toggleMenu);
+  if (closeBtn) closeBtn.addEventListener('click', toggleMenu);
+  overlay.addEventListener('click', toggleMenu);
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      if (mobileMenu.classList.contains('is-open')) {
+        toggleMenu();
+      }
+    });
+  });
+}
