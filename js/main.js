@@ -1965,6 +1965,7 @@ let aboutRenderer, aboutScene, aboutCamera;
 let aboutSceneGroup;
 let aboutOrbit1, aboutOrbit2, aboutOrbit3;
 let particle1, particle2, particle3;
+let t1 = 0, t2 = 0, t3 = 0;
 let trail1 = [], trail2 = [], trail3 = [];
 const maxTrailPoints = 14;
 let trailMeshes1 = [], trailMeshes2 = [], trailMeshes3 = [];
