@@ -2390,9 +2390,9 @@ function injectMobileNav() {
             <g class="logo-orbit-svg__rotator">
               <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
             </g>
-            <image href="logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+            <image href="/logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
           </svg>
-          <img src="logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+          <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
         </a>
         <button class="mobile-menu__close" id="mobile-menu-close" aria-label="Close Menu">✕</button>
       </div>
