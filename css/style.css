@@ -1815,6 +1815,14 @@ button {
   overflow: hidden;
 }
 
+.footer__mobile-cta {
+  display: none;
+}
+
+.footer__social-btn .social-text {
+  display: none;
+}
+
 .footer-top {
   display: flex;
   justify-content: space-between;
@@ -2516,32 +2524,200 @@ button {
     max-width: 100% !important;
   }
 
+  /* Mobile Footer Premium Redesign (Apple/Linear/Vercel/Framer Inspired) */
   .footer {
-    padding: 60px 6% max(40px, env(safe-area-inset-bottom)) 6% !important;
+    padding: 44px 6% max(32px, env(safe-area-inset-bottom)) 6% !important;
+    background-color: #070708 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .footer__mobile-cta {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    margin-bottom: 36px !important;
+    padding-bottom: 32px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .footer__mobile-cta-overline {
+    font-family: var(--font-display) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.2em !important;
+    color: var(--fire) !important;
+    margin-bottom: 10px !important;
+    text-transform: uppercase !important;
+  }
+
+  .footer__mobile-cta-title {
+    font-family: var(--font-display) !important;
+    font-size: clamp(1.4rem, 5.2vw, 2.1rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    color: var(--volt) !important;
+    margin-bottom: 20px !important;
+    text-transform: uppercase !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .footer__mobile-cta-btn {
+    min-height: 48px !important;
+    padding: 12px 28px !important;
+    font-size: 0.9rem !important;
+    border-radius: 4px !important;
+    width: auto !important;
+    display: inline-flex !important;
   }
 
   .footer-top {
     flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 28px !important;
+    margin-bottom: 32px !important;
+  }
+
+  .footer__logo-col {
+    align-items: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  /* Subtle signature logo on mobile (hides repeated 50px SVG orbit logo) */
+  .footer__logo {
+    font-size: 1.1rem !important;
+    gap: 8px !important;
     align-items: center !important;
-    text-align: center !important;
-    gap: 36px !important;
+  }
+
+  .footer__logo .logo-orbit-svg {
+    display: none !important;
+  }
+
+  .footer__logo .logo-wordmark-img {
+    height: 1.1em !important;
+    opacity: 0.9 !important;
+  }
+
+  .footer__tagline {
+    font-size: 0.75rem !important;
+    letter-spacing: 0.15em !important;
+    color: var(--mist) !important;
+    opacity: 0.6 !important;
+    font-weight: 600 !important;
+    margin-top: 4px !important;
+    text-transform: uppercase !important;
+    text-shadow: none !important;
+  }
+
+  .footer__nav-col {
+    width: 100% !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding-top: 24px !important;
   }
 
   .footer__menu {
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 16px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px 20px !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    text-align: left !important;
   }
 
-  .footer-bottom {
-    flex-direction: column !important;
-    gap: 12px !important;
-    text-align: center !important;
+  .footer__link {
+    font-size: 0.88rem !important;
+    color: var(--mist) !important;
+    opacity: 0.8 !important;
+    font-weight: 500 !important;
+    transition: opacity 0.2s ease, color 0.2s ease !important;
+    display: inline-block !important;
+  }
+
+  .footer__link:hover {
+    opacity: 1 !important;
+    color: var(--fire) !important;
+  }
+
+  .footer__socials-col {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 18px !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding-top: 20px !important;
   }
 
   .footer__social-btn {
-    width: 48px !important;
-    height: 48px !important;
+    width: auto !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 0.8rem !important;
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+    color: var(--mist) !important;
+    opacity: 0.75 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .footer__social-btn .social-text {
+    display: inline-block !important;
+  }
+
+  .footer__social-btn::after {
+    content: '↗';
+    font-size: 0.75rem;
+    color: var(--fire);
+    opacity: 0.8;
+  }
+
+  .footer__social-btn svg {
+    display: none !important;
+  }
+
+  .footer__social-btn:hover {
+    opacity: 1 !important;
+    color: var(--volt) !important;
+    background: transparent !important;
+    transform: none !important;
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding-top: 20px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    text-align: left !important;
+  }
+
+  .footer__copy {
+    font-size: 0.74rem !important;
+    color: var(--mist) !important;
+    opacity: 0.4 !important;
+    font-weight: 400 !important;
+  }
+
+  .footer__credit {
+    font-size: 0.7rem !important;
+    color: var(--mist) !important;
+    opacity: 0.25 !important;
+    letter-spacing: 0.15em !important;
+    font-family: var(--font-display) !important;
+    text-transform: uppercase !important;
   }
 
   /* Dashboard Admin View responsiveness overrides */
