@@ -2169,7 +2169,16 @@ button {
 
   /* Section Padding */
   .section-padding {
-    padding: clamp(60px, 10vw, 100px) 6% !important;
+    padding: clamp(50px, 8vw, 80px) 6% !important;
+  }
+
+  /* Ensure top section under navbar on mobile has generous space from wordmark */
+  section:first-of-type,
+  main > section:first-of-type,
+  .section-padding:first-of-type,
+  .hero-section,
+  .creators-hero {
+    padding-top: max(160px, calc(145px + env(safe-area-inset-top))) !important;
   }
 
   .heading-large,
