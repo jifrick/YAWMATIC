@@ -82,7 +82,7 @@
     }
     @media (max-width: 1024px) {
       .creators-hero {
-        padding-top: 120px;
+        padding-top: max(160px, calc(145px + env(safe-area-inset-top))) !important;
         min-height: auto;
       }
       .creators-hero__headline {

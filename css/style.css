@@ -2296,11 +2296,12 @@ button {
     touch-action: pan-y !important;
   }
 
-  .hero-section {
+  .hero-section,
+  .creators-hero {
     height: auto !important;
     min-height: 100vh !important;
     min-height: 100svh !important;
-    padding: max(105px, calc(92px + env(safe-area-inset-top))) 6% max(16px, calc(8px + env(safe-area-inset-bottom))) 6% !important;
+    padding: max(160px, calc(145px + env(safe-area-inset-top))) 6% max(16px, calc(8px + env(safe-area-inset-bottom))) 6% !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
