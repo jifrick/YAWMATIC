@@ -73,8 +73,14 @@
       padding: 50px 40px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
+    .form-row-2col {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
     @media(max-width: 600px) {
-      .apply-card { padding: 30px 20px; }
+      .apply-card { padding: 24px 16px; }
+      .form-row-2col { grid-template-columns: 1fr !important; gap: 15px !important; }
     }
 
     /* Step Progress Indicator */
@@ -499,7 +505,7 @@
               background: rgba(255, 255, 255, 0.04);
             }
           </style>
-          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group form-row-2col">
             <div>
               <label class="form-label" for="app-city">City</label>
               <input type="text" id="app-city" class="form-control" placeholder="Kochi" required>
@@ -551,7 +557,7 @@
             <label class="form-label" for="app-instagram">Instagram Handle (Username Only)</label>
             <input type="text" id="app-instagram" class="form-control" placeholder="arjun_clicks">
           </div>
-          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group form-row-2col">
             <div>
               <label class="form-label" for="app-behance">Behance handle</label>
               <input type="text" id="app-behance" class="form-control" placeholder="username">
@@ -561,7 +567,7 @@
               <input type="text" id="app-dribbble" class="form-control" placeholder="username">
             </div>
           </div>
-          <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group form-row-2col">
             <div>
               <label class="form-label" for="app-youtube">YouTube Handle</label>
               <input type="text" id="app-youtube" class="form-control" placeholder="username">

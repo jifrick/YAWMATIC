@@ -2172,6 +2172,11 @@ button {
     padding: clamp(50px, 8vw, 80px) 6% !important;
   }
 
+  .form-row-2col {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
   /* Ensure top section under navbar on mobile has generous space from wordmark */
   section:first-of-type,
   main > section:first-of-type,

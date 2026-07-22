@@ -176,7 +176,7 @@ export default function CreatorsApply() {
                     <label className="form-label">Phone Number</label>
                     <input type="tel" className="form-control" placeholder="+91 98765 43210" required value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
-                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="form-group form-row-2col">
                     <div>
                       <label className="form-label">City</label>
                       <input type="text" className="form-control" placeholder="Kochi" required value={city} onChange={(e) => setCity(e.target.value)} />
@@ -242,7 +242,7 @@ export default function CreatorsApply() {
                     <label className="form-label">Instagram Handle (Username Only)</label>
                     <input type="text" className="form-control" placeholder="arjun_clicks" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
                   </div>
-                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="form-group form-row-2col">
                     <div>
                       <label className="form-label">Behance handle</label>
                       <input type="text" className="form-control" placeholder="username" value={behance} onChange={(e) => setBehance(e.target.value)} />
@@ -252,7 +252,7 @@ export default function CreatorsApply() {
                       <input type="text" className="form-control" placeholder="username" value={dribbble} onChange={(e) => setDribbble(e.target.value)} />
                     </div>
                   </div>
-                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="form-group form-row-2col">
                     <div>
                       <label className="form-label">YouTube Handle</label>
                       <input type="text" className="form-control" placeholder="username" value={youtube} onChange={(e) => setYoutube(e.target.value)} />
