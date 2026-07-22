@@ -2146,6 +2146,12 @@ button {
    MOBILE & TABLET RESPONSIVENESS SYSTEM (<= 1024px)
    ==================================================== */
 @media (max-width: 1024px) {
+  /* Touch scroll optimization & hardware acceleration */
+  html, body {
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
   /* Scroll locking & custom cursor visibility */
   body.no-scroll {
     overflow: hidden !important;
@@ -2239,25 +2245,28 @@ button {
     height: 1.15em !important;
   }
 
-  /* Mobile Hero Container & Full Viewport Composition (100dvh) */
+  /* Mobile Hero Container & Full Viewport Composition (Touch Scroll Optimized) */
   .hero-pin-wrapper {
-    height: 100vh !important;
-    height: 100dvh !important;
+    height: auto !important;
     min-height: 100vh !important;
-    min-height: 100dvh !important;
+    min-height: 100svh !important;
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
   }
 
   .hero-section {
-    height: 100% !important;
-    min-height: 100% !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    min-height: 100svh !important;
     padding: max(64px, calc(52px + env(safe-area-inset-top))) 6% max(16px, calc(8px + env(safe-area-inset-bottom))) 6% !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
     align-items: center !important;
     gap: 0 !important;
+    overflow: visible !important;
+    touch-action: pan-y !important;
   }
 
   .hero__webgl-container,
