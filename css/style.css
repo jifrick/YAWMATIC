@@ -2216,10 +2216,12 @@ button {
   }
 
   .navbar {
-    padding: max(18px, env(safe-area-inset-top)) 6% 18px 6% !important;
+    padding: max(12px, env(safe-area-inset-top)) max(calc(6% + 10px), calc(env(safe-area-inset-right) + 12px)) 12px max(calc(6% + 10px), calc(env(safe-area-inset-left) + 12px)) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
-  /* Wordmark reduced by ~20% on mobile to act as a signature logo */
+  /* Wordmark logo styling with clean alignment and breathing room */
   .navbar__logo {
     transform: scale(0.80) !important;
     transform-origin: left center !important;
@@ -2229,25 +2231,25 @@ button {
     height: 1.15em !important;
   }
 
-  /* Mobile Hero Container & Clean Composition (3D Canvas Removed) */
+  /* Mobile Hero Container & Clean Composition */
   .hero-pin-wrapper {
     height: auto !important;
-    min-height: calc(100vh - 80px) !important;
+    min-height: auto !important;
   }
 
   .hero-section {
-    padding: max(85px, calc(70px + env(safe-area-inset-top))) 6% max(36px, env(safe-area-inset-bottom)) 6% !important;
+    padding: max(68px, calc(56px + env(safe-area-inset-top))) 6% max(20px, env(safe-area-inset-bottom)) 6% !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
     gap: 0 !important;
     height: auto !important;
-    min-height: calc(100vh - 80px) !important;
+    min-height: auto !important;
   }
 
   .hero__webgl-container,
   .hero__orbit-overlay {
-    display: none !important; /* Removed 3D animation on mobile for max speed & zero clutter */
+    display: none !important;
   }
 
   .hero__content {
@@ -2255,17 +2257,24 @@ button {
     text-align: center !important;
     align-items: center !important;
     order: 1 !important;
-    margin: 20px auto 0 auto !important;
-    will-change: transform;
-    transform: translate3d(0, -35px, 0) !important; /* Shift upward slightly for visual balance */
+    margin: 0 auto !important;
+    will-change: auto;
+    transform: none !important; /* Sharp alignment without blur or offset under header */
+  }
+
+  .hero__headline,
+  .hero__headline span,
+  .hero__headline span.fire {
+    text-shadow: none !important;
+    filter: none !important;
   }
 
   .hero__headline {
-    font-size: clamp(2.7rem, 9.5vw, 4.2rem) !important; /* Increased visual importance */
+    font-size: clamp(2.7rem, 9.5vw, 4.2rem) !important;
     line-height: 1.04 !important;
     letter-spacing: -0.03em !important;
     margin-top: 0 !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 18px !important;
     text-transform: uppercase;
   }
 
@@ -2275,15 +2284,15 @@ button {
     color: var(--mist) !important;
     max-width: 340px !important;
     width: 92% !important;
-    margin: 0 auto 36px auto !important;
+    margin: 0 auto 26px auto !important;
   }
 
   .hero__ctas {
     flex-direction: column !important;
     width: 100% !important;
     max-width: 360px !important;
-    gap: 14px !important;
-    margin: 0 auto 40px auto !important;
+    gap: 12px !important;
+    margin: 0 auto 28px auto !important;
   }
 
   .hero__ctas .magnetic-wrap {
@@ -2299,7 +2308,7 @@ button {
   }
 
   .hero__cards-container {
-    display: none !important; /* Hide desktop floating cards on mobile for clutter-free hero */
+    display: none !important;
   }
 
   .hero__scroll-explore {
@@ -2308,10 +2317,15 @@ button {
     left: auto !important;
     transform: none !important;
     order: 2 !important;
-    margin-top: 10px !important;
-    margin-bottom: 20px !important;
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
     align-self: center !important;
     opacity: 0.7 !important;
+  }
+
+  /* Reduce empty vertical space before vision section */
+  #vision.section-padding {
+    padding-top: clamp(32px, 5vw, 44px) !important;
   }
 
   /* Prevent iOS Auto-Zoom on Form Input Focus */
