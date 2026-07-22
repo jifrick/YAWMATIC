@@ -1290,7 +1290,7 @@ function initHeroWebGL() {
 
   // Execute Mobile Hero Engine on screens <= 1024px
   if (window.innerWidth <= 1024) {
-    initMobileHeroWebGL();
+    // 3D animation removed on mobile/tablet for performance and clutter-free experience
     return;
   }
 

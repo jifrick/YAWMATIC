@@ -2221,7 +2221,7 @@ button {
 
   /* Wordmark reduced by ~20% on mobile to act as a signature logo */
   .navbar__logo {
-    transform: scale(0.70) !important;
+    transform: scale(0.80) !important;
     transform-origin: left center !important;
   }
 
@@ -2229,76 +2229,61 @@ button {
     height: 1.15em !important;
   }
 
-  /* Mobile Hero Container & Vertical Rhythm */
+  /* Mobile Hero Container & Clean Composition (3D Canvas Removed) */
   .hero-pin-wrapper {
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: calc(100vh - 80px) !important;
   }
 
   .hero-section {
-    padding: max(70px, calc(60px + env(safe-area-inset-top))) 6% max(24px, env(safe-area-inset-bottom)) 6% !important;
+    padding: max(85px, calc(70px + env(safe-area-inset-top))) 6% max(36px, env(safe-area-inset-bottom)) 6% !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 0 !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: calc(100vh - 80px) !important;
   }
 
-  .hero__webgl-container {
-    width: 100% !important;
-    height: 240px !important;
-    min-height: 200px !important;
-    max-height: 260px !important;
-    position: relative !important;
-    order: 1 !important;
-    margin: 0 auto 10px auto !important;
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-  }
-
+  .hero__webgl-container,
   .hero__orbit-overlay {
-    width: 220px !important;
-    height: 220px !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) rotateX(75deg) !important;
-    opacity: 0.6 !important;
+    display: none !important; /* Removed 3D animation on mobile for max speed & zero clutter */
   }
 
   .hero__content {
     width: 100% !important;
     text-align: center !important;
     align-items: center !important;
-    order: 2 !important;
-    margin: 0 auto !important;
+    order: 1 !important;
+    margin: 20px auto 0 auto !important;
     will-change: transform;
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, -35px, 0) !important; /* Shift upward slightly for visual balance */
   }
 
   .hero__headline {
-    font-size: clamp(2.0rem, 6.4vw, 3.2rem) !important;
-    line-height: 1.08 !important;
-    letter-spacing: -0.02em !important;
+    font-size: clamp(2.7rem, 9.5vw, 4.2rem) !important; /* Increased visual importance */
+    line-height: 1.04 !important;
+    letter-spacing: -0.03em !important;
     margin-top: 0 !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 24px !important;
+    text-transform: uppercase;
   }
 
   .hero__subtext {
-    font-size: clamp(0.9rem, 3.2vw, 1.05rem) !important;
+    font-size: clamp(0.95rem, 3.6vw, 1.15rem) !important;
     line-height: 1.65 !important;
     color: var(--mist) !important;
-    max-width: 320px !important;
-    width: 90% !important;
-    margin: 0 auto 28px auto !important;
+    max-width: 340px !important;
+    width: 92% !important;
+    margin: 0 auto 36px auto !important;
   }
 
   .hero__ctas {
     flex-direction: column !important;
     width: 100% !important;
     max-width: 360px !important;
-    gap: 12px !important;
-    margin: 0 auto !important;
+    gap: 14px !important;
+    margin: 0 auto 40px auto !important;
   }
 
   .hero__ctas .magnetic-wrap {
@@ -2322,8 +2307,8 @@ button {
     bottom: auto !important;
     left: auto !important;
     transform: none !important;
-    order: 3 !important;
-    margin-top: 14px !important;
+    order: 2 !important;
+    margin-top: 10px !important;
     margin-bottom: 20px !important;
     align-self: center !important;
     opacity: 0.7 !important;
