@@ -130,7 +130,7 @@ export default function Layout({ children, currentPath }: LayoutProps) {
           <li><a href="/process" onClick={(e) => handleLinkClick(e, '/process')} className={getLinkClass('/process')}>Process</a></li>
           <li><a href="/creators" onClick={(e) => handleLinkClick(e, '/creators')} className={getLinkClass('/creators')}>Creators</a></li>
         </ul>
-        <div className="magnetic-wrap">
+        <div className="magnetic-wrap navbar__cta">
           <a href="/contact" onClick={(e) => handleLinkClick(e, '/contact')} className={getContactBtnClass()}>Let's Talk →</a>
         </div>
       </nav>
