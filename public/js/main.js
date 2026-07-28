@@ -2496,3 +2496,10 @@ function injectMobileNav() {
     });
   });
 }
+
+// Automatically initialize mobile navigation on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', injectMobileNav);
+} else {
+  injectMobileNav();
+}
