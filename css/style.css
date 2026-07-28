@@ -2481,22 +2481,22 @@ button {
 
   /* Mobile Hero Container & Full Viewport Composition (Touch Scroll Optimized) */
   .hero-pin-wrapper {
-    height: auto !important;
-    min-height: 0 !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     position: relative !important;
     overflow: visible !important;
   }
 
   .hero-section,
   .creators-hero {
-    height: auto !important;
-    min-height: 0 !important;
-    padding: max(100px, calc(85px + env(safe-area-inset-top))) 6% 36px 6% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    padding: max(100px, calc(85px + env(safe-area-inset-top))) 6% max(24px, calc(16px + env(safe-area-inset-bottom))) 6% !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     align-items: center !important;
-    gap: 0 !important;
+    box-sizing: border-box !important;
     overflow: visible !important;
   }
 
@@ -2512,7 +2512,7 @@ button {
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
-    margin: 0 0 24px 0 !important;
+    margin: auto 0 !important;
     transform: translateZ(0) !important;
   }
 
@@ -2570,7 +2570,7 @@ button {
     bottom: auto !important;
     left: auto !important;
     transform: none !important;
-    margin-top: 12px !important;
+    margin-top: auto !important;
     margin-bottom: 0 !important;
     align-self: center !important;
     opacity: 0.7 !important;
