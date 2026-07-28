@@ -1191,6 +1191,11 @@
         existingTrigger.kill(true);
       }
 
+      if (window.innerWidth <= 1024) {
+        gsap.set(container, { clearProps: 'all' });
+        return;
+      }
+
       gsap.to(container, {
         x: () => -(container.scrollWidth - window.innerWidth),
         ease: 'none',

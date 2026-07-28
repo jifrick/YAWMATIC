@@ -1563,67 +1563,69 @@ function initHeroWebGL() {
     requestAnimationFrame(animateHeroScene);
   }
 
-  // GSAP SCROLL TIMELINE
-  heroTl = gsap.timeline({
-    scrollTrigger: {
-      trigger: '#hero',
-      start: 'top top',
-      end: '+=200%',
-      pin: true,
-      scrub: 1.5
-    }
-  });
+  // GSAP SCROLL TIMELINE (Desktop only)
+  if (window.innerWidth > 1024) {
+    heroTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#hero',
+        start: 'top top',
+        end: '+=200%',
+        pin: true,
+        scrub: 1.5
+      }
+    });
 
-  heroTl
-    .to(scrollEmissive, { value: 0.05, duration: 0.15, ease: 'power1.in' }, 0)
-    .to(torusMat1,       { opacity: 0.30, duration: 0.15 }, 0)
-    .to(torusMat2,       { opacity: 0.22, duration: 0.15 }, 0)
-    .to('.floating-card', { opacity: 1, x: 0, stagger: 0.06, duration: 0.15, ease: 'power2.out' }, 0);
+    heroTl
+      .to(scrollEmissive, { value: 0.05, duration: 0.15, ease: 'power1.in' }, 0)
+      .to(torusMat1,       { opacity: 0.30, duration: 0.15 }, 0)
+      .to(torusMat2,       { opacity: 0.22, duration: 0.15 }, 0)
+      .to('.floating-card', { opacity: 1, x: 0, stagger: 0.06, duration: 0.15, ease: 'power2.out' }, 0);
 
-  subCubes.forEach(mesh => {
-    if (mesh.userData.isCenter) return;
-    const normDist = mesh.userData.dist / MAX_DIST;
-    const delay    = 0.15 + (1.0 - normDist) * 0.10;
+    subCubes.forEach(mesh => {
+      if (mesh.userData.isCenter) return;
+      const normDist = mesh.userData.dist / MAX_DIST;
+      const delay    = 0.15 + (1.0 - normDist) * 0.10;
 
-    heroTl.to(mesh.position, {
-      x: mesh.userData.openPos.x,
-      y: mesh.userData.openPos.y,
-      z: mesh.userData.openPos.z,
-      duration: 0.40,
-      ease: 'power3.out'
-    }, delay);
-  });
+      heroTl.to(mesh.position, {
+        x: mesh.userData.openPos.x,
+        y: mesh.userData.openPos.y,
+        z: mesh.userData.openPos.z,
+        duration: 0.40,
+        ease: 'power3.out'
+      }, delay);
+    });
 
-  heroTl
-    .to(scrollEmissive,  { value: 0.65, duration: 0.40, ease: 'power2.in'    }, 0.15)
-    .to(innerCoreLight,  { distance: 4.5, duration: 0.40, ease: 'power2.out' }, 0.15);
+    heroTl
+      .to(scrollEmissive,  { value: 0.65, duration: 0.40, ease: 'power2.in'    }, 0.15)
+      .to(innerCoreLight,  { distance: 4.5, duration: 0.40, ease: 'power2.out' }, 0.15);
 
-  heroTl
-    .to(scrollOrbitSpeed, { value: 0.025, duration: 0.15, ease: 'power1.inOut' }, 0.55)
-    .to(torusMat1, { opacity: 0.55, duration: 0.15 }, 0.55)
-    .to(torusMat2, { opacity: 0.42, duration: 0.15 }, 0.55);
+    heroTl
+      .to(scrollOrbitSpeed, { value: 0.025, duration: 0.15, ease: 'power1.inOut' }, 0.55)
+      .to(torusMat1, { opacity: 0.55, duration: 0.15 }, 0.55)
+      .to(torusMat2, { opacity: 0.42, duration: 0.15 }, 0.55);
 
-  subCubes.forEach(mesh => {
-    if (mesh.userData.isCenter) return;
-    const normDist = mesh.userData.dist / MAX_DIST;
-    const delay    = 0.70 + normDist * 0.08;
+    subCubes.forEach(mesh => {
+      if (mesh.userData.isCenter) return;
+      const normDist = mesh.userData.dist / MAX_DIST;
+      const delay    = 0.70 + normDist * 0.08;
 
-    heroTl.to(mesh.position, {
-      x: mesh.userData.originalPos.x,
-      y: mesh.userData.originalPos.y,
-      z: mesh.userData.originalPos.z,
-      duration: 0.30,
-      ease: 'power2.inOut'
-    }, delay);
-  });
+      heroTl.to(mesh.position, {
+        x: mesh.userData.originalPos.x,
+        y: mesh.userData.originalPos.y,
+        z: mesh.userData.originalPos.z,
+        duration: 0.30,
+        ease: 'power2.inOut'
+      }, delay);
+    });
 
-  heroTl
-    .to(settleRotateSpeed, { value: 0.0012,  duration: 0.30, ease: 'power2.inOut' }, 0.70)
-    .to(scrollOrbitSpeed,  { value: 0,        duration: 0.30, ease: 'power2.inOut' }, 0.70)
-    .to(scrollEmissive,    { value: 0.04,     duration: 0.30, ease: 'power2.out'   }, 0.70)
-    .to(innerCoreLight,    { distance: 2.8,   duration: 0.30, ease: 'power2.out'   }, 0.70)
-    .to(torusMat1,         { opacity: 0.22,   duration: 0.30, ease: 'power2.inOut' }, 0.70)
-    .to(torusMat2,         { opacity: 0.15,   duration: 0.30, ease: 'power2.inOut' }, 0.70);
+    heroTl
+      .to(settleRotateSpeed, { value: 0.0012,  duration: 0.30, ease: 'power2.inOut' }, 0.70)
+      .to(scrollOrbitSpeed,  { value: 0,        duration: 0.30, ease: 'power2.inOut' }, 0.70)
+      .to(scrollEmissive,    { value: 0.04,     duration: 0.30, ease: 'power2.out'   }, 0.70)
+      .to(innerCoreLight,    { distance: 2.8,   duration: 0.30, ease: 'power2.out'   }, 0.70)
+      .to(torusMat1,         { opacity: 0.22,   duration: 0.30, ease: 'power2.inOut' }, 0.70)
+      .to(torusMat2,         { opacity: 0.15,   duration: 0.30, ease: 'power2.inOut' }, 0.70);
+  }
 
   animateHeroScene();
 

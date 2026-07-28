@@ -2147,9 +2147,17 @@ button {
    ==================================================== */
 @media (max-width: 1024px) {
   /* Touch scroll optimization & hardware acceleration */
-  html, body {
+  html {
+    overflow-x: clip !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: auto !important;
+  }
+
+  body {
+    overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
+    overscroll-behavior-y: auto !important;
   }
 
   /* Scroll locking & custom cursor visibility */
@@ -2165,12 +2173,6 @@ button {
   
   a, button, select, input, textarea, .custom-select__option, .custom-select__trigger {
     cursor: pointer !important;
-  }
-
-  html, body {
-    -webkit-overflow-scrolling: touch !important;
-    scroll-behavior: auto !important;
-    overflow-x: hidden !important;
   }
 
   /* Mobile Full-Screen Navigation Overlay System */
