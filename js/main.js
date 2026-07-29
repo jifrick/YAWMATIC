@@ -1678,20 +1678,37 @@ if (splitTextContainer) {
 
   const aboutSpans = document.querySelectorAll('#about-reveal-text span');
   if (aboutSpans.length > 0) {
-    const scrollTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: '#about-reveal-text',
-        start: 'top 75%',
-        end: 'bottom 45%',
-        scrub: 0.2
-      }
-    });
-    aboutSpans.forEach((span) => {
-      scrollTl.to(span, {
-        opacity: 1,
-        duration: 0.1
+    if (window.innerWidth <= 1024) {
+      // Mobile: one-shot IntersectionObserver — zero scroll-tick overhead
+      aboutSpans.forEach(span => { span.style.opacity = '0'; });
+      const aboutTextObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            aboutSpans.forEach((span, i) => {
+              setTimeout(() => { span.style.opacity = '1'; span.style.transition = 'opacity 0.4s ease'; }, i * 18);
+            });
+            aboutTextObserver.disconnect();
+          }
+        });
+      }, { threshold: 0.15 });
+      const aboutTextContainer = document.getElementById('about-reveal-text');
+      if (aboutTextContainer) aboutTextObserver.observe(aboutTextContainer);
+    } else {
+      const scrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#about-reveal-text',
+          start: 'top 75%',
+          end: 'bottom 45%',
+          scrub: 0.2
+        }
       });
-    });
+      aboutSpans.forEach((span) => {
+        scrollTl.to(span, {
+          opacity: 1,
+          duration: 0.1
+        });
+      });
+    }
   }
 }
 
@@ -1759,6 +1776,28 @@ function initTimelineScroll() {
   if (!timelineContainer || !timelineFill || timelineSteps.length === 0) return;
 
   adjustTimelineLine();
+
+  if (window.innerWidth <= 1024) {
+    // Mobile: IntersectionObserver per step — zero scrub overhead on scroll thread
+    const timelineObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const step = entry.target;
+        const idx = Array.from(timelineSteps).indexOf(step);
+        if (entry.isIntersecting) {
+          step.classList.add('active', 'current');
+          timelineSteps.forEach((s, i) => { if (i !== idx) s.classList.remove('current'); });
+          // Advance the fill proportionally
+          if (timelineFill) {
+            const pct = Math.round(((idx + 1) / timelineSteps.length) * 100);
+            timelineFill.style.transition = 'height 0.5s ease';
+            timelineFill.style.height = pct + '%';
+          }
+        }
+      });
+    }, { threshold: 0.35 });
+    timelineSteps.forEach(step => timelineObserver.observe(step));
+    return;
+  }
 
   gsap.to(timelineFill, {
     height: '100%',

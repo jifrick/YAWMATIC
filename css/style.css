@@ -2146,6 +2146,67 @@ button {
    MOBILE & TABLET RESPONSIVENESS SYSTEM (<= 1024px)
    ==================================================== */
 @media (max-width: 1024px) {
+  /* ====================================================
+     MOBILE PERFORMANCE: ELIMINATE ALL SCROLL JITTER
+     Stop GPU compositor thrashing caused by:
+     – continuous CSS animations during scroll
+     – fixed compositing layers (mouse-glow, noise)
+     – backdrop-filter on non-modal elements
+     – missing will-change hints on transformed elements
+     ==================================================== */
+
+  /* 1. Kill the fixed mouse-glow overlay entirely — it creates a permanent
+        GPU compositor layer with mix-blend-mode: screen across the entire page. */
+  .mouse-glow {
+    display: none !important;
+  }
+
+  /* 2. Kill the noise SVG overlay fixed layer — feTurbulence filter forces
+        a separate repaint layer on every scroll frame. */
+  .noise-overlay {
+    display: none !important;
+  }
+
+  /* 3. Stop all CSS animations that run on-screen during scroll.
+        These cause repaint/composite work on every animation frame while the
+        user is actively scrolling, producing the jittery stuttering. */
+  .hero__scroll-arrow,
+  .logo-orbit-svg__rotator,
+  .pulse-glow,
+  .about-webgl-container::after,
+  .ecosystem-node,
+  .timeline-step__marker::after,
+  .timeline-line-fill {
+    animation: none !important;
+    animation-play-state: paused !important;
+  }
+
+  /* 4. Promote the hero content to its own GPU layer so the browser can
+        scroll everything underneath it without repainting the text. */
+  .hero-section,
+  .hero__content,
+  .navbar {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* 5. Add contain: paint to each section so off-screen section content
+        does not trigger compositing work while scrolling past the hero. */
+  .section-padding,
+  .featured-work-container,
+  .footer {
+    contain: paint;
+  }
+
+  /* 6. Stop backdrop-filter on the navbar on mobile. backdrop-filter creates
+        a stacking context and forces compositing of everything behind it on
+        every scroll frame — the single largest cause of hero scroll jitter. */
+  .navbar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: rgba(9, 9, 10, 0.92) !important;
+  }
+
   /* Touch scroll optimization & hardware acceleration */
   html {
     overflow-x: clip !important;
@@ -2174,6 +2235,7 @@ button {
   a, button, select, input, textarea, .custom-select__option, .custom-select__trigger {
     cursor: pointer !important;
   }
+
 
   /* Mobile Full-Screen Navigation Overlay System */
   .mobile-menu {
