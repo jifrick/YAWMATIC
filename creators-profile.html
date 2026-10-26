@@ -24,21 +24,26 @@
   <title>Creator Profile — YAWMATIC Collective</title>
   <meta name="description" content="View creative talent portfolio and submit booking inquiries on YAWMATIC Collective.">
 
+  <!-- Canonical URL (dynamically set in script based on specific creator profile slug) -->
+  <link rel="canonical" id="canonical-url" href="https://yawmatic.online/creators">
+
   <!-- Favicon References -->
   <link rel="icon" type="image/png" href="/logo_y_only.png">
   <link rel="apple-touch-icon" href="/logo_y_only.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="profile">
+  <meta property="og:url" id="og-url" content="https://yawmatic.online/creators">
   <meta property="og:title" content="Creator Profile — YAWMATIC Collective">
   <meta property="og:description" content="View creative talent portfolio and submit booking inquiries on YAWMATIC Collective.">
-  <meta property="og:image" content="/logo_dark_theme.png">
+  <meta property="og:image" content="https://yawmatic.online/logo_dark_theme.png">
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" id="twitter-url" content="https://yawmatic.online/creators">
   <meta name="twitter:title" content="Creator Profile — YAWMATIC Collective">
   <meta name="twitter:description" content="View creative talent portfolio and submit booking inquiries on YAWMATIC Collective.">
-  <meta name="twitter:image" content="/logo_dark_theme.png">
+  <meta name="twitter:image" content="https://yawmatic.online/logo_dark_theme.png">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1063,6 +1068,14 @@
       // 1. Get Creator Slug from URL
       const pathParts = window.location.pathname.split('/');
       creatorSlug = pathParts[pathParts.length - 1] || 'amal-krishna';
+
+      const canonicalTag = document.getElementById('canonical-url');
+      const ogUrlTag = document.getElementById('og-url');
+      const twitterUrlTag = document.getElementById('twitter-url');
+      const profileCanonicalUrl = `https://yawmatic.online/creators/${creatorSlug}`;
+      if (canonicalTag) canonicalTag.href = profileCanonicalUrl;
+      if (ogUrlTag) ogUrlTag.content = profileCanonicalUrl;
+      if (twitterUrlTag) twitterUrlTag.content = profileCanonicalUrl;
 
       loadProfile();
       setupRealtime();

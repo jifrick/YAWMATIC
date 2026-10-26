@@ -6,5 +6,5 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /admin*
 
-# Sitemaps (Update with verified production domain when deployed)
-Sitemap: /sitemap.xml
+# Sitemaps
+Sitemap: https://yawmatic.online/sitemap.xml

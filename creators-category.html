@@ -24,21 +24,26 @@
   <title>Curated Creators — YAWMATIC Collective</title>
   <meta name="description" content="Explore vetted creators across specialized crafts in our exclusive network.">
 
+  <!-- Canonical URL (dynamically set in script based on specific category vertical) -->
+  <link rel="canonical" id="canonical-url" href="https://yawmatic.online/creators">
+
   <!-- Favicon References -->
   <link rel="icon" type="image/png" href="/logo_y_only.png">
   <link rel="apple-touch-icon" href="/logo_y_only.png">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
+  <meta property="og:url" id="og-url" content="https://yawmatic.online/creators">
   <meta property="og:title" content="Curated Creators — YAWMATIC Collective">
   <meta property="og:description" content="Explore vetted creators across specialized crafts in our exclusive network.">
-  <meta property="og:image" content="/logo_dark_theme.png">
+  <meta property="og:image" content="https://yawmatic.online/logo_dark_theme.png">
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" id="twitter-url" content="https://yawmatic.online/creators">
   <meta name="twitter:title" content="Curated Creators — YAWMATIC Collective">
   <meta name="twitter:description" content="Explore vetted creators across specialized crafts in our exclusive network.">
-  <meta name="twitter:image" content="/logo_dark_theme.png">
+  <meta name="twitter:image" content="https://yawmatic.online/logo_dark_theme.png">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -487,6 +492,14 @@
       const pathParts = window.location.pathname.split('/');
       categorySlug = pathParts[pathParts.length - 1] || 'photography';
       
+      const canonicalTag = document.getElementById('canonical-url');
+      const ogUrlTag = document.getElementById('og-url');
+      const twitterUrlTag = document.getElementById('twitter-url');
+      const categoryCanonicalUrl = `https://yawmatic.online/creators/${categorySlug}`;
+      if (canonicalTag) canonicalTag.href = categoryCanonicalUrl;
+      if (ogUrlTag) ogUrlTag.content = categoryCanonicalUrl;
+      if (twitterUrlTag) twitterUrlTag.content = categoryCanonicalUrl;
+
       document.title = `${categorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Creators — YAWMATIC`;
 
       loadCategoryDetail();
