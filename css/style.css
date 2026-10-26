@@ -2594,9 +2594,7 @@ button {
   }
 
   /* Ensure top section under navbar on mobile has generous space from wordmark */
-  section:first-of-type,
-  main > section:first-of-type,
-  .section-padding:first-of-type,
+  main > section:first-child,
   .hero-section,
   .creators-hero {
     padding-top: max(110px, calc(95px + env(safe-area-inset-top))) !important;
@@ -2722,14 +2720,15 @@ button {
 
   /* Mobile Hero Container & Full Viewport Composition (Touch Scroll Optimized) */
   .hero-pin-wrapper {
-    min-height: 100vh !important;
-    min-height: 100dvh !important;
+    height: auto !important;
+    min-height: 0 !important;
     position: relative !important;
     overflow: visible !important;
   }
 
   .hero-section,
   .creators-hero {
+    height: auto !important;
     min-height: 100vh !important;
     min-height: 100dvh !important;
     padding: max(100px, calc(85px + env(safe-area-inset-top))) 6% max(24px, calc(16px + env(safe-area-inset-bottom))) 6% !important;
