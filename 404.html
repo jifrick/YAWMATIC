@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Page Not Found | YAWMATIC</title>
+  <meta name="description" content="The requested page could not be found on YAWMATIC. Return to our digital products and creative engineering studio.">
+  <meta name="robots" content="noindex, follow">
+
+  <!-- Favicon References -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <!-- Custom Shared Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .not-found-wrapper {
+      min-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 180px 24px 100px;
+      position: relative;
+    }
+    .not-found-code {
+      font-family: var(--font-display);
+      font-size: clamp(6rem, 16vw, 14rem);
+      font-weight: 800;
+      line-height: 0.9;
+      color: var(--fire);
+      text-shadow: 0 0 60px rgba(255, 90, 31, 0.4);
+      margin-bottom: 20px;
+      user-select: none;
+    }
+    .not-found-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      color: var(--volt);
+      margin-bottom: 16px;
+    }
+    .not-found-desc {
+      color: var(--mist);
+      font-size: 1.1rem;
+      max-width: 520px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .not-found-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Accessible Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="custom-cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+
+  <!-- Mouse Glow -->
+  <div class="mouse-glow" id="mouse-glow" aria-hidden="true"></div>
+
+  <!-- Navbar Navigation -->
+  <nav class="navbar magnetic-wrap" aria-label="Primary navigation">
+    <a href="/" class="navbar__logo magnetic" aria-label="YAWMATIC Home">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32" aria-hidden="true">
+        <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+        <g class="logo-orbit-svg__rotator">
+          <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+        </g>
+        <image href="/logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+      </svg>
+      <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="/" class="navbar__link magnetic">Home</a></li>
+      <li><a href="/about" class="navbar__link magnetic">About</a></li>
+      <li><a href="/services" class="navbar__link magnetic">Services</a></li>
+      <li><a href="/work" class="navbar__link magnetic">Work</a></li>
+      <li><a href="/process" class="navbar__link magnetic">Process</a></li>
+      <li><a href="/creators" class="navbar__link magnetic">Creators</a></li>
+    </ul>
+    <div class="magnetic-wrap navbar__cta">
+      <a href="/contact" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <section class="not-found-wrapper">
+      <div class="grid-bg-overlay"></div>
+      <div class="not-found-code">404</div>
+      <h1 class="not-found-title">Dimension Not Found</h1>
+      <p class="not-found-desc">
+        The page you are looking for may have been moved, renamed, or never existed in this timeline.
+      </p>
+      <div class="not-found-actions">
+        <a href="/" class="btn btn--primary magnetic">Return to Base (Home)</a>
+        <a href="/work" class="btn btn--ghost magnetic">Explore Work →</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer__logo-col">
+        <a href="/" class="footer__logo magnetic" aria-label="YAWMATIC Home">
+          <svg class="logo-orbit-svg" viewBox="0 0 32 32" style="width: 50px; height: 50px;" aria-hidden="true">
+            <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
+            <g class="logo-orbit-svg__rotator">
+              <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
+            </g>
+            <image href="/logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
+          </svg>
+          <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+        </a>
+        <div class="footer__tagline">THINK FUTURE. BUILD DIFFERENT.</div>
+      </div>
+
+      <div class="footer__nav-col">
+        <ul class="footer__menu">
+          <li><a href="/" class="footer__link magnetic">Home</a></li>
+          <li><a href="/about" class="footer__link magnetic">About</a></li>
+          <li><a href="/services" class="footer__link magnetic">Services</a></li>
+          <li><a href="/work" class="footer__link magnetic">Work</a></li>
+          <li><a href="/process" class="footer__link magnetic">Process</a></li>
+          <li><a href="/creators" class="footer__link magnetic">Creators</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__socials-col">
+        <a href="https://www.instagram.com/yawmatic?igsh=YjJvcW8xY3dzejFq" target="_blank" rel="noopener noreferrer" class="footer__social-btn magnetic" aria-label="Instagram">
+          <span class="social-text">Instagram</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer__copy">© 2026 YAWMATIC. All rights reserved.</div>
+      <div class="footer__credit">THINK FUTURE. BUILD DIFFERENT.</div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

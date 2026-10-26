@@ -2,25 +2,43 @@
 <html lang="en">
 <head>
   <script>
-    window.addEventListener('error', function(e) {
-      var div = document.createElement('div');
-      div.style.position = 'fixed';
-      div.style.top = '10px';
-      div.style.left = '10px';
-      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
-      div.style.color = 'white';
-      div.style.padding = '15px';
-      div.style.zIndex = '999999';
-      div.style.fontFamily = 'monospace';
-      div.style.borderRadius = '5px';
-      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
-      document.body.appendChild(div);
-    });
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      window.addEventListener('error', function(e) {
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '10px';
+        div.style.left = '10px';
+        div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+        div.style.color = 'white';
+        div.style.padding = '15px';
+        div.style.zIndex = '999999';
+        div.style.fontFamily = 'monospace';
+        div.style.borderRadius = '5px';
+        div.innerHTML = '<strong>JS Dev Diagnostic:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+        document.body.appendChild(div);
+      });
+    }
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YAWMATIC — Think Future. Build Different.</title>
   <meta name="description" content="YAWMATIC builds digital products, brands, and experiences that drive real impact and growth. Think Future. Build Different.">
+
+  <!-- Favicon References -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="YAWMATIC — Think Future. Build Different.">
+  <meta property="og:description" content="YAWMATIC builds digital products, brands, and experiences that drive real impact and growth.">
+  <meta property="og:image" content="/logo_dark_theme.png">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="YAWMATIC — Think Future. Build Different.">
+  <meta name="twitter:description" content="YAWMATIC builds digital products, brands, and experiences that drive real impact and growth.">
+  <meta name="twitter:image" content="/logo_dark_theme.png">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,6 +75,7 @@
     body.loading .navbar,
     body.loading .hero-pin-wrapper,
     body.loading section,
+    body.loading .selected-work-section,
     body.loading .featured-work-container,
     body.loading footer,
     body.loading .custom-cursor-dot,
@@ -139,17 +158,20 @@
   <!-- Mouse Glow -->
   <div class="mouse-glow" id="mouse-glow"></div>
 
+  <!-- Skip to Content Accessibility Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Navbar Navigation -->
-  <nav class="navbar magnetic-wrap">
-    <a href="/" class="navbar__logo magnetic">
-      <svg class="logo-orbit-svg" viewBox="0 0 32 32">
+  <nav class="navbar magnetic-wrap" aria-label="Primary navigation">
+    <a href="/" class="navbar__logo magnetic" aria-label="YAWMATIC Home">
+      <svg class="logo-orbit-svg" viewBox="0 0 32 32" aria-hidden="true">
         <circle class="logo-orbit-svg__ring" cx="16" cy="16" r="12" />
         <g class="logo-orbit-svg__rotator">
           <circle cx="24.48" cy="7.52" r="1.8" fill="#FF5A1F" />
         </g>
         <image href="/logo_y_only.png" x="10" y="8.75" width="12" height="14.5" />
       </svg>
-      <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img" />
+      <img src="/logo_dark_theme.png" alt="YAWMATIC — Creative Engineering Agency" class="logo-wordmark-img" />
     </a>
     <ul class="navbar__menu">
       <li><a href="/" class="navbar__link magnetic">Home</a></li>
@@ -164,9 +186,12 @@
     </div>
   </nav>
 
+  <!-- MAIN LANDMARK CONTENT -->
+  <main id="main-content">
+
   <!-- 01. HERO SECTION -->
   <div class="hero-pin-wrapper" id="hero">
-    <section class="hero-section">
+    <section class="hero-section" aria-label="Agency Overview">
       <div class="grid-bg-overlay"></div>
       
       <!-- Orbit ring for aesthetic depth behind WebGL -->
@@ -365,129 +390,155 @@
     </div>
   </section>
 
-  <!-- 05. FEATURED WORK (HORIZONTAL SCROLL) -->
-  <div class="featured-work-container" id="work">
-    <div class="horizontal-scroll-container" id="horizontal-scroll-container">
+  <!-- 05. SELECTED WORK (EDITORIAL OVERLAPPING CARD STACK) -->
+  <section class="selected-work-section" id="work">
+    <div class="selected-work-intro">
+      <span class="overline reveal-item">Selected Work</span>
+      <h2 class="heading-large reveal-item">Featured<br>Projects</h2>
+      <p class="selected-work-intro__desc reveal-item">
+        A curated showcase of our latest digital executions, custom architectures, and brand systems.
+      </p>
+    </div>
+
+    <div class="cards-stack-container" id="cards-stack-container">
       
-      <!-- Showcase header card -->
-      <div class="featured-work__header-card">
-        <span class="overline">Our Work</span>
-        <h2 class="heading-large">Featured<br>Projects</h2>
-        <p style="color: var(--mist); line-height: 1.6; margin-top: 10px;">
-          Scroll horizontally to explore our latest digital executions, platforms, and identity packages.
-        </p>
-      </div>
+      <!-- Project 1: YAWMATIC (Flagship Agency Platform) -->
+      <article class="stack-card" data-card-index="0">
+        <div class="stack-card__inner">
+          <div class="work-card__glow-corner"></div>
+          <div class="stack-card__top">
+            <div class="stack-card__meta">
+              <span class="work-card__category">Flagship Platform</span>
+              <span class="stack-card__num">01 / 05</span>
+            </div>
+            <h3 class="work-card__title">YAWMATIC</h3>
+          </div>
+          <p class="work-card__desc">
+            The digital home of YAWMATIC — combining real-time WebGL geometries, smooth spatial transitions, and high-performance editorial design crafted for high-growth ventures.
+          </p>
+          <div class="work-card__footer">
+            <ul class="work-card__tags">
+              <li class="work-card__tag">WebGL</li>
+              <li class="work-card__tag">Three.js</li>
+              <li class="work-card__tag">Brand System</li>
+            </ul>
+            <a href="/" class="work-card__link magnetic" aria-label="Explore YAWMATIC project">
+              <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+            </a>
+          </div>
+        </div>
+      </article>
 
-      <!-- Project 1 -->
-      <a href="https://webinvitein.vercel.app/" target="_blank" rel="noopener noreferrer" class="work-card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="work-card__glow-corner"></div>
-        <div>
-          <span class="work-card__category">Digital Platform</span>
-          <h3 class="work-card__title">WEBINVITE.IN</h3>
+      <!-- Project 2: Rental Book (Vehicle & Asset Management Suite) -->
+      <article class="stack-card" data-card-index="1">
+        <div class="stack-card__inner">
+          <div class="work-card__glow-corner"></div>
+          <div class="stack-card__top">
+            <div class="stack-card__meta">
+              <span class="work-card__category">Enterprise SaaS</span>
+              <span class="stack-card__num">02 / 05</span>
+            </div>
+            <h3 class="work-card__title">Rental Book</h3>
+          </div>
+          <p class="work-card__desc">
+            A comprehensive commercial asset management system engineered for automated fleet rental tracking, digital contracts, multi-tenant invoicing, and real-time operational analytics.
+          </p>
+          <div class="work-card__footer">
+            <ul class="work-card__tags">
+              <li class="work-card__tag">SaaS</li>
+              <li class="work-card__tag">Operations</li>
+              <li class="work-card__tag">Cloud Architecture</li>
+            </ul>
+            <a href="/contact" class="work-card__link magnetic" aria-label="Inquire about Rental Book">
+              <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+            </a>
+          </div>
         </div>
-        <p class="work-card__desc">
-          A fully interactive, premium web experience platform designed for digital event management and immersive visual invites.
-        </p>
-        <div class="work-card__footer">
-          <ul class="work-card__tags">
-            <li class="work-card__tag">WebGL</li>
-            <li class="work-card__tag">UX/UI</li>
-            <li class="work-card__tag">SaaS</li>
-          </ul>
-          <span class="work-card__link magnetic">
-            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
-          </span>
-        </div>
-      <!-- Project 2 (Badrul Huda Academy) -->
-      <a href="https://badrulhuda.com" target="_blank" rel="noopener noreferrer" class="work-card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="work-card__glow-corner"></div>
-        <div>
-          <span class="work-card__category">Institutional Website</span>
-          <h3 class="work-card__title">Badrul Huda</h3>
-        </div>
-        <p class="work-card__desc">
-          An elegant, clean, and accessible institutional platform designed for Wayanad's premier educational academy, featuring digital course listings and streamlined admissions.
-        </p>
-        <div class="work-card__footer">
-          <ul class="work-card__tags">
-            <li class="work-card__tag">UX/UI</li>
-            <li class="work-card__tag">Responsive</li>
-            <li class="work-card__tag">Education</li>
-          </ul>
-          <span class="work-card__link magnetic">
-            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
-          </span>
-        </div>
-      </a>
+      </article>
 
-      <!-- Project 3 -->
-      <div class="work-card">
-        <div class="work-card__glow-corner"></div>
-        <div>
-          <span class="work-card__category">Brand Systems</span>
-          <h3 class="work-card__title">Identity & Voice</h3>
+      <!-- Project 3: WEBINVITE.IN (Digital Interactive Invite SaaS) -->
+      <article class="stack-card" data-card-index="2">
+        <div class="stack-card__inner">
+          <div class="work-card__glow-corner"></div>
+          <div class="stack-card__top">
+            <div class="stack-card__meta">
+              <span class="work-card__category">Digital Platform</span>
+              <span class="stack-card__num">03 / 05</span>
+            </div>
+            <h3 class="work-card__title">WEBINVITE.IN</h3>
+          </div>
+          <p class="work-card__desc">
+            A fully interactive, premium web experience platform designed for digital event management, guest RSVPs, and immersive bespoke visual invitations.
+          </p>
+          <div class="work-card__footer">
+            <ul class="work-card__tags">
+              <li class="work-card__tag">WebGL</li>
+              <li class="work-card__tag">UX/UI</li>
+              <li class="work-card__tag">SaaS</li>
+            </ul>
+            <a href="https://webinvitein.vercel.app/" target="_blank" rel="noopener noreferrer" class="work-card__link magnetic" aria-label="Visit WEBINVITE.IN (opens in new tab)">
+              <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+            </a>
+          </div>
         </div>
-        <p class="work-card__desc">
-          Structuring visual guidelines and scalable design layouts for modern enterprise branding across physical and web applications.
-        </p>
-        <div class="work-card__footer">
-          <ul class="work-card__tags">
-            <li class="work-card__tag">Branding</li>
-            <li class="work-card__tag">Vector</li>
-            <li class="work-card__tag">Guidelines</li>
-          </ul>
-          <a href="#" class="work-card__link magnetic">
-            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
-          </a>
-        </div>
-      </div>
+      </article>
 
-      <!-- Project 4 -->
-      <div class="work-card">
-        <div class="work-card__glow-corner"></div>
-        <div>
-          <span class="work-card__category">Web Experiences</span>
-          <h3 class="work-card__title">Interactive Systems</h3>
+      <!-- Project 4: Badrulhuda Academy (Institutional Educational Portal) -->
+      <article class="stack-card" data-card-index="3">
+        <div class="stack-card__inner">
+          <div class="work-card__glow-corner"></div>
+          <div class="stack-card__top">
+            <div class="stack-card__meta">
+              <span class="work-card__category">Institutional Portal</span>
+              <span class="stack-card__num">04 / 05</span>
+            </div>
+            <h3 class="work-card__title">Badrulhuda Academy</h3>
+          </div>
+          <p class="work-card__desc">
+            An elegant, accessible institutional ecosystem designed for Wayanad's premier educational academy, featuring digital course catalogs and streamlined digital admissions.
+          </p>
+          <div class="work-card__footer">
+            <ul class="work-card__tags">
+              <li class="work-card__tag">UX/UI</li>
+              <li class="work-card__tag">Responsive</li>
+              <li class="work-card__tag">Education</li>
+            </ul>
+            <a href="https://badrulhuda.com" target="_blank" rel="noopener noreferrer" class="work-card__link magnetic" aria-label="Visit Badrulhuda Academy (opens in new tab)">
+              <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+            </a>
+          </div>
         </div>
-        <p class="work-card__desc">
-          Custom web configurations, canvas particle systems, and 3D product showrooms built for global distribution.
-        </p>
-        <div class="work-card__footer">
-          <ul class="work-card__tags">
-            <li class="work-card__tag">Three.js</li>
-            <li class="work-card__tag">Custom Shader</li>
-            <li class="work-card__tag">Creative Dev</li>
-          </ul>
-          <a href="#" class="work-card__link magnetic">
-            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
-          </a>
-        </div>
-      </div>
+      </article>
 
-      <!-- Project 5 -->
-      <div class="work-card">
-        <div class="work-card__glow-corner"></div>
-        <div>
-          <span class="work-card__category">Motion Design</span>
-          <h3 class="work-card__title">Creative Visuals</h3>
+      <!-- Project 5: YAWMATIC Collective (Curated Talent Network) -->
+      <article class="stack-card" data-card-index="4">
+        <div class="stack-card__inner">
+          <div class="work-card__glow-corner"></div>
+          <div class="stack-card__top">
+            <div class="stack-card__meta">
+              <span class="work-card__category">Talent Ecosystem</span>
+              <span class="stack-card__num">05 / 05</span>
+            </div>
+            <h3 class="work-card__title">YAWMATIC Collective</h3>
+          </div>
+          <p class="work-card__desc">
+            An exclusive network connecting vetted photographers, videographers, 3D artists, and motion designers directly with global agency briefs and production teams.
+          </p>
+          <div class="work-card__footer">
+            <ul class="work-card__tags">
+              <li class="work-card__tag">Talent Marketplace</li>
+              <li class="work-card__tag">Vetted Roster</li>
+              <li class="work-card__tag">Operations</li>
+            </ul>
+            <a href="/creators" class="work-card__link magnetic" aria-label="Explore YAWMATIC Collective">
+              <span style="font-size: 1.2rem; font-weight: bold;">→</span>
+            </a>
+          </div>
         </div>
-        <p class="work-card__desc">
-          Constructing short form motion assets, custom vector animations, and creative typography overlays.
-        </p>
-        <div class="work-card__footer">
-          <ul class="work-card__tags">
-            <li class="work-card__tag">GSAP</li>
-            <li class="work-card__tag">Cinema4D</li>
-            <li class="work-card__tag">Video Systems</li>
-          </ul>
-          <a href="#" class="work-card__link magnetic">
-            <span style="font-size: 1.2rem; font-weight: bold;">→</span>
-          </a>
-        </div>
-      </div>
+      </article>
 
     </div>
-  </div>
+  </section>
 
   <!-- 06. PROCESS EXPERIENCE -->
   <section class="section-padding" id="process" style="min-height: 85vh; padding-bottom: 120px;">
@@ -804,6 +855,8 @@
       </a>
     </div>
   </section>
+
+  </main>
 
   <!-- 12. FOOTER -->
   <footer class="footer">

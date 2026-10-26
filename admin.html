@@ -2,24 +2,31 @@
 <html lang="en">
 <head>
   <script>
-    window.addEventListener('error', function(e) {
-      var div = document.createElement('div');
-      div.style.position = 'fixed';
-      div.style.top = '10px';
-      div.style.left = '10px';
-      div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
-      div.style.color = 'white';
-      div.style.padding = '15px';
-      div.style.zIndex = '99999999';
-      div.style.fontFamily = 'monospace';
-      div.style.borderRadius = '5px';
-      div.innerHTML = '<strong>JS Error:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
-      document.body.appendChild(div);
-    });
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      window.addEventListener('error', function(e) {
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '10px';
+        div.style.left = '10px';
+        div.style.backgroundColor = 'rgba(255, 90, 31, 0.95)';
+        div.style.color = 'white';
+        div.style.padding = '15px';
+        div.style.zIndex = '99999999';
+        div.style.fontFamily = 'monospace';
+        div.style.borderRadius = '5px';
+        div.innerHTML = '<strong>JS Dev Diagnostic:</strong> ' + e.message + '<br>Line: ' + e.lineno + ' in ' + e.filename;
+        document.body.appendChild(div);
+      });
+    }
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control Center — YAWMATIC Collective</title>
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Favicon References -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1400,16 +1407,22 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Verifying Credentials...';
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Authentication Failed: ' + error.message);
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          alert('Authentication Failed: ' + error.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Log In';
+          return;
+        }
+        await verifyUserRole(data.user);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Log In';
-        return;
+      } catch (networkErr) {
+        alert('Unable to connect to authorization server. Please verify your Supabase endpoint status.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log In';
       }
-      await verifyUserRole(data.user);
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Log In';
     }
 
     // Check permissions and load workspace

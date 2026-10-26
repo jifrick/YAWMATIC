@@ -191,7 +191,9 @@ document.addEventListener('click', (e) => {
    SMOOTH SCROLLING (Lenis)
    ---------------------------------------------------- */
 let lenis;
-if (window.innerWidth > 1024) {
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (window.innerWidth > 1024 && !prefersReducedMotion) {
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -370,6 +372,7 @@ window.addEventListener('load', () => {
   if (isInternalNavigation) {
     // Internal nav: skip loader transition, initialize page features directly
     highlightActiveLink();
+    if (document.getElementById('cards-stack-container')) initCardsStack();
     if (document.getElementById('horizontal-scroll-container')) initHorizontalScroll();
     if (document.getElementById('about-webgl-canvas')) initAboutWebGL();
     if (document.querySelector('.timeline-container')) initTimelineScroll();
@@ -402,9 +405,7 @@ function runLoaderTimeline() {
   const pulse = document.getElementById('loader-pulse-rect');
   const wordmark = document.getElementById('loader-wordmark');
   
-  if (!path || !dot) {
-    // Loader SVG not in DOM yet (React SPA case) — mark complete immediately
-    // so triggerSiteTransition() fires via the window.load handler
+  if (!path || !dot || prefersReducedMotion) {
     loaderTimelineComplete = true;
     if (pageLoaded) triggerSiteTransition();
     return;
@@ -636,6 +637,9 @@ function triggerSiteTransition() {
     }, 0.2);
   }
 
+  if (document.getElementById('cards-stack-container')) {
+    initCardsStack();
+  }
   if (document.getElementById('horizontal-scroll-container')) {
     initHorizontalScroll();
   }
@@ -1713,7 +1717,54 @@ if (splitTextContainer) {
 }
 
 /* ----------------------------------------------------
-   05. FEATURED WORK HORIZONTAL SCROLL SCENE
+   05. SELECTED WORK OVERLAPPING CARD STACK
+   ---------------------------------------------------- */
+function initCardsStack() {
+  const container = document.getElementById('cards-stack-container');
+  if (!container) return;
+
+  // Clean up any prior triggers for this section
+  const existingTriggers = ScrollTrigger.getAll().filter(st => {
+    return st.vars && (st.vars.id === 'cards-stack-trigger' || (st.vars.id && st.vars.id.startsWith('stack-card-')));
+  });
+  existingTriggers.forEach(st => st.kill(true));
+
+  const cards = container.querySelectorAll('.stack-card');
+  if (cards.length === 0) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion || window.innerWidth <= 1024) {
+    cards.forEach(card => {
+      gsap.set(card, { clearProps: 'all' });
+    });
+    return;
+  }
+
+  // Progressive overlapping card stack on desktop
+  // As subsequent cards arrive, underlying cards scale down subtly and dim slightly
+  cards.forEach((card, index) => {
+    if (index === cards.length - 1) return; // Top-most card does not need scaling from a successor
+
+    const nextCard = cards[index + 1];
+    gsap.to(card, {
+      scale: 0.94 - (index * 0.015),
+      opacity: 0.75,
+      filter: 'blur(2px)',
+      ease: 'power1.out',
+      scrollTrigger: {
+        id: `stack-card-${index}`,
+        trigger: nextCard,
+        start: 'top 80%',
+        end: 'top 30%',
+        scrub: true,
+        invalidateOnRefresh: true
+      }
+    });
+  });
+}
+
+/* ----------------------------------------------------
+   FEATURED WORK HORIZONTAL SCROLL SCENE (FOR /work)
    ---------------------------------------------------- */
 function initHorizontalScroll() {
   const container = document.getElementById('horizontal-scroll-container');

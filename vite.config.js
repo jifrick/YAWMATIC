@@ -19,7 +19,8 @@ export default {
         creatorsCategory: path.resolve(__dirname, 'creators-category.html'),
         creatorsProfile: path.resolve(__dirname, 'creators-profile.html'),
         creatorsApply: path.resolve(__dirname, 'creators-apply.html'),
-        admin: path.resolve(__dirname, 'admin.html')
+        admin: path.resolve(__dirname, 'admin.html'),
+        notFound: path.resolve(__dirname, '404.html')
       }
     }
   }

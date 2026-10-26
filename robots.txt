@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Private admin controls and endpoints
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin*
+
+# Sitemaps (Update with verified production domain when deployed)
+Sitemap: /sitemap.xml

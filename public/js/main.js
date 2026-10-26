@@ -191,7 +191,9 @@ document.addEventListener('click', (e) => {
    SMOOTH SCROLLING (Lenis)
    ---------------------------------------------------- */
 let lenis;
-if (window.innerWidth > 1024) {
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (window.innerWidth > 1024 && !prefersReducedMotion) {
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -370,6 +372,7 @@ window.addEventListener('load', () => {
   if (isInternalNavigation) {
     // Internal nav: skip loader transition, initialize page features directly
     highlightActiveLink();
+    if (document.getElementById('cards-stack-container')) initCardsStack();
     if (document.getElementById('horizontal-scroll-container')) initHorizontalScroll();
     if (document.getElementById('about-webgl-canvas')) initAboutWebGL();
     if (document.querySelector('.timeline-container')) initTimelineScroll();
@@ -402,9 +405,7 @@ function runLoaderTimeline() {
   const pulse = document.getElementById('loader-pulse-rect');
   const wordmark = document.getElementById('loader-wordmark');
   
-  if (!path || !dot) {
-    // Loader SVG not in DOM yet (React SPA case) — mark complete immediately
-    // so triggerSiteTransition() fires via the window.load handler
+  if (!path || !dot || prefersReducedMotion) {
     loaderTimelineComplete = true;
     if (pageLoaded) triggerSiteTransition();
     return;
@@ -636,6 +637,9 @@ function triggerSiteTransition() {
     }, 0.2);
   }
 
+  if (document.getElementById('cards-stack-container')) {
+    initCardsStack();
+  }
   if (document.getElementById('horizontal-scroll-container')) {
     initHorizontalScroll();
   }
@@ -1678,25 +1682,89 @@ if (splitTextContainer) {
 
   const aboutSpans = document.querySelectorAll('#about-reveal-text span');
   if (aboutSpans.length > 0) {
-    const scrollTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: '#about-reveal-text',
-        start: 'top 75%',
-        end: 'bottom 45%',
-        scrub: 0.2
-      }
-    });
-    aboutSpans.forEach((span) => {
-      scrollTl.to(span, {
-        opacity: 1,
-        duration: 0.1
+    if (window.innerWidth <= 1024) {
+      // Mobile: one-shot IntersectionObserver — zero scroll-tick overhead
+      aboutSpans.forEach(span => { span.style.opacity = '0'; });
+      const aboutTextObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            aboutSpans.forEach((span, i) => {
+              setTimeout(() => { span.style.opacity = '1'; span.style.transition = 'opacity 0.4s ease'; }, i * 18);
+            });
+            aboutTextObserver.disconnect();
+          }
+        });
+      }, { threshold: 0.15 });
+      const aboutTextContainer = document.getElementById('about-reveal-text');
+      if (aboutTextContainer) aboutTextObserver.observe(aboutTextContainer);
+    } else {
+      const scrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#about-reveal-text',
+          start: 'top 75%',
+          end: 'bottom 45%',
+          scrub: 0.2
+        }
       });
-    });
+      aboutSpans.forEach((span) => {
+        scrollTl.to(span, {
+          opacity: 1,
+          duration: 0.1
+        });
+      });
+    }
   }
 }
 
 /* ----------------------------------------------------
-   05. FEATURED WORK HORIZONTAL SCROLL SCENE
+   05. SELECTED WORK OVERLAPPING CARD STACK
+   ---------------------------------------------------- */
+function initCardsStack() {
+  const container = document.getElementById('cards-stack-container');
+  if (!container) return;
+
+  // Clean up any prior triggers for this section
+  const existingTriggers = ScrollTrigger.getAll().filter(st => {
+    return st.vars && (st.vars.id === 'cards-stack-trigger' || (st.vars.id && st.vars.id.startsWith('stack-card-')));
+  });
+  existingTriggers.forEach(st => st.kill(true));
+
+  const cards = container.querySelectorAll('.stack-card');
+  if (cards.length === 0) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReducedMotion || window.innerWidth <= 1024) {
+    cards.forEach(card => {
+      gsap.set(card, { clearProps: 'all' });
+    });
+    return;
+  }
+
+  // Progressive overlapping card stack on desktop
+  // As subsequent cards arrive, underlying cards scale down subtly and dim slightly
+  cards.forEach((card, index) => {
+    if (index === cards.length - 1) return; // Top-most card does not need scaling from a successor
+
+    const nextCard = cards[index + 1];
+    gsap.to(card, {
+      scale: 0.94 - (index * 0.015),
+      opacity: 0.75,
+      filter: 'blur(2px)',
+      ease: 'power1.out',
+      scrollTrigger: {
+        id: `stack-card-${index}`,
+        trigger: nextCard,
+        start: 'top 80%',
+        end: 'top 30%',
+        scrub: true,
+        invalidateOnRefresh: true
+      }
+    });
+  });
+}
+
+/* ----------------------------------------------------
+   FEATURED WORK HORIZONTAL SCROLL SCENE (FOR /work)
    ---------------------------------------------------- */
 function initHorizontalScroll() {
   const container = document.getElementById('horizontal-scroll-container');
@@ -1759,6 +1827,28 @@ function initTimelineScroll() {
   if (!timelineContainer || !timelineFill || timelineSteps.length === 0) return;
 
   adjustTimelineLine();
+
+  if (window.innerWidth <= 1024) {
+    // Mobile: IntersectionObserver per step — zero scrub overhead on scroll thread
+    const timelineObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const step = entry.target;
+        const idx = Array.from(timelineSteps).indexOf(step);
+        if (entry.isIntersecting) {
+          step.classList.add('active', 'current');
+          timelineSteps.forEach((s, i) => { if (i !== idx) s.classList.remove('current'); });
+          // Advance the fill proportionally
+          if (timelineFill) {
+            const pct = Math.round(((idx + 1) / timelineSteps.length) * 100);
+            timelineFill.style.transition = 'height 0.5s ease';
+            timelineFill.style.height = pct + '%';
+          }
+        }
+      });
+    }, { threshold: 0.35 });
+    timelineSteps.forEach(step => timelineObserver.observe(step));
+    return;
+  }
 
   gsap.to(timelineFill, {
     height: '100%',
