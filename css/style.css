@@ -3236,8 +3236,32 @@ button {
     height: auto !important;
   }
 
-  .msg-threads {
-    max-height: 250px;
+  /* Ultra-compact screen tuning (320px - 360px screens) */
+  @media (max-width: 360px) {
+    .hero__headline {
+      font-size: 2.1rem !important;
+      line-height: 1.05 !important;
+    }
+    .heading-large {
+      font-size: 1.9rem !important;
+      line-height: 1.1 !important;
+    }
+    .section-padding {
+      padding: 60px 4% !important;
+    }
+    .work-card,
+    .stack-card__inner,
+    .vision-card,
+    .capability-card {
+      padding: 24px 16px !important;
+    }
+    .navbar__logo {
+      transform: scale(0.65) !important;
+    }
+    .navbar__cta .btn {
+      padding: 8px 12px !important;
+      font-size: 0.72rem !important;
+    }
   }
 }
 
