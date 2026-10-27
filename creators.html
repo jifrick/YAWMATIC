@@ -409,29 +409,60 @@
       margin-top: 8px;
     }
 
-    /* Success Stories Cards */
+    /* Genuine Portfolio Case Studies Cards */
     .stories-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 36px;
       margin-top: 50px;
     }
     @media (max-width: 900px) {
-      .stories-grid { grid-template-columns: 1fr; }
+      .stories-grid { grid-template-columns: 1fr; gap: 28px; }
     }
     .story-card {
       background: #0b0b0c;
       border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      padding: 40px;
+      border-radius: 8px;
+      padding: 36px;
       display: flex;
       flex-direction: column;
       gap: 20px;
       transition: var(--transition-medium);
+      position: relative;
+      overflow: hidden;
     }
     .story-card:hover {
       border-color: var(--glass-border-hover);
-      box-shadow: 0 12px 30px rgba(255, 90, 31, 0.1);
+      box-shadow: 0 16px 40px rgba(255, 90, 31, 0.08);
+    }
+    .story-card__media {
+      width: 100%;
+      height: 220px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .story-card__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 0.6s var(--ease-premium);
+    }
+    .story-card:hover .story-card__img {
+      transform: scale(1.03);
+    }
+    .story-card__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
     }
     .story-card__overline {
       font-size: 0.75rem;
@@ -441,35 +472,80 @@
       text-transform: uppercase;
       letter-spacing: 1.5px;
     }
-    .story-card__title {
+    .story-card__status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
       font-family: var(--font-display);
-      font-size: 1.35rem;
       font-weight: 700;
       text-transform: uppercase;
-      color: var(--volt);
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--mist);
     }
-    .story-card__quote {
-      font-size: 1rem;
+    .story-card__status-badge--active {
+      background: rgba(255, 90, 31, 0.1);
+      border-color: rgba(255, 90, 31, 0.3);
+      color: var(--fire);
+    }
+    .story-card__status-badge--verified {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: #4ade80;
+    }
+    .story-card__title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--volt);
+      line-height: 1.2;
+    }
+    .story-card__concept {
+      font-size: 0.95rem;
       font-style: italic;
-      line-height: 1.6;
+      line-height: 1.5;
       color: var(--volt);
       border-left: 2px solid var(--fire);
-      padding-left: 15px;
-      margin: 10px 0;
+      padding-left: 14px;
+      margin: 4px 0;
     }
     .story-card__body {
       font-size: 0.9rem;
-      line-height: 1.6;
+      line-height: 1.65;
       color: var(--mist);
+    }
+    .story-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0 0;
+    }
+    .story-card__tag {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 3px;
+      color: var(--mist);
+      font-family: var(--font-display);
     }
     .story-card__footer {
       font-size: 0.8rem;
       color: var(--mist);
       margin-top: auto;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 15px;
+      padding-top: 18px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     /* Become a Creator Section */
@@ -730,54 +806,132 @@
     </div>
   </section>
 
-  <!-- 5. SUCCESS STORIES -->
+  <!-- 5. AUTHENTIC CASE STUDIES & INITIATIVES -->
   <section class="section-padding" id="success-stories">
     <div class="grid-bg-overlay"></div>
-    <span class="overline reveal-item">Case Studies</span>
-    <h2 class="heading-large reveal-item">Collective Success</h2>
+    <span class="overline reveal-item">Verified Case Studies & Initiatives</span>
+    <h2 class="heading-large reveal-item">Real Projects & Products</h2>
+    <p class="reveal-item" style="color: var(--mist); max-width: 680px; margin: 0 0 3rem 0; line-height: 1.6;">
+      Documented digital engineering, community initiatives, and product architectures built with purpose. Every case study reflects honest implementation status and verified technical stacks.
+    </p>
     
     <div class="stories-grid">
-      <!-- Story 1 -->
-      <div class="story-card reveal-item">
-        <span class="story-card__overline">Badrul Huda Academy</span>
-        <h3 class="story-card__title">Institutional Platform</h3>
-        <p class="story-card__quote">"A modern, clean, and accessible portal designed to reflect the academy's identity."</p>
-        <p class="story-card__body">
-          To establish a trustworthy online presence for the Wayanad-based academy, YAWMATIC designed and developed a responsive web experience structuring courses, facilities, and admissions.
-        </p>
-        <div class="story-card__footer">
-          <span>Location: Kerala, India</span>
-          <span style="color: var(--fire)">Completed & Delivered</span>
+      <!-- Project 1: KAITHAANGU -->
+      <article class="story-card reveal-item">
+        <div class="story-card__media">
+          <img src="/assets/projects/kaithaangu.png" alt="KAITHAANGU Community Giving Platform Illustration" class="story-card__img" loading="lazy" width="600" height="220">
         </div>
-      </div>
-      
-      <!-- Story 2 -->
-      <div class="story-card reveal-item" style="transition-delay: 0.1s;">
-        <span class="story-card__overline">WEBINVITE.IN</span>
-        <h3 class="story-card__title">Platform Interface Redesign</h3>
-        <p class="story-card__quote">"A masterful execution of whitespace, responsive components, and clean branding."</p>
-        <p class="story-card__body">
-          The event hosting SaaS portal needed a visual upgrade. YAWMATIC assigned Priya Sharma (UI/UX) & Sara Cherian (Brand Design) to collaborate.
-        </p>
-        <div class="story-card__footer">
-          <span>Assigned: 2 Creators</span>
-          <span style="color: var(--fire)">180k Users Onboarded</span>
+        <div class="story-card__header">
+          <span class="story-card__overline">Social Impact / Community Giving</span>
+          <span class="story-card__status-badge story-card__status-badge--verified">Platform Initiative (MVP)</span>
         </div>
-      </div>
+        <h3 class="story-card__title">KAITHAANGU (കൈത്താങ്ങ്)</h3>
+        <blockquote class="story-card__concept">
+          “എനിക്ക് വേണ്ട, നീ എടുത്തോ.” — Direct community giving without commercial transactions or bargaining.
+        </blockquote>
+        <p class="story-card__body">
+          KAITHAANGU connects individuals with surplus, usable items with community members who genuinely need them. Designed strictly as a non-commercial social impact platform, it replaces wasteful disposal with organized community solidarity. Donors list items freely, while recipient applications undergo verification to ensure responsible item handover and protect private user contact details.
+        </p>
+        <ul class="story-card__tags" aria-label="Technology Stack">
+          <li class="story-card__tag">React</li>
+          <li class="story-card__tag">TypeScript</li>
+          <li class="story-card__tag">Vite</li>
+          <li class="story-card__tag">Supabase</li>
+          <li class="story-card__tag">PostgreSQL RLS</li>
+          <li class="story-card__tag">Image Optimization</li>
+        </ul>
+        <div class="story-card__footer">
+          <span>Focus: Community Welfare</span>
+          <span style="color: var(--fire)">Free-Giving Platform</span>
+        </div>
+      </article>
 
-      <!-- Story 3 -->
-      <div class="story-card reveal-item" style="transition-delay: 0.2s;">
-        <span class="story-card__overline">Vanguard Towers Dubai</span>
-        <h3 class="story-card__title">3D CGI Product Speculation</h3>
-        <p class="story-card__quote">"Surreal CGI loops that helped sell out the entire tower pre-launch."</p>
-        <p class="story-card__body">
-          A luxury real estate project needed high-end 3D visual loops for Dubai showroom panels. YAWMATIC assigned Marcus Vance (3D Artist).
-        </p>
-        <div class="story-card__footer">
-          <span>Assigned: 1 Creator</span>
-          <span style="color: var(--fire)">100% Units Sold</span>
+      <!-- Project 2: HelpLink -->
+      <article class="story-card reveal-item" style="transition-delay: 0.1s;">
+        <div class="story-card__media">
+          <img src="/assets/projects/helplink.webp" alt="HelpLink Community Resource Discovery Platform" class="story-card__img" loading="lazy" width="600" height="220">
         </div>
-      </div>
+        <div class="story-card__header">
+          <span class="story-card__overline">Education & Community Resources</span>
+          <span class="story-card__status-badge story-card__status-badge--verified">Engineered & Tested</span>
+        </div>
+        <h3 class="story-card__title">HelpLink</h3>
+        <blockquote class="story-card__concept">
+          “Find something useful. Share something useful.” — Centralized discovery for opportunities and support.
+        </blockquote>
+        <p class="story-card__body">
+          A community-driven directory addressing the fragmentation of student resources, scholarships, internships, free tools, and civic assistance. Engineered with a secure monolithic architecture featuring multi-category search, categorized directory navigation, an administrative review dashboard, RESTful endpoints, and automated end-to-end test suites.
+        </p>
+        <ul class="story-card__tags" aria-label="Technology Stack">
+          <li class="story-card__tag">Python</li>
+          <li class="story-card__tag">FastAPI</li>
+          <li class="story-card__tag">SQLAlchemy</li>
+          <li class="story-card__tag">Jinja2</li>
+          <li class="story-card__tag">Pydantic</li>
+          <li class="story-card__tag">Pytest</li>
+        </ul>
+        <div class="story-card__footer">
+          <span>Architecture: Monolith & REST API</span>
+          <span style="color: var(--fire)">Verified Repository</span>
+        </div>
+      </article>
+
+      <!-- Project 3: FreshFlow -->
+      <article class="story-card reveal-item" style="transition-delay: 0.15s;">
+        <div class="story-card__media">
+          <img src="/assets/projects/freshflow.png" alt="FreshFlow Produce Inventory Decision Platform" class="story-card__img" loading="lazy" width="600" height="220">
+        </div>
+        <div class="story-card__header">
+          <span class="story-card__overline">Agricultural Technology / AI</span>
+          <span class="story-card__status-badge story-card__status-badge--active">Startup Showcase MVP</span>
+        </div>
+        <h3 class="story-card__title">FreshFlow</h3>
+        <blockquote class="story-card__concept">
+          “Data-driven decision support to mitigate avoidable fresh-produce deterioration and losses.”
+        </blockquote>
+        <p class="story-card__body">
+          FreshFlow helps fresh-produce sellers identify perishable inventory requiring immediate attention, evaluate published buyer demand, and compare feasible disposition options. Built with an architecture that strictly separates deterministic economic calculations and freshness-risk scoring from qualitative LLM-assisted decision guidance.
+        </p>
+        <ul class="story-card__tags" aria-label="Technology Stack">
+          <li class="story-card__tag">React 18</li>
+          <li class="story-card__tag">TypeScript</li>
+          <li class="story-card__tag">Tailwind CSS</li>
+          <li class="story-card__tag">Supabase Edge Functions</li>
+          <li class="story-card__tag">Qualitative AI</li>
+        </ul>
+        <div class="story-card__footer">
+          <span>Scope: Working Prototype</span>
+          <span style="color: var(--fire)">Decision Support Engine</span>
+        </div>
+      </article>
+
+      <!-- Project 4: Badrul Huda Academy -->
+      <article class="story-card reveal-item" style="transition-delay: 0.2s;">
+        <div class="story-card__media" style="background: radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.4) 100%);">
+          <img src="/assets/projects/badrulhuda-logo.webp" alt="Badrul Huda Islamic Academy Emblem" class="story-card__img" style="object-fit: contain; padding: 24px; max-height: 200px;" loading="lazy" width="600" height="220">
+        </div>
+        <div class="story-card__header">
+          <span class="story-card__overline">Institutional Website Modernization</span>
+          <span class="story-card__status-badge">Approved Initiative</span>
+        </div>
+        <h3 class="story-card__title">Badrul Huda Academy</h3>
+        <blockquote class="story-card__concept">
+          “A structured digital home reflecting the heritage and educational mission of the academy.”
+        </blockquote>
+        <p class="story-card__body">
+          Modernization concept presented to and approved by the institution's founder to elevate the digital presence of the Wayanad-based academy. Focused on structuring academic programs, residential facilities, admissions guidelines, and institutional history into a clean, accessible web architecture tailored for students, parents, and community patrons.
+        </p>
+        <ul class="story-card__tags" aria-label="Technology Stack">
+          <li class="story-card__tag">Next.js</li>
+          <li class="story-card__tag">Tailwind CSS</li>
+          <li class="story-card__tag">Responsive UX</li>
+          <li class="story-card__tag">Information Architecture</li>
+        </ul>
+        <div class="story-card__footer">
+          <span>Location: Wayanad, Kerala</span>
+          <span style="color: var(--fire)">Digital Modernization</span>
+        </div>
+      </article>
     </div>
   </section>
 
