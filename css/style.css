@@ -2849,8 +2849,9 @@ button {
   }
 
   .about-webgl-container {
-    width: 260px !important;
-    height: 260px !important;
+    width: 280px !important;
+    height: 280px !important;
+    max-width: 85vw !important;
     margin: 0 auto;
     position: relative !important;
     display: flex !important;
@@ -2859,21 +2860,7 @@ button {
   }
 
   .about-webgl-container::after {
-    content: 'Y';
-    font-family: var(--font-display);
-    font-size: 4.5rem;
-    font-weight: 800;
-    color: var(--fire);
-    text-shadow: 0 0 35px rgba(255, 90, 31, 0.7);
-    position: absolute;
-    z-index: 3;
-    pointer-events: none;
-    animation: pulseYMobile 3s infinite alternate ease-in-out;
-  }
-
-  @keyframes pulseYMobile {
-    0% { opacity: 0.75; transform: scale(0.95); }
-    100% { opacity: 1; transform: scale(1.05); }
+    display: none !important;
   }
 
   .vision-grid {
@@ -3261,6 +3248,10 @@ button {
     .navbar__cta .btn {
       padding: 8px 12px !important;
       font-size: 0.72rem !important;
+    }
+    .about-webgl-container {
+      width: 240px !important;
+      height: 240px !important;
     }
   }
 }

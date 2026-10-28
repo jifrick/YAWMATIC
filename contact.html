@@ -197,6 +197,56 @@
         top: -4vw;
         font-size: clamp(6rem, 15vw, 12rem);
       }
+      .contact-hero {
+        min-height: auto !important;
+        padding-top: max(115px, calc(100px + env(safe-area-inset-top))) !important;
+        padding-bottom: 40px !important;
+      }
+      .contact-hero__sub {
+        margin: 0 auto 32px auto !important;
+      }
+      .contact-form-section {
+        padding-top: 40px !important;
+        padding-bottom: 80px !important;
+      }
+      .contact-section-header {
+        margin-bottom: 32px !important;
+        padding-bottom: 16px !important;
+      }
+      .discovery-progress {
+        margin-bottom: 32px !important;
+      }
+      .discovery-phone-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+      .discovery-phone-row select#disc-phone-prefix {
+        width: auto !important;
+        min-width: 105px !important;
+        max-width: 125px !important;
+        flex: 0 0 auto !important;
+        padding-left: 14px !important;
+        padding-right: 32px !important;
+        background-position: right 10px center !important;
+        font-size: 0.92rem !important;
+      }
+      .discovery-phone-row input#disc-phone {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+      }
+    }
+    @media (max-width: 360px) {
+      .discovery-phone-row select#disc-phone-prefix {
+        min-width: 95px !important;
+        max-width: 110px !important;
+        padding-left: 10px !important;
+        padding-right: 28px !important;
+        font-size: 0.85rem !important;
+      }
     }
 
     /* Section 2: Discovery Form Section */

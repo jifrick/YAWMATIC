@@ -2111,20 +2111,31 @@ const curve3 = new THREE.EllipseCurve(0, 0, 2.25, 1.55, 0, 2 * Math.PI, false, 0
 function initAboutWebGL() {
   const container = document.getElementById('about-interactive-logo');
   const canvas = document.getElementById('about-webgl-canvas');
-  if (!canvas || !container || window.innerWidth <= 1024) return;
+  if (!canvas || !container) return;
 
-  // Renderer
-  aboutRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-  aboutRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
-  aboutRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Cleanup any previous instance if re-initialized
+  if (aboutRenderer) {
+    try {
+      aboutRenderer.dispose();
+    } catch(e) {}
+  }
+
+  const initialWidth = canvas.clientWidth || container.clientWidth || 280;
+  const initialHeight = canvas.clientHeight || container.clientHeight || 280;
+
+  // Renderer - Optimized pixel ratio for mobile vs desktop
+  aboutRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  aboutRenderer.setSize(initialWidth, initialHeight, false);
+  aboutRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
   // Scene
   aboutScene = new THREE.Scene();
   aboutScene.fog = new THREE.FogExp2(0x0f0f10, 0.07);
 
-  // Camera
-  aboutCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-  aboutCamera.position.z = 7.2;
+  // Camera - Adjust camera Z distance slightly on mobile so the Y-core and orbits fit comfortably without clipping
+  const isMobile = window.innerWidth <= 768;
+  aboutCamera = new THREE.PerspectiveCamera(45, initialWidth / initialHeight, 0.1, 100);
+  aboutCamera.position.z = isMobile ? 8.2 : 7.2;
 
   // Lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
@@ -2306,10 +2317,10 @@ function initAboutWebGL() {
   pulseRing.position.z = 0.1;
   aboutSceneGroup.add(pulseRing);
 
-  // Mouse Parallax
+  // Mouse & Touch Parallax
   let targetRotX = 0;
   let targetRotY = 0;
-  const parentCol = document.querySelector('.about__right');
+  const parentCol = document.querySelector('.about__right') || container;
   if (parentCol) {
     parentCol.addEventListener('mousemove', (e) => {
       const rect = parentCol.getBoundingClientRect();
@@ -2324,15 +2335,34 @@ function initAboutWebGL() {
       targetRotX = 0;
       targetRotY = 0;
     });
+
+    parentCol.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches.length > 0) {
+        const touch = e.touches[0];
+        const rect = parentCol.getBoundingClientRect();
+        const normX = ((touch.clientX - rect.left) / rect.width) - 0.5;
+        const normY = ((touch.clientY - rect.top) / rect.height) - 0.5;
+        targetRotY = normX * 0.35;
+        targetRotX = normY * 0.35;
+      }
+    }, { passive: true });
+
+    parentCol.addEventListener('touchend', () => {
+      targetRotX = 0;
+      targetRotY = 0;
+    }, { passive: true });
   }
 
   const resizeAboutHandler = () => {
-    if (!aboutRenderer) return;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
+    if (!aboutRenderer || !aboutCamera) return;
+    const w = canvas.clientWidth || container.clientWidth || 280;
+    const h = canvas.clientHeight || container.clientHeight || 280;
+    if (w === 0 || h === 0) return;
+    
     aboutCamera.aspect = w / h;
+    aboutCamera.position.z = window.innerWidth <= 768 ? 8.2 : 7.2;
     aboutCamera.updateProjectionMatrix();
-    aboutRenderer.setSize(w, h);
+    aboutRenderer.setSize(w, h, false);
   };
   window.addEventListener('resize', resizeAboutHandler);
 
