@@ -506,6 +506,104 @@
       color: #ffffff;
       border-bottom: 1px solid rgba(255, 90, 31, 0.3);
     }
+    .whatsapp-info-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: rgba(37, 211, 102, 0.08);
+      border: 1px solid rgba(37, 211, 102, 0.25);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .whatsapp-info-banner svg {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      fill: #25D366;
+    }
+    .whatsapp-fallback-box {
+      display: none;
+      margin-top: 24px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 90, 31, 0.3);
+      border-radius: 6px;
+    }
+    .whatsapp-fallback-box h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 10px 0;
+    }
+    .whatsapp-fallback-box p {
+      font-size: 0.9rem;
+      color: #9f9fa3;
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+    }
+    .whatsapp-prefilled-text {
+      width: 100%;
+      height: 140px;
+      background: #0b0b0d;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d1d1d6;
+      font-family: monospace, sans-serif;
+      font-size: 0.85rem;
+      padding: 12px;
+      border-radius: 4px;
+      box-sizing: border-box;
+      resize: vertical;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .whatsapp-fallback-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .btn-copy-wa, .btn-open-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-copy-wa {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .btn-copy-wa:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .btn-open-wa {
+      background: #25D366;
+      color: #0b0b0c;
+    }
+    .btn-open-wa:hover {
+      background: #20ba5a;
+    }
+    .discovery-btn-next.btn-whatsapp {
+      background: #25D366 !important;
+      color: #0a0a0c !important;
+    }
+    .discovery-btn-next.btn-whatsapp:hover {
+      background: #20ba5a !important;
+      color: #ffffff !important;
+    }
     .discovery-error-msg {
       color: #FF5A1F;
       font-size: 0.8rem;
@@ -912,16 +1010,35 @@
 
         <!-- STEP 6: Review Summary -->
         <div class="discovery-step" id="step-6" data-step="6">
-          <h2 class="discovery-step__title">06 / Review & Submit</h2>
-          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">Please review your request details below.</p>
+          <h2 class="discovery-step__title">06 / Review & Send</h2>
+          <p class="discovery-sub" style="margin-bottom: 24px; font-size: 0.95rem;">Review your enquiry details below before sending directly to our team via WhatsApp.</p>
           
           <div class="discovery-summary" id="disc-summary-text">
             <!-- Rendered dynamically -->
           </div>
 
-          <div id="contact-submission-error" style="display: none; margin-top: 20px; padding: 16px 20px; background: rgba(255, 90, 31, 0.1); border: 1px solid rgba(255, 90, 31, 0.4); border-radius: 8px; color: #F2F2F2; font-size: 0.95rem; line-height: 1.5;">
-            <strong style="color: var(--fire);">Submission Notice:</strong>
-            <span id="contact-error-msg-text">We are currently experiencing connectivity with our secure database endpoint. Your brief details have been preserved. You can retry or email us directly at <a href="mailto:yawmatic.in@gmail.com" style="color: var(--fire); text-decoration: underline;">yawmatic.in@gmail.com</a>.</span>
+          <div class="whatsapp-info-banner">
+            <svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.176-.541-1.894-.784-3.111-2.716-3.206-2.842-.095-.126-.773-1.028-.773-1.961s.487-1.39.66-1.581c.174-.191.381-.239.508-.239.127 0 .254.001.365.006.118.005.277-.045.433.33.16.386.547 1.332.595 1.43.048.098.08.213.016.341-.064.128-.096.208-.191.319-.095.111-.201.248-.287.333-.095.094-.194.196-.083.387.111.191.494.814 1.059 1.318.729.649 1.343.85 1.534.945.191.095.302.079.413-.048.111-.127.476-.556.603-.746.127-.19.254-.159.429-.095.175.064 1.111.524 1.302.619.191.095.318.143.365.223.047.079.047.461-.097.866z"/></svg>
+            <div>
+              <strong>Send via WhatsApp:</strong> Your project enquiry will be neatly prefilled into a WhatsApp message for <strong>YAWMATIC (+91 99460 52347)</strong>. You can review and edit before sending.
+            </div>
+          </div>
+
+          <!-- Fallback Box if popup blocked or app unable to launch -->
+          <div class="whatsapp-fallback-box" id="whatsapp-fallback-box">
+            <h4>Ready to Send via WhatsApp</h4>
+            <p>If WhatsApp didn't open automatically, you can open it directly or copy your prefilled enquiry message below:</p>
+            <textarea class="whatsapp-prefilled-text" id="whatsapp-fallback-textarea" readonly></textarea>
+            <div class="whatsapp-fallback-actions">
+              <a href="#" target="_blank" rel="noopener noreferrer" class="btn-open-wa" id="whatsapp-direct-link">
+                <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.176-.541-1.894-.784-3.111-2.716-3.206-2.842-.095-.126-.773-1.028-.773-1.961s.487-1.39.66-1.581c.174-.191.381-.239.508-.239.127 0 .254.001.365.006.118.005.277-.045.433.33.16.386.547 1.332.595 1.43.048.098.08.213.016.341-.064.128-.096.208-.191.319-.095.111-.201.248-.287.333-.095.094-.194.196-.083.387.111.191.494.814 1.059 1.318.729.649 1.343.85 1.534.945.191.095.302.079.413-.048.111-.127.476-.556.603-.746.127-.19.254-.159.429-.095.175.064 1.111.524 1.302.619.191.095.318.143.365.223.047.079.047.461-.097.866z"/></svg>
+                Open in WhatsApp
+              </a>
+              <button type="button" class="btn-copy-wa" id="btn-copy-wa-text">
+                <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span id="btn-copy-label">Copy Message Text</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1237,11 +1354,13 @@
       }
 
       if (currentStep === totalSteps) {
+        nextBtn.classList.add('btn-whatsapp');
         nextBtn.innerHTML = `
-          Submit Request
-          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          Send via WhatsApp
+          <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.176-.541-1.894-.784-3.111-2.716-3.206-2.842-.095-.126-.773-1.028-.773-1.961s.487-1.39.66-1.581c.174-.191.381-.239.508-.239.127 0 .254.001.365.006.118.005.277-.045.433.33.16.386.547 1.332.595 1.43.048.098.08.213.016.341-.064.128-.096.208-.191.319-.095.111-.201.248-.287.333-.095.094-.194.196-.083.387.111.191.494.814 1.059 1.318.729.649 1.343.85 1.534.945.191.095.302.079.413-.048.111-.127.476-.556.603-.746.127-.19.254-.159.429-.095.175.064 1.111.524 1.302.619.191.095.318.143.365.223.047.079.047.461-.097.866z"/></svg>
         `;
       } else {
+        nextBtn.classList.remove('btn-whatsapp');
         nextBtn.innerHTML = `
           Next Step
           <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -1259,103 +1378,96 @@
       });
     }
 
-    function handleDiscoverySubmit() {
-      const submitBtn = document.getElementById('btn-next-step');
-      const errBanner = document.getElementById('contact-submission-error');
-      if (errBanner) errBanner.style.display = 'none';
+    const WA_NUMBER = '919946052347';
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting Request...';
+    function constructWhatsAppMessage() {
+      const lines = [
+        '*New Project Enquiry — YAWMATIC*',
+        '',
+        `*Name:* ${state.name || 'Not provided'}`,
+        `*Email:* ${state.email || 'Not provided'}`,
+        `*Phone:* ${state.phonePrefix} ${state.phoneNum || 'Not provided'}`
+      ];
 
-      // Post to Supabase inquiries table
-      fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          client_name: state.name,
-          email: state.email,
-          phone: `${state.phonePrefix} ${state.phoneNum}`,
-          company: state.company,
-          project_type: state.needs.join(', '),
-          budget: state.budget,
-          message: `Timeline: ${state.timeline}\n\nProject Brief:\n${state.details}`,
-          status: 'new'
-        })
-      })
-      .then(res => {
-        if (res.ok || res.status === 201) {
-          showSuccessScreen();
-        } else {
-          if (errBanner) {
-            errBanner.style.display = 'block';
-            errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          } else {
-            alert('Submission could not be completed. Your details are saved on this screen. Please try again or email us.');
-          }
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Retry Submission';
-        }
-      })
-      .catch(err => {
-        console.warn('Inquiry endpoint offline or unreachable:', err);
-        if (errBanner) {
-          errBanner.style.display = 'block';
-          errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else {
-          alert('Submission could not be completed. Your details are saved on this screen. Please try again or email us directly.');
-        }
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Retry Submission';
-      });
-    }
-
-    function showSuccessScreen() {
-      const container = document.getElementById('discovery-flow-container');
-      
-      // Fade out the hero header if visible
-      const hero = document.getElementById('discovery-hero-section');
-      if (hero) {
-        gsap.to(hero, { opacity: 0, height: 0, overflow: 'hidden', duration: 0.3 });
+      if (state.company) {
+        lines.push(`*Company / Organization:* ${state.company}`);
       }
 
-      gsap.to(container, {
-        opacity: 0,
-        y: -30,
-        duration: 0.3,
-        onComplete: () => {
-          container.innerHTML = `
-            <div class="discovery-success">
-              <svg class="success-checkmark" viewBox="0 0 52 52">
-                <circle cx="26" cy="26" r="25" />
-                <path fill="none" class="success-checkmark check" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
-              </svg>
-              <h1 class="discovery-hero" style="font-size:3rem; margin-bottom:16px;">Thank You.</h1>
-              <p class="discovery-sub" style="font-size:1.2rem; margin-bottom:8px; color:#ffffff;">We've received your project inquiry.</p>
-              <p class="discovery-sub" style="margin-bottom:40px; max-width:500px; margin-left:auto; margin-right:auto;">
-                Our team will carefully review your request and get back to you shortly.
-              </p>
-              <a href="/" class="discovery-btn-next" style="display:inline-flex; text-decoration:none; margin:0 auto; width:max-content; justify-content:center;">
-                Back to Home
-              </a>
-            </div>
-          `;
-          
-          gsap.fromTo(container, {
-            opacity: 0,
-            y: 30
-          }, {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            ease: 'power2.out'
-          });
+      if (state.needs && state.needs.length > 0) {
+        lines.push(`*Project Type:* ${state.needs.join(', ')}`);
+      }
+
+      if (state.budget) {
+        lines.push(`*Budget:* ${state.budget}`);
+      }
+
+      if (state.timeline) {
+        lines.push(`*Timeline:* ${state.timeline}`);
+      }
+
+      if (state.details) {
+        lines.push('');
+        lines.push('*Project Details:*');
+        lines.push(state.details);
+      }
+
+      lines.push('');
+      lines.push('*Source:* YAWMATIC Website Contact Form');
+
+      return lines.join('\n');
+    }
+
+    function handleDiscoverySubmit() {
+      // Validate all steps to be certain
+      for (let s = 1; s <= 5; s++) {
+        if (!validateStep(s)) {
+          goToStep(s);
+          return;
         }
-      });
+      }
+
+      const messageText = constructWhatsAppMessage();
+      const encodedMsg = encodeURIComponent(messageText);
+      const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodedMsg}`;
+
+      // Populate fallback box
+      const fallbackBox = document.getElementById('whatsapp-fallback-box');
+      const fallbackTextarea = document.getElementById('whatsapp-fallback-textarea');
+      const directLink = document.getElementById('whatsapp-direct-link');
+      const copyBtn = document.getElementById('btn-copy-wa-text');
+      const copyLabel = document.getElementById('btn-copy-label');
+
+      if (fallbackTextarea) fallbackTextarea.value = messageText;
+      if (directLink) directLink.href = waUrl;
+      if (fallbackBox) {
+        fallbackBox.style.display = 'block';
+        fallbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Copy text button handler
+      if (copyBtn) {
+        copyBtn.onclick = function() {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(messageText).then(() => {
+              if (copyLabel) copyLabel.textContent = 'Copied to Clipboard!';
+              setTimeout(() => {
+                if (copyLabel) copyLabel.textContent = 'Copy Message Text';
+              }, 2500);
+            }).catch(() => {
+              fallbackTextarea.select();
+              document.execCommand('copy');
+              if (copyLabel) copyLabel.textContent = 'Copied!';
+            });
+          } else {
+            fallbackTextarea.select();
+            document.execCommand('copy');
+            if (copyLabel) copyLabel.textContent = 'Copied!';
+          }
+        };
+      }
+
+      // Launch WhatsApp conversation in new window/tab
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
     }
   </script>
 </body>
