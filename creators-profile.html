@@ -731,17 +731,17 @@
         <div class="profile-hero-content">
           <div class="profile-hero-eyebrow">
             <span id="creator-role-eyebrow" class="profile-role-title">COLLECTIVE TALENT</span>
-            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-            <span id="creator-location-badge" class="profile-location-text">
+            <span id="creator-location-dot" style="color: rgba(255, 255, 255, 0.2); display: none;">·</span>
+            <span id="creator-location-badge" class="profile-location-text" style="display: none;">
               <svg style="width: 12px; height: 12px; color: var(--fire);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              <span id="creator-location-val">LOCATION</span>
+              <span id="creator-location-val"></span>
             </span>
           </div>
 
-          <h1 id="creator-fullname" class="profile-member-name">CREATOR</h1>
+          <h1 id="creator-fullname" class="profile-member-name"></h1>
 
           <!-- Badges (Vetted, Availability) -->
           <div class="profile-badges-row">
@@ -766,7 +766,7 @@
         <div class="profile-content-main">
           
           <!-- B. Approved Skills Cluster -->
-          <section id="section-skills" class="editorial-section">
+          <section id="section-skills" class="editorial-section" style="display: none;">
             <h2 class="editorial-section__label">Approved Skills & Disciplines</h2>
             <div id="creator-skills-cloud" class="skills-cluster"></div>
           </section>
@@ -778,24 +778,24 @@
           </section>
 
           <!-- D. Professional Capabilities Specs -->
-          <section id="section-capabilities" class="editorial-section">
+          <section id="section-capabilities" class="editorial-section" style="display: none;">
             <h2 class="editorial-section__label">Professional Capabilities</h2>
             <div class="capabilities-list">
-              <div id="cap-experience-wrap" class="capability-cell">
+              <div id="cap-experience-wrap" class="capability-cell" style="display: none;">
                 <span class="capability-cell__label">Experience</span>
-                <span id="meta-experience" class="capability-cell__value">—</span>
+                <span id="meta-experience" class="capability-cell__value"></span>
               </div>
-              <div id="cap-availability-wrap" class="capability-cell">
+              <div id="cap-availability-wrap" class="capability-cell" style="display: none;">
                 <span class="capability-cell__label">Work Capacity</span>
-                <span id="meta-availability" class="capability-cell__value">—</span>
+                <span id="meta-availability" class="capability-cell__value"></span>
               </div>
               <div id="cap-equipment-wrap" class="capability-cell" style="display: none;">
                 <span class="capability-cell__label">Creative Tools & Gear</span>
-                <span id="meta-equipment" class="capability-cell__value">—</span>
+                <span id="meta-equipment" class="capability-cell__value"></span>
               </div>
               <div id="cap-languages-wrap" class="capability-cell" style="display: none;">
                 <span class="capability-cell__label">Languages</span>
-                <span id="meta-languages" class="capability-cell__value">—</span>
+                <span id="meta-languages" class="capability-cell__value"></span>
               </div>
             </div>
           </section>
@@ -915,9 +915,47 @@
     let currentCreatorId = null;
     let creatorSlug = '';
 
+    function resolveSlug() {
+      // 1. Check query parameter: ?slug=sinan-k or ?id=sinan-k
+      const url = new URL(window.location.href);
+      const querySlug = url.searchParams.get('slug') || url.searchParams.get('id');
+      if (querySlug && querySlug.trim()) {
+        return querySlug.trim().replace(/\.html$/, '');
+      }
+
+      // 2. Check clean path in sessionStorage if transitioned via main.js
+      const sessionRoute = sessionStorage.getItem('currentCleanRoute');
+      if (sessionRoute) {
+        const cleanRouteParts = sessionRoute.split('?')[0].replace(/\/+$/, '').split('/');
+        const candidate = cleanRouteParts[cleanRouteParts.length - 1] || '';
+        if (candidate && !['creators', 'creators-profile', 'creators-profile.html', 'browse', 'apply'].includes(candidate)) {
+          return candidate.replace(/\.html$/, '');
+        }
+      }
+
+      // 3. Check current pathname: e.g. /creators/sinan-k or /creators-profile.html
+      const pathOnly = window.location.pathname.replace(/\/+$/, '');
+      const parts = pathOnly.split('/');
+      const last = parts[parts.length - 1] || '';
+      if (last && !['creators', 'creators-profile', 'creators-profile.html', 'browse', 'apply'].includes(last)) {
+        return last.replace(/\.html$/, '');
+      }
+
+      return '';
+    }
+
     function loadProfile() {
+      if (!creatorSlug) {
+        creatorSlug = resolveSlug();
+      }
+
+      if (!creatorSlug || creatorSlug === 'creators') {
+        window.location.replace('/creators/browse');
+        return;
+      }
+
       const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,profile_image,cover_image,bio,equipment,languages,portfolio_links,uploaded_files,slug';
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&slug=eq.${creatorSlug}&status=eq.approved`, {
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&slug=eq.${encodeURIComponent(creatorSlug)}&status=eq.approved`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -937,23 +975,39 @@
 
           // 1. Basic Details & Page Title
           document.title = `${c.full_name} — YAWMATIC Collective Profile`;
-          document.getElementById('creator-fullname').textContent = c.full_name;
+          const nameEl = document.getElementById('creator-fullname');
+          if (nameEl) nameEl.textContent = c.full_name;
           
-          // Fallback image handling: authentic uploaded image or neutral abstract avatar
+          // Neutral abstract fallback avatar & image error protection
           const isAvatarStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
           const avatarUrl = isAvatarStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
 
           const avatarEl = document.getElementById('creator-avatar');
-          avatarEl.src = avatarUrl;
-          if (isAvatarStockOrEmpty) avatarEl.style.filter = 'none';
-
-          // Location badge
-          const locationValEl = document.getElementById('creator-location-val');
-          if (locationValEl) {
-            locationValEl.textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}` || 'Worldwide';
+          if (avatarEl) {
+            avatarEl.src = avatarUrl;
+            avatarEl.alt = `${c.full_name} — YAWMATIC Collective Member`;
+            avatarEl.onerror = () => {
+              avatarEl.src = DEFAULT_AVATAR;
+              avatarEl.style.filter = 'none';
+            };
+            if (isAvatarStockOrEmpty) avatarEl.style.filter = 'none';
           }
 
-          // Primary Professional Role (Display top category or Collective Specialist)
+          // Location badge (Only displayed if valid location data exists)
+          const locationValEl = document.getElementById('creator-location-val');
+          const locationBadgeEl = document.getElementById('creator-location-badge');
+          const locationDotEl = document.getElementById('creator-location-dot');
+          const locParts = [c.city, c.country].filter(p => p && p.trim() && !['nil', 'nill', 'none', 'null'].includes(p.trim().toLowerCase()));
+          if (locParts.length > 0 && locationValEl && locationBadgeEl) {
+            locationValEl.textContent = locParts.join(', ');
+            locationBadgeEl.style.display = 'inline-flex';
+            if (locationDotEl) locationDotEl.style.display = 'inline';
+          } else {
+            if (locationBadgeEl) locationBadgeEl.style.display = 'none';
+            if (locationDotEl) locationDotEl.style.display = 'none';
+          }
+
+          // Primary Professional Role
           const categories = Array.isArray(c.categories) ? c.categories : [];
           const primaryRole = categories.length > 0 ? categories[0].replace(/-/g, ' ') : 'Collective Talent';
           const roleEyebrow = document.getElementById('creator-role-eyebrow');
@@ -1111,44 +1165,8 @@
           if (capabilitiesSection) {
             capabilitiesSection.style.display = hasCapabilities ? 'flex' : 'none';
           }
-          if (Array.isArray(c.equipment)) {
-            equipItems = c.equipment.filter(e => e && e.trim() && !['nil', 'nill', 'none'].includes(e.trim().toLowerCase()));
-          } else if (typeof c.equipment === 'string' && c.equipment.trim()) {
-            const trimmed = c.equipment.trim();
-            if (!['nil', 'nill', 'none'].includes(trimmed.toLowerCase())) {
-              equipItems = [trimmed];
-            }
-          }
 
-          if (equipWrap && equipEl) {
-            if (equipItems.length > 0) {
-              equipWrap.style.display = 'flex';
-              equipEl.textContent = equipItems.join(', ');
-            } else {
-              equipWrap.style.display = 'none';
-            }
-          }
-
-          // Languages
-          const langWrap = document.getElementById('cap-languages-wrap');
-          const langEl = document.getElementById('meta-languages');
-          let langItems = [];
-          if (Array.isArray(c.languages)) {
-            langItems = c.languages.filter(l => l && l.trim());
-          } else if (typeof c.languages === 'string' && c.languages.trim()) {
-            langItems = [c.languages.trim()];
-          }
-
-          if (langWrap && langEl) {
-            if (langItems.length > 0) {
-              langWrap.style.display = 'flex';
-              langEl.textContent = langItems.join(', ');
-            } else {
-              langWrap.style.display = 'none';
-            }
-          }
-
-          // 4. Render Portfolio Gallery (Only approved showcase items submitted and verified by Admin)
+          // 5. Render Portfolio Gallery (Only approved showcase items submitted and verified by Admin)
           const portSection = document.getElementById('section-portfolio');
           const gallery = document.getElementById('portfolio-gallery-container');
           if (gallery) gallery.innerHTML = '';
@@ -1184,6 +1202,27 @@
                       <h4 class="portfolio-item__title">${item.title || 'Project Showcase'}</h4>
                     </div>
                   </div>
+                `;
+                card.addEventListener('click', () => openLightbox(item));
+                gallery.appendChild(card);
+              });
+            }
+          }
+
+          // 6. Fetch reviews
+          loadReviews(c.id);
+        })
+        .catch(err => {
+          document.body.innerHTML = `
+            <div class="section-padding" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
+              <span class="overline">Profile Error</span>
+              <h1 class="heading-large">Creator Not Found</h1>
+              <p style="color:var(--mist);margin-bottom:30px;">The creator profile matching "${creatorSlug}" is either inactive or does not exist in our vetted network.</p>
+              <a href="/creators/browse" class="btn btn--primary">Browse Curated Directory</a>
+            </div>
+          `;
+        });
+    }
                 `;
                 card.addEventListener('click', () => openLightbox(item));
                 gallery.appendChild(card);
@@ -1282,10 +1321,9 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Get Creator Slug from URL
-      const pathParts = window.location.pathname.split('/');
-      creatorSlug = pathParts[pathParts.length - 1] || '';
+    function initCreatorPage() {
+      // 1. Get Creator Slug from URL or history
+      creatorSlug = resolveSlug();
 
       // Safeguard: Reserved words must redirect to directory or home, never execute as profile query
       if (creatorSlug === 'browse') {
@@ -1312,122 +1350,22 @@
       loadProfile();
       setupRealtime();
 
-      // 3. Setup Project Booking Inquiry Submission directly to Supabase inquiries table
-      const inquiryForm = document.getElementById('form-creator-inquiry');
-      if (inquiryForm) {
-        inquiryForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          
-          const name = document.getElementById('inquiry-name').value;
-          const email = document.getElementById('inquiry-email').value;
-          const projectDetails = document.getElementById('inquiry-details').value;
-
-          const submitBtn = inquiryForm.querySelector('button[type="submit"]');
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Submitting inquiry...';
-
-          fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-              client_name: name,
-              email: email,
-              project_type: 'Collective Talent Request',
-              message: `Target Member: ${document.getElementById('creator-fullname').textContent} (ID: ${currentCreatorId})\n\nBrief Details:\n${projectDetails}`,
-              status: 'new'
-            })
-          })
-            .then(res => {
-              if (res.ok || res.status === 201) {
-                inquiryForm.innerHTML = `
-                  <div style="text-align:center; padding: 20px 0;">
-                    <span style="font-size:3rem; color:var(--fire); margin-bottom:15px; display:block;">✓</span>
-                    <h3 class="sidebar-title" style="font-size:1.2rem; margin-bottom:10px;">Inquiry Vetted</h3>
-                    <p style="font-size:0.85rem; color:var(--mist); line-height:1.5;">
-                      Thanks, your brief was routed to YAWMATIC admin. We will review availability and details and contact you shortly.
-                    </p>
-                  </div>
-                `;
-              } else {
-                alert('Submission failed. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Project Inquiry';
-              }
-            })
-            .catch(err => {
-              alert('A network error occurred. Please try again.');
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Submit Project Inquiry';
-            });
+      // Close Lightbox Modal
+      const lbClose = document.getElementById('lightbox-close');
+      if (lbClose) lbClose.addEventListener('click', closeLightbox);
+      const lbModal = document.getElementById('lightbox-modal');
+      if (lbModal) {
+        lbModal.addEventListener('click', (e) => {
+          if (e.target.id === 'lightbox-modal') closeLightbox();
         });
       }
+    }
 
-      // 4. Setup Review Submission directly to Supabase reviews table (for moderation)
-      const reviewForm = document.getElementById('form-submit-review');
-      if (reviewForm) {
-        reviewForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          
-          const clientName = document.getElementById('review-client-name').value;
-          const rating = parseInt(document.getElementById('review-rating').value, 10) || 5;
-          const text = document.getElementById('review-text').value;
-
-          const submitBtn = reviewForm.querySelector('button[type="submit"]');
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Submitting testimonial...';
-
-          fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-              creator_id: currentCreatorId,
-              client_name: clientName,
-              rating,
-              review: text,
-              approved: false
-            })
-          })
-            .then(res => {
-              if (res.ok || res.status === 201) {
-                reviewForm.innerHTML = `
-                  <div style="text-align:center; padding: 20px 0; background:rgba(255, 90, 31, 0.05); border:1px solid rgba(255, 90, 31, 0.15); border-radius:4px;">
-                    <span style="font-size:2rem; color:var(--fire); display:block; margin-bottom:10px;">✓</span>
-                    <h4 class="sidebar-title" style="font-size:1rem; margin-bottom:5px;">Review Logged</h4>
-                    <p style="font-size:0.8rem; color:var(--mist); line-height:1.5; padding:0 20px;">
-                      Review submitted for agency moderation. It will show up on this profile once approved.
-                    </p>
-                  </div>
-                `;
-              } else {
-                alert('Submission failed. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Review for Moderation';
-              }
-            })
-            .catch(err => {
-              alert('A network error occurred. Please try again.');
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Submit Review for Moderation';
-            });
-        });
-      }
-
-      // 5. Close Lightbox Modal
-      document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
-      document.getElementById('lightbox-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'lightbox-modal') closeLightbox();
-      });
-    });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCreatorPage);
+    } else {
+      initCreatorPage();
+    }
 
     // Lightbox handlers
     function openLightbox(item) {
