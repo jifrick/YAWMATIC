@@ -74,8 +74,8 @@
       display: flex !important;
     }
     body.loading .navbar,
+    body.loading main,
     body.loading section,
-    body.loading .profile-cover,
     body.loading footer,
     body.loading .custom-cursor-dot,
     body.loading .custom-cursor-ring,
@@ -84,255 +84,305 @@
       visibility: hidden !important;
     }
 
-    /* Cover Banner — Minimal & Balanced */
-    .profile-cover {
-      width: 100%;
-      height: 220px;
-      overflow: hidden;
-      position: relative;
-      background: radial-gradient(circle at 50% 30%, rgba(255, 90, 31, 0.08) 0%, #0a0a0b 70%);
-      border-bottom: 1px solid var(--glass-border);
-      margin-top: 80px;
-    }
-    @media(max-width: 768px) {
-      .profile-cover {
-        height: 160px;
-        margin-top: 70px;
-      }
-    }
-    .profile-cover__img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.35;
-      filter: saturate(0.8);
-    }
-    .profile-cover__glow {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to top, #09090a 10%, rgba(9, 9, 10, 0.4) 60%, transparent 100%);
-      pointer-events: none;
-    }
+    /* -------------------------------------------------------------
+       EDITORIAL CREATOR PROFILE DESIGN SYSTEM
+    -------------------------------------------------------------- */
 
-    /* Profile Layout System */
-    .profile-section {
-      padding-top: 0 !important;
+    .profile-page-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 80vh;
+      padding-top: 120px;
       padding-bottom: 100px;
-      position: relative;
+      background: #09090a;
     }
-    .profile-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 380px;
-      gap: 40px;
-      align-items: start;
-      margin-top: -70px;
-      position: relative;
-      z-index: 5;
-    }
-    @media(max-width: 1024px) {
-      .profile-layout {
-        grid-template-columns: 1fr;
-        margin-top: -50px;
-        gap: 40px;
+    @media (max-width: 768px) {
+      .profile-page-wrapper {
+        padding-top: 100px;
+        padding-bottom: 70px;
       }
     }
 
-    /* Profile Main Column */
-    .profile-main {
-      display: flex;
-      flex-direction: column;
-      gap: 36px;
-      min-width: 0;
+    .profile-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 5%;
+      position: relative;
+      z-index: 2;
     }
 
-    /* Profile Header */
-    .profile-header {
-      display: flex;
-      gap: 28px;
-      align-items: flex-end;
+    /* Back Link */
+    .profile-back-nav {
+      margin-bottom: 28px;
+    }
+    .profile-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mist);
+      text-decoration: none;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .profile-back-link:hover {
+      color: var(--fire);
+      transform: translateX(-3px);
+    }
+
+    /* -------------------------------------------------------------
+       A. COMPACT PROFILE HEADER
+    -------------------------------------------------------------- */
+    .profile-hero-card {
       background: var(--card-bg);
       border: 1px solid var(--glass-border);
       border-radius: 8px;
-      padding: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      padding: 36px 40px;
+      display: flex;
+      gap: 36px;
+      align-items: center;
+      margin-bottom: 36px;
+      position: relative;
+      overflow: hidden;
     }
-    @media(max-width: 680px) {
-      .profile-header {
+    .profile-hero-card::after {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255, 90, 31, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    @media (max-width: 768px) {
+      .profile-hero-card {
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 24px 20px;
-        gap: 20px;
+        align-items: flex-start;
+        padding: 28px 24px;
+        gap: 24px;
       }
     }
-    .profile-header__avatar-wrap {
-      width: 130px;
-      height: 130px;
+
+    .profile-avatar-box {
+      width: 120px;
+      height: 120px;
+      min-width: 120px;
       border-radius: 50%;
       overflow: hidden;
-      border: 3px solid rgba(255, 90, 31, 0.3);
-      background: #111113;
-      flex-shrink: 0;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border: 2px solid rgba(255, 90, 31, 0.4);
+      background: #111114;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
     }
-    @media(max-width: 680px) {
-      .profile-header__avatar-wrap {
-        width: 110px;
-        height: 110px;
+    @media (max-width: 480px) {
+      .profile-avatar-box {
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
       }
     }
-    .profile-header__avatar {
+    .profile-avatar-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
-    .profile-header__title-info {
+
+    .profile-hero-content {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
       flex-grow: 1;
     }
-    .profile-header__name-row {
+
+    .profile-hero-eyebrow {
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
     }
-    @media(max-width: 680px) {
-      .profile-header__name-row {
-        justify-content: center;
-      }
-    }
-    .profile-header__name {
+    .profile-role-title {
       font-family: var(--font-display);
-      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--fire);
+    }
+    .profile-location-text {
+      font-size: 0.82rem;
+      color: var(--mist);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .profile-member-name {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 4.5vw, 3.4rem);
       font-weight: 800;
       text-transform: uppercase;
-      line-height: 1.15;
+      line-height: 1.05;
       color: var(--volt);
       letter-spacing: -0.5px;
       margin: 0;
       word-break: break-word;
     }
-    .profile-header__meta {
-      font-size: 0.85rem;
-      color: var(--mist);
+
+    .profile-badges-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-family: var(--font-display);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
-    @media(max-width: 680px) {
-      .profile-header__meta {
-        justify-content: center;
-      }
-    }
-
-    /* Skills Pill Cloud */
-    .skills-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 6px;
-    }
-    @media(max-width: 680px) {
-      .skills-cloud {
-        justify-content: center;
-      }
-    }
-    .skill-pill {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--volt);
+    .status-pill {
       font-family: var(--font-display);
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 5px 12px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-pill--vetted {
+      background: rgba(255, 90, 31, 0.12);
+      border: 1px solid rgba(255, 90, 31, 0.35);
+      color: var(--fire);
+    }
+    .status-pill--availability {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--volt);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .status-dot.available { background: #00E676; box-shadow: 0 0 6px #00E676; }
+    .status-dot.limited { background: #FFD600; box-shadow: 0 0 6px #FFD600; }
+    .status-dot.booked { background: #FF1744; box-shadow: 0 0 6px #FF1744; }
+
+    /* -------------------------------------------------------------
+       TWO-COLUMN EDITORIAL CONTENT LAYOUT (70% / 30%)
+    -------------------------------------------------------------- */
+    .profile-grid-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 36px;
+      align-items: start;
+    }
+    @media (max-width: 1024px) {
+      .profile-grid-layout {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+    }
+
+    .profile-content-main {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-width: 0;
+    }
+
+    /* Editorial Section Unit */
+    .editorial-section {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (max-width: 600px) {
+      .editorial-section {
+        padding: 24px 20px;
+        gap: 16px;
+      }
+    }
+
+    .editorial-section__label {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--fire);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+    .editorial-section__label::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fire);
+    }
+
+    /* Skills Cloud */
+    .skills-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--volt);
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 7px 14px;
       border-radius: 4px;
       transition: var(--transition-fast);
     }
-    .skill-pill:hover {
+    .skill-tag:hover {
       border-color: rgba(255, 90, 31, 0.4);
       background: rgba(255, 90, 31, 0.08);
     }
 
-    /* Content Card Units */
-    .content-card {
-      background: var(--card-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 8px;
-      padding: 32px 30px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    @media(max-width: 680px) {
-      .content-card {
-        padding: 24px 20px;
-      }
-    }
-    .content-card__heading {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--volt);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0;
-    }
-    .content-card__heading::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 16px;
-      background: var(--fire);
-      border-radius: 2px;
-    }
-
-    /* Bio Section */
-    .profile-bio {
-      font-size: 1rem;
-      line-height: 1.75;
+    /* Bio Text */
+    .profile-bio-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
       color: var(--mist);
       margin: 0;
     }
-    .profile-bio p {
-      margin: 0 0 12px 0;
+    .profile-bio-text p {
+      margin: 0 0 14px 0;
     }
-    .profile-bio p:last-child {
+    .profile-bio-text p:last-child {
       margin-bottom: 0;
     }
 
-    /* Capabilities Meta Grid */
-    .capabilities-grid {
+    /* Capabilities Specs Grid */
+    .capabilities-list {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 18px;
     }
-    @media(max-width: 600px) {
-      .capabilities-grid {
+    @media (max-width: 600px) {
+      .capabilities-list {
         grid-template-columns: 1fr;
-        gap: 16px;
       }
     }
-    .capability-item {
+    .capability-cell {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 6px;
@@ -341,43 +391,103 @@
       flex-direction: column;
       gap: 6px;
     }
-    .capability-item__label {
+    .capability-cell__label {
       font-family: var(--font-display);
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--fire);
       text-transform: uppercase;
       letter-spacing: 1px;
+      color: var(--fire);
     }
-    .capability-item__value {
+    .capability-cell__value {
       font-size: 0.95rem;
+      font-weight: 500;
       color: var(--volt);
       line-height: 1.45;
-      font-weight: 500;
       word-break: break-word;
     }
-    .meta-item__label {
+
+    /* -------------------------------------------------------------
+       B. COMPACT ENQUIRY SIDEBAR CARD
+    -------------------------------------------------------------- */
+    .profile-sidebar-wrapper {
+      position: sticky;
+      top: 110px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (max-width: 1024px) {
+      .profile-sidebar-wrapper {
+        position: static;
+        margin-top: 10px;
+      }
+    }
+
+    .enquiry-card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 30px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+    .enquiry-card__eyebrow {
       font-family: var(--font-display);
       font-size: 0.75rem;
       font-weight: 700;
-      color: var(--fire);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+      color: var(--fire);
     }
-    .meta-item__value {
-      font-size: 0.95rem;
+    .enquiry-card__title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.15;
       color: var(--volt);
-      line-height: 1.4;
+      margin: 0;
+    }
+    .enquiry-card__desc {
+      font-size: 0.88rem;
+      color: var(--mist);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .enquiry-card__cta {
+      margin-top: 6px;
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+    .enquiry-card__trust {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--mist);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 16px;
+      margin-top: 4px;
     }
 
-    /* Portfolio Gallery */
+    /* Portfolio Gallery & Reviews (when approved items exist) */
     .portfolio-gallery {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
-    @media(max-width: 600px) {
-      .portfolio-gallery { grid-template-columns: 1fr; }
+    @media (max-width: 600px) {
+      .portfolio-gallery {
+        grid-template-columns: 1fr;
+      }
     }
     .portfolio-item {
       border-radius: 6px;
@@ -385,22 +495,20 @@
       position: relative;
       background: #0b0b0c;
       border: 1px solid var(--glass-border);
-      cursor: none;
+      cursor: pointer;
     }
     .portfolio-item--wide {
       grid-column: span 2;
     }
-    @media(max-width: 600px) {
-      .portfolio-item--wide { grid-column: span 1; }
+    @media (max-width: 600px) {
+      .portfolio-item--wide {
+        grid-column: span 1;
+      }
     }
     .portfolio-item__aspect {
       position: relative;
       width: 100%;
-      height: 0;
-      padding-bottom: 56.25%; /* 16:9 */
-    }
-    .portfolio-item__aspect--square {
-      padding-bottom: 100%; /* 1:1 */
+      padding-bottom: 60%;
     }
     .portfolio-item__media {
       position: absolute;
@@ -409,194 +517,31 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: grayscale(40%);
-      transition: var(--transition-slow);
+      transition: transform 0.5s ease;
     }
     .portfolio-item:hover .portfolio-item__media {
-      filter: grayscale(0);
-      scale: 1.03;
+      transform: scale(1.04);
     }
     .portfolio-item__overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 60%);
       opacity: 0;
-      transition: var(--transition-medium);
+      transition: opacity 0.3s ease;
       display: flex;
       align-items: flex-end;
-      padding: 30px;
+      padding: 20px;
     }
     .portfolio-item:hover .portfolio-item__overlay {
       opacity: 1;
     }
     .portfolio-item__title {
       font-family: var(--font-display);
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 700;
       text-transform: uppercase;
       color: var(--volt);
-    }
-    .portfolio-item__play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: rgba(255, 90, 31, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--volt);
-      box-shadow: 0 4px 15px rgba(255,90,31,0.4);
-      pointer-events: none;
-      transition: var(--transition-fast);
-    }
-    .portfolio-item:hover .portfolio-item__play-icon {
-      scale: 1.1;
-      background: var(--fire);
-    }
-
-    /* Sticky Booking Panel Sidebar */
-    .profile-sidebar {
-      width: 100%;
-      position: sticky;
-      top: 100px;
-      height: fit-content;
-      background: var(--card-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 8px;
-      padding: 32px 26px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    }
-    @media(max-width: 1024px) {
-      .profile-sidebar {
-        width: 100%;
-        position: static;
-        padding: 28px 20px;
-      }
-    }
-    .sidebar-header {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      padding-bottom: 16px;
-    }
-    .sidebar-title {
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: var(--volt);
-      letter-spacing: 0.8px;
       margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sidebar-title::before {
-      content: '';
-      display: inline-block;
-      width: 4px;
-      height: 16px;
-      background: var(--fire);
-      border-radius: 2px;
-    }
-    .sidebar-desc {
-      font-size: 0.82rem;
-      color: var(--mist);
-      line-height: 1.55;
-      margin: 0;
-    }
-    .sidebar-security-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--font-display);
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--volt);
-      background: rgba(255, 90, 31, 0.08);
-      border: 1px solid rgba(255, 90, 31, 0.25);
-      padding: 6px 10px;
-      border-radius: 4px;
-      margin-top: 4px;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-    .form-label {
-      font-family: var(--font-display);
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--mist);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .form-control {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      color: var(--volt);
-      padding: 14px 16px;
-      border-radius: 4px;
-      font-size: 0.95rem;
-      font-family: var(--font-body);
-      outline: none;
-      transition: var(--transition-fast);
-    }
-    .form-control:focus {
-      border-color: var(--fire);
-      background: rgba(255, 255, 255, 0.04);
-    }
-    textarea.form-control {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    /* Reviews list */
-    .reviews-list {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .review-card {
-      background: rgba(255,255,255,0.01);
-      border: 1px solid var(--glass-border);
-      padding: 24px;
-      border-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .review-card__header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .review-card__client {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      color: var(--volt);
-    }
-    .review-card__stars {
-      color: var(--fire);
-      font-size: 0.9rem;
-      letter-spacing: 1px;
     }
     .review-card__text {
       font-size: 0.95rem;
@@ -765,119 +710,132 @@
     </div>
   </nav>
 
-  <main id="creator-profile-main">
-  <!-- PROFILE COVER BANNER -->
-  <div class="profile-cover">
-    <img id="creator-cover-image" src="" alt="Cover Image" class="profile-cover__img">
-    <div class="profile-cover__glow"></div>
-  </div>
-
-  <!-- PROFILE CONTENT LAYOUT -->
-  <section class="section-padding profile-section">
-    <div class="profile-layout">
+  <main id="creator-profile-main" class="profile-page-wrapper">
+    <div class="profile-container">
       
-      <!-- Main Content Column -->
-      <div class="profile-main">
-        
-        <!-- Profile Header Unit -->
-        <header class="profile-header">
-          <div class="profile-header__avatar-wrap">
-            <img id="creator-avatar" src="" alt="Avatar" class="profile-header__avatar">
-          </div>
-          <div class="profile-header__title-info">
-            <div class="profile-header__name-row">
-              <h1 id="creator-fullname" class="profile-header__name">CREATOR</h1>
-              <span id="creator-vetted-badge" class="verified-badge" style="display: none;">Vetted</span>
-            </div>
-            <div class="profile-header__meta">
-              <span id="creator-category-badge">COLLECTIVE TALENT</span>
-              <span>·</span>
-              <span id="creator-location-badge">LOCATION</span>
-            </div>
-            <!-- Skills Cloud -->
-            <div id="creator-skills-cloud" class="skills-cloud"></div>
-          </div>
-        </header>
-
-        <!-- About Member Section -->
-        <section id="section-bio" class="content-card" style="display: none;">
-          <h2 class="content-card__heading">About</h2>
-          <div id="creator-bio" class="profile-bio"></div>
-        </section>
-
-        <!-- Professional Capabilities Section -->
-        <section id="section-capabilities" class="content-card">
-          <h2 class="content-card__heading">Professional Capabilities</h2>
-          <div class="capabilities-grid">
-            <div id="cap-experience-wrap" class="capability-item">
-              <span class="capability-item__label">Experience</span>
-              <span id="meta-experience" class="capability-item__value">1+ Years</span>
-            </div>
-            <div id="cap-availability-wrap" class="capability-item">
-              <span class="capability-item__label">Availability</span>
-              <span id="meta-availability" class="capability-item__value">Available for Projects</span>
-            </div>
-            <div id="cap-equipment-wrap" class="capability-item" style="grid-column: span 2;">
-              <span class="capability-item__label">Equipment & Creative Tools</span>
-              <span id="meta-equipment" class="capability-item__value">Studio Rig</span>
-            </div>
-            <div id="cap-languages-wrap" class="capability-item" style="grid-column: span 2;">
-              <span class="capability-item__label">Languages</span>
-              <span id="meta-languages" class="capability-item__value">English</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Project Showcase Section (Only shown if approved projects exist) -->
-        <section id="section-portfolio" class="content-card" style="display: none;">
-          <h2 class="content-card__heading">Portfolio Showcase</h2>
-          <div id="portfolio-gallery-container" class="portfolio-gallery"></div>
-        </section>
-
-        <!-- Reviews & Testimonials Section (Only shown if approved reviews exist) -->
-        <section id="section-reviews" class="content-card" style="display: none;">
-          <h2 class="content-card__heading">Verified Reviews</h2>
-          <div id="reviews-list-container" class="reviews-list"></div>
-        </section>
-
+      <!-- Back to Collective Directory -->
+      <div class="profile-back-nav">
+        <a href="/creators/browse" class="profile-back-link">
+          <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back to Directory
+        </a>
       </div>
 
-      <!-- Sticky Booking Panel Sidebar -->
-      <aside class="profile-sidebar">
-        <div class="sidebar-header">
-          <h2 class="sidebar-title">Book Creator</h2>
-          <p class="sidebar-desc">
-            Connect through YAWMATIC administrators. We assemble creative teams, verify contract scopes, and guarantee production delivery.
-          </p>
-          <span class="sidebar-security-badge">
-            <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Admin-Managed Talent
-          </span>
+      <!-- A. COMPACT PROFILE HEADER -->
+      <header class="profile-hero-card">
+        <div class="profile-avatar-box">
+          <img id="creator-avatar" src="" alt="Creator Avatar" class="profile-avatar-img">
+        </div>
+        <div class="profile-hero-content">
+          <div class="profile-hero-eyebrow">
+            <span id="creator-role-eyebrow" class="profile-role-title">COLLECTIVE TALENT</span>
+            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
+            <span id="creator-location-badge" class="profile-location-text">
+              <svg style="width: 12px; height: 12px; color: var(--fire);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span id="creator-location-val">LOCATION</span>
+            </span>
+          </div>
+
+          <h1 id="creator-fullname" class="profile-member-name">CREATOR</h1>
+
+          <!-- Badges (Vetted, Availability) -->
+          <div class="profile-badges-row">
+            <span id="creator-vetted-badge" class="status-pill status-pill--vetted" style="display: none;">
+              <svg style="width: 12px; height: 12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Vetted Member
+            </span>
+            <span id="creator-availability-badge" class="status-pill status-pill--availability" style="display: none;">
+              <span id="creator-availability-dot" class="status-dot"></span>
+              <span id="creator-availability-text">Available</span>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- TWO-COLUMN CONTENT LAYOUT (Main 70% / Sidebar 30%) -->
+      <div class="profile-grid-layout">
+        
+        <!-- Main Content Column -->
+        <div class="profile-content-main">
+          
+          <!-- B. Approved Skills Cluster -->
+          <section id="section-skills" class="editorial-section">
+            <h2 class="editorial-section__label">Approved Skills & Disciplines</h2>
+            <div id="creator-skills-cloud" class="skills-cluster"></div>
+          </section>
+
+          <!-- C. About Section (Hidden if empty or nil) -->
+          <section id="section-bio" class="editorial-section" style="display: none;">
+            <h2 class="editorial-section__label">About</h2>
+            <div id="creator-bio" class="profile-bio-text"></div>
+          </section>
+
+          <!-- D. Professional Capabilities Specs -->
+          <section id="section-capabilities" class="editorial-section">
+            <h2 class="editorial-section__label">Professional Capabilities</h2>
+            <div class="capabilities-list">
+              <div id="cap-experience-wrap" class="capability-cell">
+                <span class="capability-cell__label">Experience</span>
+                <span id="meta-experience" class="capability-cell__value">—</span>
+              </div>
+              <div id="cap-availability-wrap" class="capability-cell">
+                <span class="capability-cell__label">Work Capacity</span>
+                <span id="meta-availability" class="capability-cell__value">—</span>
+              </div>
+              <div id="cap-equipment-wrap" class="capability-cell" style="display: none;">
+                <span class="capability-cell__label">Creative Tools & Gear</span>
+                <span id="meta-equipment" class="capability-cell__value">—</span>
+              </div>
+              <div id="cap-languages-wrap" class="capability-cell" style="display: none;">
+                <span class="capability-cell__label">Languages</span>
+                <span id="meta-languages" class="capability-cell__value">—</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- E. Selected Projects / Portfolio (Only rendered if admin-approved projects exist) -->
+          <section id="section-portfolio" class="editorial-section" style="display: none;">
+            <h2 class="editorial-section__label">Selected Projects</h2>
+            <div id="portfolio-gallery-container" class="portfolio-gallery"></div>
+          </section>
+
+          <!-- Verified Client Reviews (Only rendered if admin-approved reviews exist) -->
+          <section id="section-reviews" class="editorial-section" style="display: none;">
+            <h2 class="editorial-section__label">Verified Client Reviews</h2>
+            <div id="reviews-list-container" class="reviews-list"></div>
+          </section>
+
         </div>
 
-        <form id="form-creator-inquiry">
-          <div class="form-group">
-            <label class="form-label" for="inquiry-name">Your Full Name</label>
-            <input type="text" id="inquiry-name" class="form-control" placeholder="John Doe" required>
+        <!-- 3. COMPACT ENQUIRY SIDEBAR CARD -->
+        <aside class="profile-sidebar-wrapper">
+          <div class="enquiry-card">
+            <span class="enquiry-card__eyebrow">Production Collaboration</span>
+            <h2 class="enquiry-card__title">Work with this Creator</h2>
+            <p class="enquiry-card__desc">
+              Connect through YAWMATIC. Our management team coordinates project scopes, talent matching, contract agreements, and production delivery.
+            </p>
+            <a id="btn-discuss-project" href="/contact?ref=creator" class="btn btn--primary enquiry-card__cta">
+              Discuss a Project with YAWMATIC →
+            </a>
+            <div class="enquiry-card__trust">
+              <svg style="width: 14px; height: 14px; color: var(--fire);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Admin-Managed Talent Network</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="inquiry-email">Work Email</label>
-            <input type="email" id="inquiry-email" class="form-control" placeholder="john@company.com" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="inquiry-details">Project Scope Details</label>
-            <textarea id="inquiry-details" class="form-control" placeholder="Describe your project brief, timeline expectations, and estimated budget..." required></textarea>
-          </div>
-          <button type="submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 6px;">
-            Submit Project Inquiry →
-          </button>
-        </form>
-      </aside>
+        </aside>
 
+      </div>
     </div>
-  </section>
   </main>
 
   <!-- LIGHTBOX MODAL -->
@@ -978,47 +936,86 @@
           currentCreatorId = c.id;
 
           // 1. Basic Details & Page Title
-          document.title = `${c.full_name} — YAWMATIC Collective`;
+          document.title = `${c.full_name} — YAWMATIC Collective Profile`;
           document.getElementById('creator-fullname').textContent = c.full_name;
           
-          // Fallback image handling
+          // Fallback image handling: authentic uploaded image or neutral abstract avatar
           const isAvatarStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
           const avatarUrl = isAvatarStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
-
-          const isCoverStockOrEmpty = !c.cover_image || c.cover_image.includes('unsplash.com') || c.cover_image.includes('placeholder');
-          const coverUrl = isCoverStockOrEmpty ? DEFAULT_COVER : c.cover_image;
 
           const avatarEl = document.getElementById('creator-avatar');
           avatarEl.src = avatarUrl;
           if (isAvatarStockOrEmpty) avatarEl.style.filter = 'none';
 
-          document.getElementById('creator-cover-image').src = coverUrl;
-          document.getElementById('creator-location-badge').textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}`;
+          // Location badge
+          const locationValEl = document.getElementById('creator-location-val');
+          if (locationValEl) {
+            locationValEl.textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}` || 'Worldwide';
+          }
 
-          // Format category list & badges
+          // Primary Professional Role (Display top category or Collective Specialist)
           const categories = Array.isArray(c.categories) ? c.categories : [];
-          const formattedCats = categories.map(cat => cat.replace(/-/g, ' ')).join(' · ');
-          document.getElementById('creator-category-badge').textContent = formattedCats ? formattedCats.toUpperCase() : 'COLLECTIVE TALENT';
-
-          if (c.verified) {
-            document.getElementById('creator-vetted-badge').style.display = 'inline-block';
-          } else {
-            document.getElementById('creator-vetted-badge').style.display = 'none';
+          const primaryRole = categories.length > 0 ? categories[0].replace(/-/g, ' ') : 'Collective Talent';
+          const roleEyebrow = document.getElementById('creator-role-eyebrow');
+          if (roleEyebrow) {
+            roleEyebrow.textContent = primaryRole.toUpperCase();
           }
 
-          // Populate Skills Cloud
+          // Status Badges
+          const vettedBadge = document.getElementById('creator-vetted-badge');
+          if (vettedBadge) {
+            vettedBadge.style.display = c.verified ? 'inline-flex' : 'none';
+          }
+
+          const availBadge = document.getElementById('creator-availability-badge');
+          const availDot = document.getElementById('creator-availability-dot');
+          const availText = document.getElementById('creator-availability-text');
+          if (availBadge && c.availability) {
+            const availLabels = {
+              'available': 'Available for Projects',
+              'limited': 'Limited Availability',
+              'booked': 'Fully Booked'
+            };
+            if (availLabels[c.availability]) {
+              availBadge.style.display = 'inline-flex';
+              if (availDot) {
+                availDot.className = `status-dot ${c.availability}`;
+              }
+              if (availText) {
+                availText.textContent = availLabels[c.availability];
+              }
+            } else {
+              availBadge.style.display = 'none';
+            }
+          } else if (availBadge) {
+            availBadge.style.display = 'none';
+          }
+
+          // Dynamic Enquiry Button ref
+          const btnDiscuss = document.getElementById('btn-discuss-project');
+          if (btnDiscuss) {
+            btnDiscuss.href = `/contact?talent=${encodeURIComponent(c.full_name)}&id=${encodeURIComponent(c.id)}`;
+          }
+
+          // 2. Populate Skills Section (B)
+          const skillsSection = document.getElementById('section-skills');
           const skillsCloud = document.getElementById('creator-skills-cloud');
-          if (skillsCloud) {
-            skillsCloud.innerHTML = '';
-            categories.forEach(cat => {
-              const pill = document.createElement('span');
-              pill.className = 'skill-pill';
-              pill.textContent = cat.replace(/-/g, ' ');
-              skillsCloud.appendChild(pill);
-            });
+          if (skillsSection && skillsCloud) {
+            if (categories.length > 0) {
+              skillsSection.style.display = 'flex';
+              skillsCloud.innerHTML = '';
+              categories.forEach(cat => {
+                const tag = document.createElement('span');
+                tag.className = 'skill-tag';
+                tag.textContent = cat.replace(/-/g, ' ');
+                skillsCloud.appendChild(tag);
+              });
+            } else {
+              skillsSection.style.display = 'none';
+            }
           }
 
-          // 2. Render About Section only if genuine member-submitted text exists
+          // 3. Render About Section (C) only if genuine member-submitted text exists
           const bioSection = document.getElementById('section-bio');
           const bioContainer = document.getElementById('creator-bio');
           const trimmedBio = (c.bio || '').trim();
@@ -1039,27 +1036,81 @@
             }
           }
 
-          // 3. Render Professional Capabilities
+          // 4. Render Professional Capabilities (D)
+          const capabilitiesSection = document.getElementById('section-capabilities');
+          let hasCapabilities = false;
+
+          // Experience
+          const expWrap = document.getElementById('cap-experience-wrap');
           const expYears = parseInt(c.years_experience, 10);
           const expEl = document.getElementById('meta-experience');
-          if (expEl) {
-            expEl.textContent = expYears > 0 ? `${expYears} Year${expYears > 1 ? 's' : ''}` : 'Emerging Specialist';
+          if (expYears && expYears > 0) {
+            hasCapabilities = true;
+            if (expWrap) expWrap.style.display = 'flex';
+            if (expEl) expEl.textContent = `${expYears} Year${expYears > 1 ? 's' : ''} Professional Experience`;
+          } else if (expWrap) {
+            expWrap.style.display = 'none';
           }
 
-          const availMap = {
-            'available': 'Available for Projects',
-            'limited': 'Limited Availability',
-            'booked': 'Fully Booked'
-          };
-          const availEl = document.getElementById('meta-availability');
-          if (availEl) {
-            availEl.textContent = availMap[c.availability] || 'Available for Projects';
+          // Work Capacity / Availability
+          const availWrap = document.getElementById('cap-availability-wrap');
+          const availMetaEl = document.getElementById('meta-availability');
+          if (c.availability) {
+            hasCapabilities = true;
+            if (availWrap) availWrap.style.display = 'flex';
+            const capMap = {
+              'available': 'Immediate / Active Capacity',
+              'limited': 'Selective / Limited Capacity',
+              'booked': 'Fully Booked This Cycle'
+            };
+            if (availMetaEl) availMetaEl.textContent = capMap[c.availability] || 'Available';
+          } else if (availWrap) {
+            availWrap.style.display = 'none';
           }
 
-          // Equipment
+          // Equipment & Creative Tools
           const equipWrap = document.getElementById('cap-equipment-wrap');
           const equipEl = document.getElementById('meta-equipment');
           let equipItems = [];
+          if (Array.isArray(c.equipment)) {
+            equipItems = c.equipment.filter(e => e && e.trim() && !['nil', 'nill', 'none'].includes(e.trim().toLowerCase()));
+          } else if (typeof c.equipment === 'string' && c.equipment.trim()) {
+            const trimmed = c.equipment.trim();
+            if (!['nil', 'nill', 'none'].includes(trimmed.toLowerCase())) {
+              equipItems = [trimmed];
+            }
+          }
+
+          if (equipItems.length > 0) {
+            hasCapabilities = true;
+            if (equipWrap) equipWrap.style.display = 'flex';
+            if (equipEl) equipEl.textContent = equipItems.join(', ');
+          } else if (equipWrap) {
+            equipWrap.style.display = 'none';
+          }
+
+          // Languages
+          const langWrap = document.getElementById('cap-languages-wrap');
+          const langEl = document.getElementById('meta-languages');
+          let langItems = [];
+          if (Array.isArray(c.languages)) {
+            langItems = c.languages.filter(l => l && l.trim());
+          } else if (typeof c.languages === 'string' && c.languages.trim()) {
+            langItems = [c.languages.trim()];
+          }
+
+          if (langItems.length > 0) {
+            hasCapabilities = true;
+            if (langWrap) langWrap.style.display = 'flex';
+            if (langEl) langEl.textContent = langItems.join(', ');
+          } else if (langWrap) {
+            langWrap.style.display = 'none';
+          }
+
+          // Hide capabilities section entirely if no genuine data
+          if (capabilitiesSection) {
+            capabilitiesSection.style.display = hasCapabilities ? 'flex' : 'none';
+          }
           if (Array.isArray(c.equipment)) {
             equipItems = c.equipment.filter(e => e && e.trim() && !['nil', 'nill', 'none'].includes(e.trim().toLowerCase()));
           } else if (typeof c.equipment === 'string' && c.equipment.trim()) {
@@ -1263,109 +1314,113 @@
 
       // 3. Setup Project Booking Inquiry Submission directly to Supabase inquiries table
       const inquiryForm = document.getElementById('form-creator-inquiry');
-      inquiryForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('inquiry-name').value;
-        const email = document.getElementById('inquiry-email').value;
-        const projectDetails = document.getElementById('inquiry-details').value;
+      if (inquiryForm) {
+        inquiryForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          
+          const name = document.getElementById('inquiry-name').value;
+          const email = document.getElementById('inquiry-email').value;
+          const projectDetails = document.getElementById('inquiry-details').value;
 
-        const submitBtn = inquiryForm.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting inquiry...';
+          const submitBtn = inquiryForm.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting inquiry...';
 
-        fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            client_name: name,
-            email: email,
-            project_type: 'Collective Talent Request',
-            message: `Target Member: ${document.getElementById('creator-fullname').textContent} (ID: ${currentCreatorId})\n\nBrief Details:\n${projectDetails}`,
-            status: 'new'
+          fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+              client_name: name,
+              email: email,
+              project_type: 'Collective Talent Request',
+              message: `Target Member: ${document.getElementById('creator-fullname').textContent} (ID: ${currentCreatorId})\n\nBrief Details:\n${projectDetails}`,
+              status: 'new'
+            })
           })
-        })
-          .then(res => {
-            if (res.ok || res.status === 201) {
-              inquiryForm.innerHTML = `
-                <div style="text-align:center; padding: 20px 0;">
-                  <span style="font-size:3rem; color:var(--fire); margin-bottom:15px; display:block;">✓</span>
-                  <h3 class="sidebar-title" style="font-size:1.2rem; margin-bottom:10px;">Inquiry Vetted</h3>
-                  <p style="font-size:0.85rem; color:var(--mist); line-height:1.5;">
-                    Thanks, your brief was routed to YAWMATIC admin. We will review availability and details and contact you shortly.
-                  </p>
-                </div>
-              `;
-            } else {
-              alert('Submission failed. Please try again.');
+            .then(res => {
+              if (res.ok || res.status === 201) {
+                inquiryForm.innerHTML = `
+                  <div style="text-align:center; padding: 20px 0;">
+                    <span style="font-size:3rem; color:var(--fire); margin-bottom:15px; display:block;">✓</span>
+                    <h3 class="sidebar-title" style="font-size:1.2rem; margin-bottom:10px;">Inquiry Vetted</h3>
+                    <p style="font-size:0.85rem; color:var(--mist); line-height:1.5;">
+                      Thanks, your brief was routed to YAWMATIC admin. We will review availability and details and contact you shortly.
+                    </p>
+                  </div>
+                `;
+              } else {
+                alert('Submission failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Project Inquiry';
+              }
+            })
+            .catch(err => {
+              alert('A network error occurred. Please try again.');
               submitBtn.disabled = false;
               submitBtn.textContent = 'Submit Project Inquiry';
-            }
-          })
-          .catch(err => {
-            alert('A network error occurred. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Project Inquiry';
-          });
-      });
+            });
+        });
+      }
 
       // 4. Setup Review Submission directly to Supabase reviews table (for moderation)
       const reviewForm = document.getElementById('form-submit-review');
-      reviewForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const clientName = document.getElementById('review-client-name').value;
-        const rating = parseInt(document.getElementById('review-rating').value, 10) || 5;
-        const text = document.getElementById('review-text').value;
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          
+          const clientName = document.getElementById('review-client-name').value;
+          const rating = parseInt(document.getElementById('review-rating').value, 10) || 5;
+          const text = document.getElementById('review-text').value;
 
-        const submitBtn = reviewForm.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting testimonial...';
+          const submitBtn = reviewForm.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting testimonial...';
 
-        fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            creator_id: currentCreatorId,
-            client_name: clientName,
-            rating,
-            review: text,
-            approved: false
+          fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+              creator_id: currentCreatorId,
+              client_name: clientName,
+              rating,
+              review: text,
+              approved: false
+            })
           })
-        })
-          .then(res => {
-            if (res.ok || res.status === 201) {
-              reviewForm.innerHTML = `
-                <div style="text-align:center; padding: 20px 0; background:rgba(255, 90, 31, 0.05); border:1px solid rgba(255, 90, 31, 0.15); border-radius:4px;">
-                  <span style="font-size:2rem; color:var(--fire); display:block; margin-bottom:10px;">✓</span>
-                  <h4 class="sidebar-title" style="font-size:1rem; margin-bottom:5px;">Review Logged</h4>
-                  <p style="font-size:0.8rem; color:var(--mist); line-height:1.5; padding:0 20px;">
-                    Review submitted for agency moderation. It will show up on this profile once approved.
-                  </p>
-                </div>
-              `;
-            } else {
-              alert('Submission failed. Please try again.');
+            .then(res => {
+              if (res.ok || res.status === 201) {
+                reviewForm.innerHTML = `
+                  <div style="text-align:center; padding: 20px 0; background:rgba(255, 90, 31, 0.05); border:1px solid rgba(255, 90, 31, 0.15); border-radius:4px;">
+                    <span style="font-size:2rem; color:var(--fire); display:block; margin-bottom:10px;">✓</span>
+                    <h4 class="sidebar-title" style="font-size:1rem; margin-bottom:5px;">Review Logged</h4>
+                    <p style="font-size:0.8rem; color:var(--mist); line-height:1.5; padding:0 20px;">
+                      Review submitted for agency moderation. It will show up on this profile once approved.
+                    </p>
+                  </div>
+                `;
+              } else {
+                alert('Submission failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Review for Moderation';
+              }
+            })
+            .catch(err => {
+              alert('A network error occurred. Please try again.');
               submitBtn.disabled = false;
               submitBtn.textContent = 'Submit Review for Moderation';
-            }
-          })
-          .catch(err => {
-            alert('A network error occurred. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Review for Moderation';
-          });
-      });
+            });
+        });
+      }
 
       // 5. Close Lightbox Modal
       document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
