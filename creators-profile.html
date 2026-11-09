@@ -1223,27 +1223,6 @@
           `;
         });
     }
-                `;
-                card.addEventListener('click', () => openLightbox(item));
-                gallery.appendChild(card);
-              });
-            }
-          }
-
-          // 5. Fetch reviews
-          loadReviews(c.id);
-        })
-        .catch(err => {
-          document.body.innerHTML = `
-            <div class="section-padding" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;">
-              <span class="overline">Profile Error</span>
-              <h1 class="heading-large">Creator Not Found</h1>
-              <p style="color:var(--mist);margin-bottom:30px;">The creator profile matching "${creatorSlug}" is either inactive or does not exist in our vetted network.</p>
-              <a href="/creators/browse" class="btn btn--primary">Browse Curated Directory</a>
-            </div>
-          `;
-        });
-    }
 
     function loadReviews(creatorId) {
       const reviewsSection = document.getElementById('section-reviews');
