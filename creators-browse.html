@@ -660,7 +660,7 @@
   </footer>
 
   <!-- Custom Shared JavaScript -->
-  <script src="js/main.js"></script>
+  <script src="/js/main.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Page-specific dynamic search logic -->
@@ -693,14 +693,30 @@
       } catch (err) {
         console.warn('Supabase Realtime unavailable:', err);
       }
-      // Parse initial query params (e.g. if loaded via /creators/browse?city=Kochi)
+      // Parse initial query params (e.g. if loaded via /creators/browse?city=Kozhikode)
       const urlParams = new URLSearchParams(window.location.search);
       const initialCity = urlParams.get('city') || '';
       const initialCategory = urlParams.get('category') || '';
 
       // Initialize Filter Inputs with URL Params
-      if (initialCity) {
-        document.getElementById('filter-city').value = initialCity;
+      const citySelect = document.getElementById('filter-city');
+      if (initialCity && citySelect) {
+        // If option does not exist yet in select, add it immediately so value is preserved
+        let optExists = false;
+        for (let i = 0; i < citySelect.options.length; i++) {
+          if (citySelect.options[i].value.toLowerCase() === initialCity.toLowerCase()) {
+            citySelect.selectedIndex = i;
+            optExists = true;
+            break;
+          }
+        }
+        if (!optExists) {
+          const opt = document.createElement('option');
+          opt.value = initialCity;
+          opt.textContent = initialCity;
+          opt.selected = true;
+          citySelect.appendChild(opt);
+        }
       }
 
       // 1. Fetch Categories for checkbox filter
@@ -765,7 +781,7 @@
             const opt = document.createElement('option');
             opt.value = loc.city;
             opt.textContent = `${loc.city}, ${loc.country}`;
-            if (initialCity === loc.city) {
+            if (initialCity && initialCity.toLowerCase() === loc.city.toLowerCase()) {
               opt.selected = true;
             }
             select.appendChild(opt);
@@ -848,7 +864,7 @@
       // Build Query URL for Supabase REST API
       const params = new URLSearchParams();
       params.set('status', 'eq.approved');
-      params.set('select', '*');
+      params.set('select', 'id,full_name,city,country,categories,years_experience,availability,verified,featured,rating,profile_image,bio,slug');
       params.set('limit', String(itemsPerPage));
       params.set('offset', String((currentPage - 1) * itemsPerPage));
 
@@ -857,9 +873,9 @@
         params.set('or', `(full_name.ilike.%${search}%,bio.ilike.%${search}%,city.ilike.%${search}%,equipment.cs.{${search}})`);
       }
 
-      // 2. City filter
+      // 2. City filter (case-insensitive via ilike)
       if (city) {
-        params.set('city', `eq.${city}`);
+        params.set('city', `ilike.${city.trim()}`);
       }
 
       // 3. Availability filter
@@ -957,16 +973,12 @@
               <div class="creator-card__details">
                 <div class="creator-card__meta">
                   <span style="text-transform: uppercase;">${primaryCat}</span>
-                  <span>${c.city}</span>
+                  <span>${c.city || ''}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}...</p>
+                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}${(c.bio && c.bio.length > 75) ? '...' : ''}</p>
                 <div class="creator-card__footer">
-                  <div class="creator-card__socials">
-                    ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
-                    ${c.portfolio_url || c.behance ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>` : ''}
-                  </div>
-                  <span class="creator-card__cta">View Profile →</span>
+                  <span class="creator-card__cta">View Collective Profile →</span>
                 </div>
               </div>
             `;

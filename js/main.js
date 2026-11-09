@@ -143,6 +143,10 @@ document.addEventListener('click', (e) => {
       anchor.target !== '_blank' && 
       !href.startsWith('http')) {
         
+    // Separate pathname and query/hash
+    const [pathOnly, queryString] = href.split('?');
+    const querySuffix = queryString ? `?${queryString}` : '';
+
     const routes = {
       '/': '/index.html',
       '/about': '/about.html',
@@ -158,23 +162,25 @@ document.addEventListener('click', (e) => {
 
     let targetUrl = null;
     
-    if (routes.hasOwnProperty(href)) {
-      targetUrl = routes[href];
-    } else if (href.startsWith('/creators/')) {
-      const slug = href.substring(10);
+    if (routes.hasOwnProperty(pathOnly)) {
+      targetUrl = routes[pathOnly] + querySuffix;
+    } else if (pathOnly.startsWith('/creators/')) {
+      const slug = pathOnly.substring(10);
       const categories = [
         'photography', 'videography', 'drone-operator', 'video-editor', 'motion-designer',
         'graphic-designer', 'brand-designer', 'ui-ux-designer', 'web-designer', '3d-artist',
         'content-creator', 'social-media-manager', 'copywriter', 'ai-creative-specialist'
       ];
       if (categories.includes(slug)) {
-        targetUrl = '/creators-category.html';
+        targetUrl = '/creators-category.html' + querySuffix;
+      } else if (slug === 'browse' || slug === 'apply') {
+        targetUrl = (slug === 'browse' ? '/creators-browse.html' : '/creators-apply.html') + querySuffix;
       } else {
-        targetUrl = '/creators-profile.html';
+        targetUrl = '/creators-profile.html' + querySuffix;
       }
-    } else if (href.startsWith('/admin')) {
-      targetUrl = '/admin.html';
-    } else if (href.includes('.html')) {
+    } else if (pathOnly.startsWith('/admin')) {
+      targetUrl = '/admin.html' + querySuffix;
+    } else if (pathOnly.includes('.html')) {
       targetUrl = href;
     }
 
