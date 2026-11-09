@@ -1050,6 +1050,20 @@
       const pathParts = window.location.pathname.split('/');
       creatorSlug = pathParts[pathParts.length - 1] || '';
 
+      // Safeguard: Reserved words must redirect to directory or home, never execute as profile query
+      if (creatorSlug === 'browse') {
+        window.location.replace('/creators-browse.html' + window.location.search);
+        return;
+      }
+      if (creatorSlug === 'apply') {
+        window.location.replace('/creators-apply.html');
+        return;
+      }
+      if (!creatorSlug || creatorSlug === 'creators') {
+        window.location.replace('/creators-browse.html');
+        return;
+      }
+
       const canonicalTag = document.getElementById('canonical-url');
       const ogUrlTag = document.getElementById('og-url');
       const twitterUrlTag = document.getElementById('twitter-url');
