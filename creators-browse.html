@@ -837,6 +837,9 @@
     const itemsPerPage = 6;
     let supabaseClient;
 
+    // Neutral, minimal, abstract YAWMATIC Collective placeholder avatar for members without genuine approved photos
+    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' width='100%' height='100%'><rect width='400' height='400' fill='%230f0f10'/><circle cx='200' cy='200' r='140' stroke='%23222225' stroke-width='1.5' fill='none'/><circle cx='200' cy='200' r='90' stroke='%2326262b' stroke-width='1.5' stroke-dasharray='4 6' fill='none'/><circle cx='263.6' cy='136.4' r='6' fill='%23FF5A1F'/><circle cx='200' cy='155' r='36' fill='%232a2a30'/><path d='M130 255 C130 215, 270 215, 270 255 Z' fill='%232a2a30'/></svg>";
+
     document.addEventListener('DOMContentLoaded', () => {
       // Initialize Supabase Realtime client
       try {
@@ -1175,19 +1178,36 @@
             
             const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
             
-            // Fallback default avatar
-            const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
+            // Genuine uploaded profile image only; neutral abstract avatar if absent or stock photo
+            const isStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
+            const avatarUrl = isStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
+
+            // Only display bio paragraph if member actually supplied genuine text
+            const hasBio = Boolean(c.bio && c.bio.trim() && c.bio.trim().toLowerCase() !== 'nil' && c.bio.trim().toLowerCase() !== 'nill');
+            const bioHtml = hasBio ? `<p class="creator-card__intro">${c.bio.trim().substring(0, 90)}${c.bio.trim().length > 90 ? '...' : ''}</p>` : '';
+
+            // Status badges: only render if supported by real status
+            const hasAvailability = Boolean(c.availability && c.availability.trim());
+            const availabilityLabel = c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : c.availability === 'booked' ? 'Booked' : '';
+            const availabilityHtml = hasAvailability && availabilityLabel ? `
+              <div class="availability-pill">
+                <span class="availability-dot ${c.availability}"></span>
+                ${availabilityLabel}
+              </div>
+            ` : '';
+
+            const vettedHtml = c.verified ? `<span class="verified-badge">Vetted</span>` : '';
+            const badgeRowHtml = (availabilityHtml || vettedHtml) ? `
+              <div class="creator-card__badge-row">
+                ${availabilityHtml}
+                ${vettedHtml}
+              </div>
+            ` : '';
 
             card.innerHTML = `
               <div class="creator-card__image-wrap">
-                <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image">
-                <div class="creator-card__badge-row">
-                  <div class="availability-pill">
-                    <span class="availability-dot ${c.availability || 'available'}"></span>
-                    ${c.availability === 'available' ? 'Available' : c.availability === 'limited' ? 'Limited' : 'Booked'}
-                  </div>
-                  ${c.verified ? `<span class="verified-badge">Vetted</span>` : ''}
-                </div>
+                <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image" ${isStockOrEmpty ? 'style="filter: none; object-fit: cover;"' : ''}>
+                ${badgeRowHtml}
               </div>
               <div class="creator-card__details">
                 <div class="creator-card__meta">
@@ -1195,7 +1215,7 @@
                   <span>${c.city || ''}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}${(c.bio && c.bio.length > 75) ? '...' : ''}</p>
+                ${bioHtml}
                 <div class="creator-card__footer">
                   <span class="creator-card__cta">View Collective Profile →</span>
                 </div>

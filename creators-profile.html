@@ -826,6 +826,10 @@
     const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
 
+    // Neutral, minimal, abstract YAWMATIC Collective placeholder visuals for members without genuine approved media
+    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' width='100%' height='100%'><rect width='400' height='400' fill='%230f0f10'/><circle cx='200' cy='200' r='140' stroke='%23222225' stroke-width='1.5' fill='none'/><circle cx='200' cy='200' r='90' stroke='%2326262b' stroke-width='1.5' stroke-dasharray='4 6' fill='none'/><circle cx='263.6' cy='136.4' r='6' fill='%23FF5A1F'/><circle cx='200' cy='155' r='36' fill='%232a2a30'/><path d='M130 255 C130 215, 270 215, 270 255 Z' fill='%232a2a30'/></svg>";
+    const DEFAULT_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400' width='100%' height='100%'><rect width='1200' height='400' fill='%2309090a'/><circle cx='600' cy='200' r='300' stroke='%2319191d' stroke-width='1' fill='none'/><circle cx='600' cy='200' r='180' stroke='%231f1f24' stroke-width='1' stroke-dasharray='6 8' fill='none'/><circle cx='727' cy='73' r='5' fill='%23FF5A1F' opacity='0.7'/></svg>";
+
     let supabaseClient;
     let currentCreatorId = null;
     let creatorSlug = '';
@@ -854,9 +858,16 @@
           document.title = `${c.full_name} — Vetted Collective Member`;
           document.getElementById('creator-fullname').textContent = c.full_name;
           
-          const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
-          const coverUrl = c.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&h=400&fit=crop';
-          document.getElementById('creator-avatar').src = avatarUrl;
+          const isAvatarStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
+          const avatarUrl = isAvatarStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
+
+          const isCoverStockOrEmpty = !c.cover_image || c.cover_image.includes('unsplash.com') || c.cover_image.includes('placeholder');
+          const coverUrl = isCoverStockOrEmpty ? DEFAULT_COVER : c.cover_image;
+
+          const avatarEl = document.getElementById('creator-avatar');
+          avatarEl.src = avatarUrl;
+          if (isAvatarStockOrEmpty) avatarEl.style.filter = 'none';
+
           document.getElementById('creator-cover-image').src = coverUrl;
           document.getElementById('creator-location-badge').textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}`;
 
@@ -874,14 +885,20 @@
           const socialRow = document.getElementById('creator-social-row');
           if (socialRow) socialRow.innerHTML = '';
 
-          // Render Bio Paragraphs
+          // Render Bio Paragraphs only if genuine member-submitted text exists
           const bioContainer = document.getElementById('creator-bio');
           bioContainer.innerHTML = '';
-          (c.bio || '').split('\n\n').forEach(para => {
-            const p = document.createElement('p');
-            p.textContent = para;
-            bioContainer.appendChild(p);
-          });
+          const hasBio = Boolean(c.bio && c.bio.trim() && c.bio.trim().toLowerCase() !== 'nil' && c.bio.trim().toLowerCase() !== 'nill');
+          if (hasBio) {
+            bioContainer.style.display = 'block';
+            c.bio.trim().split('\n\n').forEach(para => {
+              const p = document.createElement('p');
+              p.textContent = para;
+              bioContainer.appendChild(p);
+            });
+          } else {
+            bioContainer.style.display = 'none';
+          }
 
           // Render Meta Specification Card
           document.getElementById('meta-experience').textContent = `${c.years_experience || 0} Vetted Years`;
@@ -955,17 +972,6 @@
               <a href="/creators/browse" class="btn btn--primary">Browse Curated Directory</a>
             </div>
           `;
-        })
-        .catch(err => {
-          console.warn('Profile load offline or not found:', err);
-          const nameEl = document.getElementById('creator-fullname');
-          if (nameEl && nameEl.textContent === '') {
-            nameEl.textContent = 'Creative Professional';
-          }
-          const bioEl = document.getElementById('creator-bio');
-          if (bioEl && bioEl.children.length === 0) {
-            bioEl.innerHTML = '<p style="color: var(--mist);">Profile data is currently synchronizing with our verified talent registry. Please check back shortly or reach out to YAWMATIC for talent inquiries.</p>';
-          }
         });
     }
 
