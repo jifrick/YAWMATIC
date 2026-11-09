@@ -84,167 +84,277 @@
       visibility: hidden !important;
     }
 
-    /* Cover Image Banner */
+    /* Cover Banner — Minimal & Balanced */
     .profile-cover {
       width: 100%;
-      height: 420px;
+      height: 220px;
       overflow: hidden;
       position: relative;
-      background-color: #0A0A0A;
+      background: radial-gradient(circle at 50% 30%, rgba(255, 90, 31, 0.08) 0%, #0a0a0b 70%);
+      border-bottom: 1px solid var(--glass-border);
       margin-top: 80px;
+    }
+    @media(max-width: 768px) {
+      .profile-cover {
+        height: 160px;
+        margin-top: 70px;
+      }
     }
     .profile-cover__img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.65;
+      opacity: 0.35;
+      filter: saturate(0.8);
     }
     .profile-cover__glow {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 200px;
-      background: linear-gradient(to top, var(--ink), transparent);
+      height: 100%;
+      background: linear-gradient(to top, #09090a 10%, rgba(9, 9, 10, 0.4) 60%, transparent 100%);
+      pointer-events: none;
     }
 
-    /* Profile Container */
-    .profile-layout {
-      display: flex;
-      gap: 50px;
+    /* Profile Layout System */
+    .profile-section {
+      padding-top: 0 !important;
+      padding-bottom: 100px;
       position: relative;
-      margin-top: -120px; /* Overlap cover image */
+    }
+    .profile-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 40px;
+      align-items: start;
+      margin-top: -70px;
+      position: relative;
       z-index: 5;
     }
     @media(max-width: 1024px) {
-      .profile-layout { flex-direction: column; margin-top: -60px; }
+      .profile-layout {
+        grid-template-columns: 1fr;
+        margin-top: -50px;
+        gap: 40px;
+      }
     }
 
-    /* Profile Info & Content */
+    /* Profile Main Column */
     .profile-main {
-      flex-grow: 1;
       display: flex;
       flex-direction: column;
-      gap: 50px;
+      gap: 36px;
+      min-width: 0;
     }
+
+    /* Profile Header */
     .profile-header {
       display: flex;
-      gap: 30px;
+      gap: 28px;
       align-items: flex-end;
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     }
-    @media(max-width: 600px) {
-      .profile-header { flex-direction: column; align-items: center; text-align: center; }
+    @media(max-width: 680px) {
+      .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 24px 20px;
+        gap: 20px;
+      }
     }
     .profile-header__avatar-wrap {
-      width: 160px;
-      height: 160px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       overflow: hidden;
-      border: 4px solid var(--ink);
-      background-color: var(--ink);
+      border: 3px solid rgba(255, 90, 31, 0.3);
+      background: #111113;
       flex-shrink: 0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @media(max-width: 680px) {
+      .profile-header__avatar-wrap {
+        width: 110px;
+        height: 110px;
+      }
     }
     .profile-header__avatar {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
     .profile-header__title-info {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-width: 0;
+      flex-grow: 1;
     }
     .profile-header__name-row {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
-    @media(max-width: 600px) {
-      .profile-header__name-row { justify-content: center; }
+    @media(max-width: 680px) {
+      .profile-header__name-row {
+        justify-content: center;
+      }
     }
     .profile-header__name {
       font-family: var(--font-display);
-      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
       font-weight: 800;
       text-transform: uppercase;
-      line-height: 1.1;
+      line-height: 1.15;
       color: var(--volt);
+      letter-spacing: -0.5px;
+      margin: 0;
+      word-break: break-word;
     }
     .profile-header__meta {
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       color: var(--mist);
       display: flex;
-      gap: 15px;
+      align-items: center;
+      gap: 10px;
       font-family: var(--font-display);
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
+      flex-wrap: wrap;
     }
-    @media(max-width: 600px) {
-      .profile-header__meta { justify-content: center; }
+    @media(max-width: 680px) {
+      .profile-header__meta {
+        justify-content: center;
+      }
     }
 
-    /* Social icons row */
-    .social-row {
+    /* Skills Pill Cloud */
+    .skills-cloud {
       display: flex;
-      gap: 20px;
-      align-items: center;
-      margin-top: 10px;
-    }
-    @media(max-width: 600px) {
-      .social-row { justify-content: center; }
-    }
-    .social-link {
-      display: flex;
-      align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
-      font-size: 0.85rem;
-      color: var(--mist);
+      margin-top: 6px;
+    }
+    @media(max-width: 680px) {
+      .skills-cloud {
+        justify-content: center;
+      }
+    }
+    .skill-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--volt);
       font-family: var(--font-display);
+      font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      padding: 5px 12px;
+      border-radius: 4px;
       transition: var(--transition-fast);
     }
-    .social-link:hover {
-      color: var(--fire);
+    .skill-pill:hover {
+      border-color: rgba(255, 90, 31, 0.4);
+      background: rgba(255, 90, 31, 0.08);
     }
-    .social-link svg {
-      width: 18px;
-      height: 18px;
+
+    /* Content Card Units */
+    .content-card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 32px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    @media(max-width: 680px) {
+      .content-card {
+        padding: 24px 20px;
+      }
+    }
+    .content-card__heading {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--volt);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+    }
+    .content-card__heading::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--fire);
+      border-radius: 2px;
     }
 
     /* Bio Section */
     .profile-bio {
-      font-size: 1.05rem;
-      line-height: 1.7;
+      font-size: 1rem;
+      line-height: 1.75;
       color: var(--mist);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-width: 720px;
+      margin: 0;
+    }
+    .profile-bio p {
+      margin: 0 0 12px 0;
+    }
+    .profile-bio p:last-child {
+      margin-bottom: 0;
     }
 
-    /* Meta Grid Table */
-    .meta-card {
-      background: var(--card-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      padding: 30px;
-    }
-    .meta-grid {
+    /* Capabilities Meta Grid */
+    .capabilities-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
+      gap: 20px;
     }
     @media(max-width: 600px) {
-      .meta-grid { grid-template-columns: 1fr; }
+      .capabilities-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
     }
-    .meta-item {
+    .capability-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
       gap: 6px;
+    }
+    .capability-item__label {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--fire);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .capability-item__value {
+      font-size: 0.95rem;
+      color: var(--volt);
+      line-height: 1.45;
+      font-weight: 500;
+      word-break: break-word;
     }
     .meta-item__label {
       font-family: var(--font-display);
@@ -351,32 +461,75 @@
       background: var(--fire);
     }
 
-    /* Sticky Sidebar Form */
+    /* Sticky Booking Panel Sidebar */
     .profile-sidebar {
-      width: 380px;
-      flex-shrink: 0;
+      width: 100%;
       position: sticky;
-      top: 120px;
+      top: 100px;
       height: fit-content;
       background: var(--card-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      padding: 40px 30px;
+      border-radius: 8px;
+      padding: 32px 26px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      gap: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     }
     @media(max-width: 1024px) {
-      .profile-sidebar { width: 100%; position: static; }
+      .profile-sidebar {
+        width: 100%;
+        position: static;
+        padding: 28px 20px;
+      }
+    }
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 16px;
     }
     .sidebar-title {
       font-family: var(--font-display);
-      font-size: 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--volt);
+      letter-spacing: 0.8px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--fire);
+      border-radius: 2px;
+    }
+    .sidebar-desc {
+      font-size: 0.82rem;
+      color: var(--mist);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .sidebar-security-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       color: var(--volt);
-      letter-spacing: 0.5px;
+      background: rgba(255, 90, 31, 0.08);
+      border: 1px solid rgba(255, 90, 31, 0.25);
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-top: 4px;
     }
     .form-group {
       display: flex;
@@ -620,120 +773,90 @@
   </div>
 
   <!-- PROFILE CONTENT LAYOUT -->
-  <section class="section-padding" style="padding-top: 0; padding-bottom: 120px;">
+  <section class="section-padding profile-section">
     <div class="profile-layout">
       
-      <!-- Main Content Block -->
+      <!-- Main Content Column -->
       <div class="profile-main">
         
-        <!-- Header Info -->
-        <div class="profile-header reveal-item">
+        <!-- Profile Header Unit -->
+        <header class="profile-header">
           <div class="profile-header__avatar-wrap">
             <img id="creator-avatar" src="" alt="Avatar" class="profile-header__avatar">
           </div>
           <div class="profile-header__title-info">
             <div class="profile-header__name-row">
-              <h1 id="creator-fullname" class="profile-header__name">CREATOR NAME</h1>
+              <h1 id="creator-fullname" class="profile-header__name">CREATOR</h1>
               <span id="creator-vetted-badge" class="verified-badge" style="display: none;">Vetted</span>
             </div>
             <div class="profile-header__meta">
-              <span id="creator-category-badge">CREATIVE SPHERE</span>
+              <span id="creator-category-badge">COLLECTIVE TALENT</span>
               <span>·</span>
               <span id="creator-location-badge">LOCATION</span>
             </div>
-            
-            <!-- Social Rows -->
-            <div id="creator-social-row" class="social-row">
-              <!-- Loaded dynamically -->
+            <!-- Skills Cloud -->
+            <div id="creator-skills-cloud" class="skills-cloud"></div>
+          </div>
+        </header>
+
+        <!-- About Member Section -->
+        <section id="section-bio" class="content-card" style="display: none;">
+          <h2 class="content-card__heading">About</h2>
+          <div id="creator-bio" class="profile-bio"></div>
+        </section>
+
+        <!-- Professional Capabilities Section -->
+        <section id="section-capabilities" class="content-card">
+          <h2 class="content-card__heading">Professional Capabilities</h2>
+          <div class="capabilities-grid">
+            <div id="cap-experience-wrap" class="capability-item">
+              <span class="capability-item__label">Experience</span>
+              <span id="meta-experience" class="capability-item__value">1+ Years</span>
+            </div>
+            <div id="cap-availability-wrap" class="capability-item">
+              <span class="capability-item__label">Availability</span>
+              <span id="meta-availability" class="capability-item__value">Available for Projects</span>
+            </div>
+            <div id="cap-equipment-wrap" class="capability-item" style="grid-column: span 2;">
+              <span class="capability-item__label">Equipment & Creative Tools</span>
+              <span id="meta-equipment" class="capability-item__value">Studio Rig</span>
+            </div>
+            <div id="cap-languages-wrap" class="capability-item" style="grid-column: span 2;">
+              <span class="capability-item__label">Languages</span>
+              <span id="meta-languages" class="capability-item__value">English</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Bio Paragraphs -->
-        <div id="creator-bio" class="profile-bio reveal-item">
-          <!-- Loaded dynamically -->
-        </div>
+        <!-- Project Showcase Section (Only shown if approved projects exist) -->
+        <section id="section-portfolio" class="content-card" style="display: none;">
+          <h2 class="content-card__heading">Portfolio Showcase</h2>
+          <div id="portfolio-gallery-container" class="portfolio-gallery"></div>
+        </section>
 
-        <!-- Meta Specification Card -->
-        <div class="meta-card reveal-item">
-          <div class="meta-grid">
-            <div class="meta-item">
-              <span class="meta-item__label">Years of Experience</span>
-              <span id="meta-experience" class="meta-item__value">0 Years</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">Availability Status</span>
-              <span id="meta-availability" class="meta-item__value">Available</span>
-            </div>
-            <div class="meta-item" style="grid-column: span 2;">
-              <span class="meta-item__label">Core Equipment Rig</span>
-              <span id="meta-equipment" class="meta-item__value">Standard Gear</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">Languages</span>
-              <span id="meta-languages" class="meta-item__value">English</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">Collective Rating</span>
-              <span id="meta-rating" class="meta-item__value">5.0 Vetted Rating</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Portfolio Showcase -->
-        <div class="reveal-item">
-          <span class="overline">Creative Proof</span>
-          <h2 class="heading-large" style="font-size: 2.2rem; margin-bottom: 30px;">Portfolio Showcase</h2>
-          <div id="portfolio-gallery-container" class="portfolio-gallery">
-            <!-- Dynamic portfolio cards -->
-          </div>
-        </div>
-
-        <!-- Reviews & Testimonials -->
-        <div class="reveal-item">
-          <span class="overline font-display">Client Testimonials</span>
-          <h2 class="heading-large" style="font-size: 2.2rem; margin-bottom: 20px;">Vetted Reviews</h2>
-          <div id="reviews-list-container" class="reviews-list">
-            <!-- Reviews will load here -->
-          </div>
-
-          <!-- Review submit form -->
-          <div class="review-submit-card">
-            <h3 class="sidebar-title" style="font-size: 1.25rem; margin-bottom: 20px;">Leave a Verified Review</h3>
-            <form id="form-submit-review">
-              <div class="form-group">
-                <label class="form-label" for="review-client-name">Your Company / Client Name</label>
-                <input type="text" id="review-client-name" class="form-control" placeholder="e.g. Aman Luxury Resorts" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="review-rating">Rating (1 to 5 Stars)</label>
-                <select id="review-rating" class="form-control" required>
-                  <option value="5">5 Stars (Flagship Quality)</option>
-                  <option value="4">4 Stars (Excellent Vibe)</option>
-                  <option value="3">3 Stars (Satisfactory)</option>
-                  <option value="2">2 Stars (Average)</option>
-                  <option value="1">1 Star (Disrupted Brief)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="review-text">Review Testimonial</label>
-                <textarea id="review-text" class="form-control" placeholder="Describe the creator's craft execution, communication, and visual output..." required></textarea>
-              </div>
-              <button type="submit" class="btn btn--primary" style="margin-top: 10px; width: 100%; justify-content: center;">
-                Submit Review for Moderation
-              </button>
-            </form>
-          </div>
-        </div>
+        <!-- Reviews & Testimonials Section (Only shown if approved reviews exist) -->
+        <section id="section-reviews" class="content-card" style="display: none;">
+          <h2 class="content-card__heading">Verified Reviews</h2>
+          <div id="reviews-list-container" class="reviews-list"></div>
+        </section>
 
       </div>
 
-      <!-- Sticky Sidebar Inquiry Form -->
-      <aside class="profile-sidebar reveal-item">
-        <h2 class="sidebar-title">Book Creator</h2>
-        <p style="font-size: 0.85rem; color: var(--mist); line-height: 1.5; margin-bottom: 10px;">
-          YAWMATIC manages all projects internally. Your inquiry routes to YAWMATIC admin to initiate contract scope.
-        </p>
+      <!-- Sticky Booking Panel Sidebar -->
+      <aside class="profile-sidebar">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Book Creator</h2>
+          <p class="sidebar-desc">
+            Connect through YAWMATIC administrators. We assemble creative teams, verify contract scopes, and guarantee production delivery.
+          </p>
+          <span class="sidebar-security-badge">
+            <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Admin-Managed Talent
+          </span>
+        </div>
+
         <form id="form-creator-inquiry">
           <div class="form-group">
             <label class="form-label" for="inquiry-name">Your Full Name</label>
@@ -745,10 +868,10 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="inquiry-details">Project Scope Details</label>
-            <textarea id="inquiry-details" class="form-control" placeholder="Describe the creative brief, timeline expectations, and estimated budget..." required></textarea>
+            <textarea id="inquiry-details" class="form-control" placeholder="Describe your project brief, timeline expectations, and estimated budget..." required></textarea>
           </div>
-          <button type="submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 10px;">
-            Submit Project Inquiry
+          <button type="submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 6px;">
+            Submit Project Inquiry →
           </button>
         </form>
       </aside>
@@ -835,7 +958,7 @@
     let creatorSlug = '';
 
     function loadProfile() {
-      const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,profile_image,cover_image,bio,portfolio_links,uploaded_files,slug';
+      const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,profile_image,cover_image,bio,equipment,languages,portfolio_links,uploaded_files,slug';
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&slug=eq.${creatorSlug}&status=eq.approved`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -854,10 +977,11 @@
           
           currentCreatorId = c.id;
 
-          // Set Title & Basic Details
-          document.title = `${c.full_name} — Vetted Collective Member`;
+          // 1. Basic Details & Page Title
+          document.title = `${c.full_name} — YAWMATIC Collective`;
           document.getElementById('creator-fullname').textContent = c.full_name;
           
+          // Fallback image handling
           const isAvatarStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
           const avatarUrl = isAvatarStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
 
@@ -871,8 +995,9 @@
           document.getElementById('creator-cover-image').src = coverUrl;
           document.getElementById('creator-location-badge').textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}`;
 
-          // Format category list
-          const formattedCats = (c.categories || []).map(cat => cat.replace('-', ' ')).join(' & ');
+          // Format category list & badges
+          const categories = Array.isArray(c.categories) ? c.categories : [];
+          const formattedCats = categories.map(cat => cat.replace(/-/g, ' ')).join(' · ');
           document.getElementById('creator-category-badge').textContent = formattedCats ? formattedCats.toUpperCase() : 'COLLECTIVE TALENT';
 
           if (c.verified) {
@@ -881,45 +1006,102 @@
             document.getElementById('creator-vetted-badge').style.display = 'none';
           }
 
-          // Admin-controlled communication: No personal social or direct contact icons are exposed publicly
-          const socialRow = document.getElementById('creator-social-row');
-          if (socialRow) socialRow.innerHTML = '';
-
-          // Render Bio Paragraphs only if genuine member-submitted text exists
-          const bioContainer = document.getElementById('creator-bio');
-          bioContainer.innerHTML = '';
-          const hasBio = Boolean(c.bio && c.bio.trim() && c.bio.trim().toLowerCase() !== 'nil' && c.bio.trim().toLowerCase() !== 'nill');
-          if (hasBio) {
-            bioContainer.style.display = 'block';
-            c.bio.trim().split('\n\n').forEach(para => {
-              const p = document.createElement('p');
-              p.textContent = para;
-              bioContainer.appendChild(p);
+          // Populate Skills Cloud
+          const skillsCloud = document.getElementById('creator-skills-cloud');
+          if (skillsCloud) {
+            skillsCloud.innerHTML = '';
+            categories.forEach(cat => {
+              const pill = document.createElement('span');
+              pill.className = 'skill-pill';
+              pill.textContent = cat.replace(/-/g, ' ');
+              skillsCloud.appendChild(pill);
             });
-          } else {
-            bioContainer.style.display = 'none';
           }
 
-          // Render Meta Specification Card
-          document.getElementById('meta-experience').textContent = `${c.years_experience || 0} Vetted Years`;
-          document.getElementById('meta-availability').textContent = c.availability === 'available' ? 'Available For Projects' : c.availability === 'limited' ? 'Limited Availability' : 'Booked Until Next Cycle';
-          
-          const ratingEl = document.getElementById('meta-rating');
-          if (ratingEl) ratingEl.textContent = 'Verified Collective Talent';
-          
-          // Equipment and Languages: general capabilities only
+          // 2. Render About Section only if genuine member-submitted text exists
+          const bioSection = document.getElementById('section-bio');
+          const bioContainer = document.getElementById('creator-bio');
+          const trimmedBio = (c.bio || '').trim();
+          const hasBio = Boolean(trimmedBio && !['nil', 'nill', 'none', 'null'].includes(trimmedBio.toLowerCase()));
+          if (bioSection && bioContainer) {
+            if (hasBio) {
+              bioSection.style.display = 'flex';
+              bioContainer.innerHTML = '';
+              trimmedBio.split('\n\n').forEach(para => {
+                if (para.trim()) {
+                  const p = document.createElement('p');
+                  p.textContent = para.trim();
+                  bioContainer.appendChild(p);
+                }
+              });
+            } else {
+              bioSection.style.display = 'none';
+            }
+          }
+
+          // 3. Render Professional Capabilities
+          const expYears = parseInt(c.years_experience, 10);
+          const expEl = document.getElementById('meta-experience');
+          if (expEl) {
+            expEl.textContent = expYears > 0 ? `${expYears} Year${expYears > 1 ? 's' : ''}` : 'Emerging Specialist';
+          }
+
+          const availMap = {
+            'available': 'Available for Projects',
+            'limited': 'Limited Availability',
+            'booked': 'Fully Booked'
+          };
+          const availEl = document.getElementById('meta-availability');
+          if (availEl) {
+            availEl.textContent = availMap[c.availability] || 'Available for Projects';
+          }
+
+          // Equipment
+          const equipWrap = document.getElementById('cap-equipment-wrap');
           const equipEl = document.getElementById('meta-equipment');
-          if (equipEl) equipEl.textContent = 'Professional Creative Rig';
+          let equipItems = [];
+          if (Array.isArray(c.equipment)) {
+            equipItems = c.equipment.filter(e => e && e.trim() && !['nil', 'nill', 'none'].includes(e.trim().toLowerCase()));
+          } else if (typeof c.equipment === 'string' && c.equipment.trim()) {
+            const trimmed = c.equipment.trim();
+            if (!['nil', 'nill', 'none'].includes(trimmed.toLowerCase())) {
+              equipItems = [trimmed];
+            }
+          }
 
-          const langList = c.languages && c.languages.length > 0 ? c.languages.join(', ') : 'English';
+          if (equipWrap && equipEl) {
+            if (equipItems.length > 0) {
+              equipWrap.style.display = 'flex';
+              equipEl.textContent = equipItems.join(', ');
+            } else {
+              equipWrap.style.display = 'none';
+            }
+          }
+
+          // Languages
+          const langWrap = document.getElementById('cap-languages-wrap');
           const langEl = document.getElementById('meta-languages');
-          if (langEl) langEl.textContent = langList;
+          let langItems = [];
+          if (Array.isArray(c.languages)) {
+            langItems = c.languages.filter(l => l && l.trim());
+          } else if (typeof c.languages === 'string' && c.languages.trim()) {
+            langItems = [c.languages.trim()];
+          }
 
-          // Render Portfolio Gallery (Only approved showcase items submitted and verified by Admin)
+          if (langWrap && langEl) {
+            if (langItems.length > 0) {
+              langWrap.style.display = 'flex';
+              langEl.textContent = langItems.join(', ');
+            } else {
+              langWrap.style.display = 'none';
+            }
+          }
+
+          // 4. Render Portfolio Gallery (Only approved showcase items submitted and verified by Admin)
+          const portSection = document.getElementById('section-portfolio');
           const gallery = document.getElementById('portfolio-gallery-container');
-          gallery.innerHTML = '';
+          if (gallery) gallery.innerHTML = '';
 
-          // Load verified showcase items from portfolio_links or uploaded_files if approved by admin
           let approvedShowcase = [];
           if (Array.isArray(c.portfolio_links)) {
             approvedShowcase = c.portfolio_links.filter(item => item && item.approved);
@@ -930,37 +1112,35 @@
             } catch (e) {}
           }
 
-          if (approvedShowcase.length === 0) {
-            gallery.innerHTML = `
-              <div style="grid-column: 1 / -1; padding: 40px 20px; border: 1px dashed var(--glass-border); border-radius: 6px; text-align: center; color: var(--mist);">
-                <div style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-main); margin-bottom: 6px;">Curated Portfolio In Progress</div>
-                Verified project case studies and showcase deliverables are curated and moderated directly by YAWMATIC administrators.
-              </div>
-            `;
-          } else {
-            approvedShowcase.forEach(item => {
-              const card = document.createElement('div');
-              card.className = `portfolio-item ${item.wide ? 'portfolio-item--wide' : ''}`;
-              const aspectClass = item.wide ? '' : 'portfolio-item__aspect--square';
-              card.innerHTML = `
-                <div class="portfolio-item__aspect ${aspectClass}">
-                  <img src="${item.url}" alt="${item.title || 'Showcase Project'}" class="portfolio-item__media">
-                  ${item.type === 'video' ? `
-                    <div class="portfolio-item__play-icon">
-                      <svg style="width:24px;height:24px;" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          if (portSection && gallery) {
+            if (approvedShowcase.length === 0) {
+              portSection.style.display = 'none';
+            } else {
+              portSection.style.display = 'flex';
+              approvedShowcase.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `portfolio-item ${item.wide ? 'portfolio-item--wide' : ''}`;
+                const aspectClass = item.wide ? '' : 'portfolio-item__aspect--square';
+                card.innerHTML = `
+                  <div class="portfolio-item__aspect ${aspectClass}">
+                    <img src="${item.url}" alt="${item.title || 'Showcase Project'}" class="portfolio-item__media">
+                    ${item.type === 'video' ? `
+                      <div class="portfolio-item__play-icon">
+                        <svg style="width:24px;height:24px;" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                      </div>
+                    ` : ''}
+                    <div class="portfolio-item__overlay">
+                      <h4 class="portfolio-item__title">${item.title || 'Project Showcase'}</h4>
                     </div>
-                  ` : ''}
-                  <div class="portfolio-item__overlay">
-                    <h4 class="portfolio-item__title">${item.title || 'Project Showcase'}</h4>
                   </div>
-                </div>
-              `;
-              card.addEventListener('click', () => openLightbox(item));
-              gallery.appendChild(card);
-            });
+                `;
+                card.addEventListener('click', () => openLightbox(item));
+                gallery.appendChild(card);
+              });
+            }
           }
 
-          // Fetch reviews
+          // 5. Fetch reviews
           loadReviews(c.id);
         })
         .catch(err => {
@@ -976,6 +1156,7 @@
     }
 
     function loadReviews(creatorId) {
+      const reviewsSection = document.getElementById('section-reviews');
       fetch(`${SUPABASE_URL}/rest/v1/reviews?creator_id=eq.${creatorId}&approved=eq.true`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
@@ -985,14 +1166,16 @@
         .then(res => res.json())
         .then(reviews => {
           const reviewsContainer = document.getElementById('reviews-list-container');
+          if (!reviewsContainer) return;
           reviewsContainer.innerHTML = '';
 
           if (!reviews || reviews.length === 0) {
-            reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">No client testimonials registered yet. Clients are audited directly by YAWMATIC.</div>';
+            if (reviewsSection) reviewsSection.style.display = 'none';
           } else {
+            if (reviewsSection) reviewsSection.style.display = 'flex';
             reviews.forEach(r => {
               const revCard = document.createElement('div');
-              revCard.className = 'review-card reveal-item';
+              revCard.className = 'review-card';
               revCard.innerHTML = `
                 <div class="review-card__header">
                   <span class="review-card__client">${r.client_name}</span>
@@ -1010,11 +1193,8 @@
           }
         })
         .catch(err => {
-          console.warn('Reviews endpoint offline:', err);
-          const reviewsContainer = document.getElementById('reviews-list-container');
-          if (reviewsContainer) {
-            reviewsContainer.innerHTML = '<div style="font-size:0.95rem; color:var(--mist); font-style:italic;">Client review registry currently updating.</div>';
-          }
+          console.warn('Reviews endpoint offline or empty:', err);
+          if (reviewsSection) reviewsSection.style.display = 'none';
         });
     }
 
