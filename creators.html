@@ -1245,9 +1245,10 @@
       ScrollTrigger.refresh();
     }
 
-    // 1. Fetch Featured Creators from Supabase where status = approved
+    // 1. Fetch Approved Creators from Supabase (order by featured first, then newest)
     function loadFeaturedCreators() {
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?featured=eq.true&status=eq.approved&limit=8`, {
+      const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,featured,profile_image,bio,slug';
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&status=eq.approved&order=featured.desc,submitted_at.desc&limit=8`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -1261,7 +1262,10 @@
           grid.innerHTML = ''; // clear loading state
           
           if (!creators || creators.length === 0) {
-            if (badge) badge.style.display = 'block';
+            if (badge) {
+              badge.textContent = 'NO APPROVED CREATORS YET';
+              badge.style.display = 'block';
+            }
             if (headerHeading) headerHeading.style.marginBottom = '0';
             return;
           }
@@ -1274,7 +1278,7 @@
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative Specialization';
             const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
 
             card.innerHTML = `
@@ -1291,16 +1295,12 @@
               <div class="creator-card__details">
                 <div class="creator-card__meta">
                   <span style="text-transform: uppercase;">${primaryCat}</span>
-                  <span>${c.city}</span>
+                  <span>${c.city || ''}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
-                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}...</p>
+                <p class="creator-card__intro">${(c.bio || '').substring(0, 75)}${(c.bio && c.bio.length > 75) ? '...' : ''}</p>
                 <div class="creator-card__footer">
-                  <div class="creator-card__socials">
-                    ${c.instagram ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>` : ''}
-                    ${c.portfolio_url || c.behance ? `<span class="creator-card__social-link"><svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>` : ''}
-                  </div>
-                  <span class="creator-card__cta">View Profile →</span>
+                  <span class="creator-card__cta">View Collective Profile →</span>
                 </div>
               </div>
             `;

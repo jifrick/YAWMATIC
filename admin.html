@@ -824,8 +824,9 @@
       <ul class="sidebar-menu">
         <li><button class="sidebar-btn active" data-view="dashboard"><i data-lucide="layout-dashboard" style="width:16px;"></i>Dashboard</button></li>
         <li><button class="sidebar-btn" data-view="applications"><i data-lucide="user-check" style="width:16px;"></i>Applications</button></li>
-        <li><button class="sidebar-btn" data-view="creators"><i data-lucide="users" style="width:16px;"></i>Creators</button></li>
-        <li><button class="sidebar-btn" data-view="leads"><i data-lucide="file-text" style="width:16px;"></i>Client Leads</button></li>
+        <li><button class="sidebar-btn" data-view="creators"><i data-lucide="users" style="width:16px;"></i>Approved Members</button></li>
+        <li><button class="sidebar-btn" data-view="showcases"><i data-lucide="image" style="width:16px;"></i>Portfolio Moderation</button></li>
+        <li><button class="sidebar-btn" data-view="leads"><i data-lucide="file-text" style="width:16px;"></i>Client Enquiries</button></li>
         <li><button class="sidebar-btn" data-view="projects"><i data-lucide="folder-kanban" style="width:16px;"></i>Projects</button></li>
         <li><button class="sidebar-btn" data-view="messages"><i data-lucide="mail" style="width:16px;"></i>Messages</button></li>
         <li><button class="sidebar-btn" data-view="reviews"><i data-lucide="star" style="width:16px;"></i>Reviews</button></li>
@@ -965,21 +966,48 @@
         <!-- ============================================== -->
         <div class="cc-view" id="view-creators">
           <div class="cc-card">
-            <span class="cc-card-title">Vetted Network</span>
+            <span class="cc-card-title">Approved Collective Members</span>
             <div class="table-responsive">
               <table class="cc-table">
                 <thead>
                   <tr>
-                    <th>Creator</th>
+                    <th>Member Details</th>
                     <th>Sphere</th>
                     <th>Location</th>
                     <th>Availability</th>
-                    <th>Rating</th>
+                    <th>Status</th>
                     <th>Badges</th>
                     <th style="text-align: right;">Action</th>
                   </tr>
                 </thead>
                 <tbody id="creators-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: PORTFOLIO SHOWCASE MODERATION -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-showcases">
+          <div class="cc-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+              <span class="cc-card-title" style="margin-bottom:0;">Showcase Project Moderation</span>
+              <button onclick="openAddShowcaseModal()" class="btn-main" style="padding:6px 14px; font-size:0.8rem;">+ Add Project Item</button>
+            </div>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Project Deliverable</th>
+                    <th>Preview / URL</th>
+                    <th>Layout</th>
+                    <th>Moderation State</th>
+                    <th style="text-align: right;">Admin Action</th>
+                  </tr>
+                </thead>
+                <tbody id="showcases-table-body"></tbody>
               </table>
             </div>
           </div>
@@ -1238,8 +1266,58 @@
           <textarea id="edit-c-notes" class="form-control" style="height:80px; resize:none;"></textarea>
         </div>
         <div style="display:flex; justify-content:space-between; margin-top:20px;">
-          <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
+            <button type="button" onclick="revokeCreatorApproval()" class="btn-main btn-ghost" style="color:#ff9800; border-color:rgba(255,152,0,0.2);">Revoke Approval</button>
+          </div>
           <button type="submit" class="btn-main">Save Updates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD SHOWCASE PROJECT -->
+  <!-- ======================================================== -->
+  <div id="modal-add-showcase" class="cc-modal">
+    <div class="cc-modal-card">
+      <button class="close-modal-btn" onclick="closeModal('modal-add-showcase')"><i data-lucide="x"></i></button>
+      <h3 class="cc-card-title">Curate Member Showcase Deliverable</h3>
+      <form id="form-add-showcase" onsubmit="submitAddShowcaseForm(event)">
+        <div class="form-group">
+          <label class="form-label">Approved Collective Member</label>
+          <select id="showcase-member-select" class="form-control" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Project Title</label>
+          <input type="text" id="showcase-title" class="form-control" placeholder="e.g. Minimalist Identity System" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Media Type</label>
+            <select id="showcase-type" class="form-control">
+              <option value="image">Image (Still Deliverable)</option>
+              <option value="video">Video (Motion / Reel)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Layout Aspect</label>
+            <label class="checkbox-label" style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+              <input type="checkbox" id="showcase-wide"> Wide Display (16:9 span 2 cols)
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Public Media Asset URL</label>
+          <input type="url" id="showcase-url" class="form-control" placeholder="https://..." required>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="showcase-approved" checked> Publish immediately to Member Profile
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+          <button type="submit" class="btn-main">Publish Deliverable</button>
         </div>
       </form>
     </div>
@@ -1347,8 +1425,18 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Inquiry Message</label>
-          <textarea id="lead-message" class="form-control" style="height:80px; resize:none;" readonly></textarea>
+          <label class="form-label">Client Message / Project Brief</label>
+          <textarea id="lead-message" class="form-control" style="height:100px; resize:none;" readonly></textarea>
+        </div>
+        <div class="form-group" style="padding:12px; background:rgba(255,90,31,0.05); border:1px solid rgba(255,90,31,0.2); border-radius:4px;">
+          <label class="form-label" style="color:var(--brand-orange); margin-bottom:6px;">Match / Connect Collective Talent</label>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Select an approved member to coordinate privately. Member contact details are never exposed directly to the client.</p>
+          <div style="display:flex; gap:10px;">
+            <select id="lead-matched-member" class="form-control" style="flex:1;">
+              <!-- Dynamically populated from cachedCreators -->
+            </select>
+            <button type="button" class="btn-main btn-ghost" style="font-size:0.75rem;" onclick="inspectMatchedMember()">View Member Dossier</button>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -1576,6 +1664,7 @@
       if (viewId === 'analytics' || viewId === 'dashboard') loadDashboard();
       else if (viewId === 'applications') loadApplications();
       else if (viewId === 'creators') loadCreators();
+      else if (viewId === 'showcases') loadShowcases();
       else if (viewId === 'leads') loadLeads();
       else if (viewId === 'projects') loadProjects();
       else if (viewId === 'messages') loadMessages();
@@ -2036,6 +2125,172 @@
       loadCreators();
     }
 
+    async function revokeCreatorApproval() {
+      const id = document.getElementById('edit-c-id').value;
+      if (!confirm('Are you sure you want to revoke approval for this member? They will be unlisted from the public Collective.')) return;
+
+      const { error } = await supabaseClient.from('creator_applications').update({ status: 'pending', verified: false, featured: false }).eq('id', id);
+      if (error) {
+        alert('Revocation error: ' + error.message);
+        return;
+      }
+
+      logActivity('Revoked Member Approval', 'creator_applications', id);
+      closeModal('modal-edit-creator');
+      loadCreators();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: PORTFOLIO SHOWCASE MODERATION
+    // --------------------------------------------------
+    async function loadShowcases() {
+      const { data, error } = await supabaseClient.from('creator_applications').select('id, full_name, portfolio_links, uploaded_files').eq('status', 'approved');
+      if (error) return;
+
+      const body = document.getElementById('showcases-table-body');
+      body.innerHTML = '';
+
+      let allItems = [];
+      (data || []).forEach(member => {
+        let items = [];
+        if (Array.isArray(member.portfolio_links)) {
+          items = member.portfolio_links;
+        } else if (typeof member.portfolio_links === 'string') {
+          try { items = JSON.parse(member.portfolio_links) || []; } catch(e){}
+        }
+
+        items.forEach((item, index) => {
+          allItems.push({
+            memberId: member.id,
+            memberName: member.full_name,
+            index: index,
+            item: item
+          });
+        });
+      });
+
+      if (allItems.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-muted);">No portfolio showcases submitted for moderation. Use "+ Add Project Item" to curate deliverables.</td></tr>';
+        return;
+      }
+
+      allItems.forEach(entry => {
+        const tr = document.createElement('tr');
+        const it = entry.item;
+        const isApproved = it.approved === true;
+        const statusBadge = isApproved 
+          ? '<span class="badge-status won">Published</span>' 
+          : '<span class="badge-status pending">Pending / Unpublished</span>';
+
+        tr.innerHTML = `
+          <td><strong style="color:var(--text-main);">${entry.memberName}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">ID: ${entry.memberId}</span></td>
+          <td><strong>${it.title || 'Untitled Deliverable'}</strong><br><span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">${it.type || 'image'}</span></td>
+          <td>
+            <a href="${it.url}" target="_blank" rel="noopener noreferrer" style="color:var(--brand-orange); font-size:0.8rem; text-decoration:underline;">Inspect Media</a>
+          </td>
+          <td>${it.wide ? 'Wide (16:9)' : 'Square (1:1)'}</td>
+          <td>${statusBadge}</td>
+          <td style="text-align: right; display:flex; gap:8px; justify-content:flex-end;">
+            ${isApproved 
+              ? `<button class="btn-main btn-ghost" style="padding:4px 8px; font-size:0.75rem; color:#FF1744;" onclick="toggleShowcaseApproval(${entry.memberId}, ${entry.index}, false)">Unpublish</button>`
+              : `<button class="btn-main" style="padding:4px 8px; font-size:0.75rem; background:#00E676;" onclick="toggleShowcaseApproval(${entry.memberId}, ${entry.index}, true)">Approve & Publish</button>`
+            }
+            <button class="btn-main btn-ghost" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteShowcaseItem(${entry.memberId}, ${entry.index})">Remove</button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    async function toggleShowcaseApproval(memberId, itemIndex, approveStatus) {
+      const { data: member } = await supabaseClient.from('creator_applications').select('portfolio_links').eq('id', memberId).single();
+      if (!member) return;
+
+      let links = [];
+      if (Array.isArray(member.portfolio_links)) links = [...member.portfolio_links];
+      else if (typeof member.portfolio_links === 'string') {
+        try { links = JSON.parse(member.portfolio_links) || []; } catch(e){}
+      }
+
+      if (links[itemIndex]) {
+        links[itemIndex].approved = approveStatus;
+        const { error } = await supabaseClient.from('creator_applications').update({ portfolio_links: links }).eq('id', memberId);
+        if (error) {
+          alert('Error updating showcase item: ' + error.message);
+          return;
+        }
+        logActivity(approveStatus ? 'Approved Showcase Project' : 'Unpublished Showcase Project', 'creator_applications', memberId, { itemIndex });
+        loadShowcases();
+      }
+    }
+
+    async function deleteShowcaseItem(memberId, itemIndex) {
+      if (!confirm('Remove this showcase item?')) return;
+      const { data: member } = await supabaseClient.from('creator_applications').select('portfolio_links').eq('id', memberId).single();
+      if (!member) return;
+
+      let links = [];
+      if (Array.isArray(member.portfolio_links)) links = [...member.portfolio_links];
+      else if (typeof member.portfolio_links === 'string') {
+        try { links = JSON.parse(member.portfolio_links) || []; } catch(e){}
+      }
+
+      links.splice(itemIndex, 1);
+      const { error } = await supabaseClient.from('creator_applications').update({ portfolio_links: links }).eq('id', memberId);
+      if (error) {
+        alert('Error deleting showcase item: ' + error.message);
+        return;
+      }
+      logActivity('Deleted Showcase Project', 'creator_applications', memberId, { itemIndex });
+      loadShowcases();
+    }
+
+    function openAddShowcaseModal() {
+      const select = document.getElementById('showcase-member-select');
+      select.innerHTML = '<option value="">Select an Approved Member</option>';
+      cachedCreators.forEach(c => {
+        select.innerHTML += `<option value="${c.id}">${c.full_name} (${c.city || 'Creative'})</option>`;
+      });
+      openModal('modal-add-showcase');
+    }
+
+    async function submitAddShowcaseForm(e) {
+      e.preventDefault();
+      const memberId = document.getElementById('showcase-member-select').value;
+      if (!memberId) {
+        alert('Please choose an approved member.');
+        return;
+      }
+
+      const newItem = {
+        title: document.getElementById('showcase-title').value,
+        type: document.getElementById('showcase-type').value,
+        url: document.getElementById('showcase-url').value,
+        wide: document.getElementById('showcase-wide').checked,
+        approved: document.getElementById('showcase-approved').checked
+      };
+
+      const { data: member } = await supabaseClient.from('creator_applications').select('portfolio_links').eq('id', memberId).single();
+      if (!member) return;
+
+      let links = [];
+      if (Array.isArray(member.portfolio_links)) links = [...member.portfolio_links];
+      else if (typeof member.portfolio_links === 'string') {
+        try { links = JSON.parse(member.portfolio_links) || []; } catch(e){}
+      }
+
+      links.push(newItem);
+      const { error } = await supabaseClient.from('creator_applications').update({ portfolio_links: links }).eq('id', memberId);
+      if (error) {
+        alert('Error adding showcase item: ' + error.message);
+        return;
+      }
+
+      logActivity('Added Showcase Project Deliverable', 'creator_applications', memberId, { title: newItem.title });
+      closeModal('modal-add-showcase');
+      loadShowcases();
+    }
+
     // --------------------------------------------------
     // VIEW HANDLER: CLIENT LEADS
     // --------------------------------------------------
@@ -2128,7 +2383,23 @@
         mgrSelect.innerHTML += `<option value="${adm.id}" ${selected}>${adm.full_name}</option>`;
       });
 
+      // Collective talent matchmaking dropdown
+      const memberSelect = document.getElementById('lead-matched-member');
+      memberSelect.innerHTML = '<option value="">No member assigned</option>';
+      cachedCreators.forEach(cr => {
+        memberSelect.innerHTML += `<option value="${cr.id}">${cr.full_name} (${(cr.categories || []).join(', ')})</option>`;
+      });
+
       openModal('modal-lead');
+    }
+
+    function inspectMatchedMember() {
+      const memberId = document.getElementById('lead-matched-member').value;
+      if (!memberId) {
+        alert('Please select a member from the dropdown first.');
+        return;
+      }
+      openCreatorEditModal(memberId);
     }
 
     async function submitLeadForm(e) {
@@ -2636,6 +2907,7 @@
           const activeView = getActiveView();
           if (activeView === 'applications') loadApplications();
           if (activeView === 'creators') loadCreators();
+          if (activeView === 'showcases') loadShowcases();
           if (activeView === 'dashboard' || activeView === 'analytics') loadDashboard();
         })
         .subscribe();

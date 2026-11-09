@@ -831,7 +831,8 @@
     let creatorSlug = '';
 
     function loadProfile() {
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?slug=eq.${creatorSlug}&status=eq.approved`, {
+      const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,profile_image,cover_image,bio,portfolio_links,uploaded_files,slug';
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&slug=eq.${creatorSlug}&status=eq.approved`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -850,18 +851,18 @@
           currentCreatorId = c.id;
 
           // Set Title & Basic Details
-          document.title = `${c.full_name} — Vetted Creative Creator`;
+          document.title = `${c.full_name} — Vetted Collective Member`;
           document.getElementById('creator-fullname').textContent = c.full_name;
           
           const avatarUrl = c.profile_image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&h=200&fit=crop';
           const coverUrl = c.cover_image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&h=400&fit=crop';
           document.getElementById('creator-avatar').src = avatarUrl;
           document.getElementById('creator-cover-image').src = coverUrl;
-          document.getElementById('creator-location-badge').textContent = `${c.city || ''}, ${c.country || ''}`;
+          document.getElementById('creator-location-badge').textContent = `${c.city || ''}${c.country ? ', ' + c.country : ''}`;
 
           // Format category list
           const formattedCats = (c.categories || []).map(cat => cat.replace('-', ' ')).join(' & ');
-          document.getElementById('creator-category-badge').textContent = formattedCats.toUpperCase();
+          document.getElementById('creator-category-badge').textContent = formattedCats ? formattedCats.toUpperCase() : 'COLLECTIVE TALENT';
 
           if (c.verified) {
             document.getElementById('creator-vetted-badge').style.display = 'inline-block';
@@ -869,30 +870,9 @@
             document.getElementById('creator-vetted-badge').style.display = 'none';
           }
 
-          // Render Social Icons Row
+          // Admin-controlled communication: No personal social or direct contact icons are exposed publicly
           const socialRow = document.getElementById('creator-social-row');
-          socialRow.innerHTML = '';
-          
-          const socials = [
-            { key: 'instagram', label: 'Instagram', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>' },
-            { key: 'portfolio_url', label: 'Portfolio', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>' },
-            { key: 'behance', label: 'Behance', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M19 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><line x1="6" y1="12" x2="6" y2="12"></line></svg>' },
-            { key: 'dribbble', label: 'Dribbble', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.78 3.39m0 5.85c7.9 1.13 12.05-1.12 16.3-5.85"></path></svg>' }
-          ];
-
-          socials.forEach(soc => {
-            const val = c[soc.key];
-            if (val) {
-              const linkUrl = val.startsWith('http') ? val : `https://${soc.key === 'instagram' ? 'instagram.com/' : ''}${val}`;
-              const a = document.createElement('a');
-              a.href = linkUrl;
-              a.target = '_blank';
-              a.rel = 'noopener noreferrer';
-              a.className = 'social-link magnetic';
-              a.innerHTML = `${soc.svg} ${soc.label}`;
-              socialRow.appendChild(a);
-            }
-          });
+          if (socialRow) socialRow.innerHTML = '';
 
           // Render Bio Paragraphs
           const bioContainer = document.getElementById('creator-bio');
@@ -906,61 +886,62 @@
           // Render Meta Specification Card
           document.getElementById('meta-experience').textContent = `${c.years_experience || 0} Vetted Years`;
           document.getElementById('meta-availability').textContent = c.availability === 'available' ? 'Available For Projects' : c.availability === 'limited' ? 'Limited Availability' : 'Booked Until Next Cycle';
-          document.getElementById('meta-rating').textContent = `${Number(c.rating || 5.0).toFixed(1)} Stars Agency Rating`;
           
-          const equipList = c.equipment && c.equipment.length > 0 ? c.equipment.join(', ') : 'Standard Creative Gear';
-          document.getElementById('meta-equipment').textContent = equipList;
+          const ratingEl = document.getElementById('meta-rating');
+          if (ratingEl) ratingEl.textContent = 'Verified Collective Talent';
+          
+          // Equipment and Languages: general capabilities only
+          const equipEl = document.getElementById('meta-equipment');
+          if (equipEl) equipEl.textContent = 'Professional Creative Rig';
 
           const langList = c.languages && c.languages.length > 0 ? c.languages.join(', ') : 'English';
-          document.getElementById('meta-languages').textContent = langList;
+          const langEl = document.getElementById('meta-languages');
+          if (langEl) langEl.textContent = langList;
 
-          // Render Portfolio Gallery (Seed portfolio items based on category/files)
+          // Render Portfolio Gallery (Only approved showcase items submitted and verified by Admin)
           const gallery = document.getElementById('portfolio-gallery-container');
           gallery.innerHTML = '';
 
-          const isVisual = (c.categories || []).includes('photography') || (c.categories || []).includes('videography') || (c.categories || []).includes('drone-operator') || (c.categories || []).includes('3d-artist');
-          
-          const portfolioItems = isVisual ? [
-            { type: 'image', title: 'Architectural Shadows', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'video', title: 'The Cinematic Edge reel', url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1200&h=675&fit=crop', wide: true, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-            { type: 'image', title: 'Structure and Form', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'image', title: 'Golden Hour Zenith', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'image', title: 'Urban Geometry', url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200&h=675&fit=crop', wide: true }
-          ] : [
-            { type: 'image', title: 'Design System Typography', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'image', title: 'WEBINVITE.IN Redesign Board', url: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=1200&h=675&fit=crop', wide: true },
-            { type: 'image', title: 'Tactile Interface Wireframe', url: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'image', title: 'Brand Guidelines Concept', url: 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?q=80&w=600&h=600&fit=crop', wide: false },
-            { type: 'image', title: 'Minimalist Poster System', url: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&h=675&fit=crop', wide: true }
-          ];
+          // Load verified showcase items from portfolio_links or uploaded_files if approved by admin
+          let approvedShowcase = [];
+          if (Array.isArray(c.portfolio_links)) {
+            approvedShowcase = c.portfolio_links.filter(item => item && item.approved);
+          } else if (typeof c.portfolio_links === 'string') {
+            try {
+              const parsed = JSON.parse(c.portfolio_links);
+              if (Array.isArray(parsed)) approvedShowcase = parsed.filter(item => item && item.approved);
+            } catch (e) {}
+          }
 
-          portfolioItems.forEach(item => {
-            const card = document.createElement('div');
-            card.className = `portfolio-item ${item.wide ? 'portfolio-item--wide' : ''}`;
-            
-            const aspectClass = item.wide ? '' : 'portfolio-item__aspect--square';
-            
-            card.innerHTML = `
-              <div class="portfolio-item__aspect ${aspectClass}">
-                <img src="${item.url}" alt="${item.title}" class="portfolio-item__media">
-                ${item.type === 'video' ? `
-                  <div class="portfolio-item__play-icon">
-                    <svg style="width:24px;height:24px;" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  </div>
-                ` : ''}
-                <div class="portfolio-item__overlay">
-                  <h4 class="portfolio-item__title">${item.title}</h4>
-                </div>
+          if (approvedShowcase.length === 0) {
+            gallery.innerHTML = `
+              <div style="grid-column: 1 / -1; padding: 40px 20px; border: 1px dashed var(--glass-border); border-radius: 6px; text-align: center; color: var(--mist);">
+                <div style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-main); margin-bottom: 6px;">Curated Portfolio In Progress</div>
+                Verified project case studies and showcase deliverables are curated and moderated directly by YAWMATIC administrators.
               </div>
             `;
-            
-            // Lightbox handler
-            card.addEventListener('click', () => {
-              openLightbox(item);
+          } else {
+            approvedShowcase.forEach(item => {
+              const card = document.createElement('div');
+              card.className = `portfolio-item ${item.wide ? 'portfolio-item--wide' : ''}`;
+              const aspectClass = item.wide ? '' : 'portfolio-item__aspect--square';
+              card.innerHTML = `
+                <div class="portfolio-item__aspect ${aspectClass}">
+                  <img src="${item.url}" alt="${item.title || 'Showcase Project'}" class="portfolio-item__media">
+                  ${item.type === 'video' ? `
+                    <div class="portfolio-item__play-icon">
+                      <svg style="width:24px;height:24px;" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </div>
+                  ` : ''}
+                  <div class="portfolio-item__overlay">
+                    <h4 class="portfolio-item__title">${item.title || 'Project Showcase'}</h4>
+                  </div>
+                </div>
+              `;
+              card.addEventListener('click', () => openLightbox(item));
+              gallery.appendChild(card);
             });
-
-            gallery.appendChild(card);
-          });
+          }
 
           // Fetch reviews
           loadReviews(c.id);
@@ -1067,7 +1048,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Get Creator Slug from URL
       const pathParts = window.location.pathname.split('/');
-      creatorSlug = pathParts[pathParts.length - 1] || 'amal-krishna';
+      creatorSlug = pathParts[pathParts.length - 1] || '';
 
       const canonicalTag = document.getElementById('canonical-url');
       const ogUrlTag = document.getElementById('og-url');
@@ -1102,10 +1083,10 @@
             'Prefer': 'return=minimal'
           },
           body: JSON.stringify({
-            creator_id: currentCreatorId,
             client_name: name,
-            email,
-            message: projectDetails,
+            email: email,
+            project_type: 'Collective Talent Request',
+            message: `Target Member: ${document.getElementById('creator-fullname').textContent} (ID: ${currentCreatorId})\n\nBrief Details:\n${projectDetails}`,
             status: 'new'
           })
         })
