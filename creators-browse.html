@@ -321,7 +321,22 @@
       width: 180px;
     }
 
-    /* Creators Grid */
+    /* Browse Container Header Spacing */
+    .browse-section {
+      padding-top: 140px;
+      min-height: 100vh;
+      position: relative;
+    }
+    @media(max-width: 900px) {
+      .browse-section {
+        padding-top: 110px;
+      }
+    }
+    .browse-header {
+      margin-bottom: 30px;
+    }
+
+    /* Creators Grid & Empty State */
     .results-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -332,6 +347,33 @@
     }
     @media (max-width: 600px) {
       .results-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Loading state for grid */
+    .directory-loader {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      gap: 16px;
+      color: var(--mist);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .directory-loader__spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid rgba(255, 90, 31, 0.2);
+      border-top-color: var(--fire);
+      border-radius: 50%;
+      animation: dirSpin 0.8s linear infinite;
+    }
+    @keyframes dirSpin {
+      to { transform: rotate(360deg); }
     }
 
     /* Empty State */
@@ -381,12 +423,129 @@
       color: var(--mist);
     }
 
-    /* Re-use creator-card styles from hub */
+    /* Full Creator Card System */
     .creator-card {
-      width: 100%; /* Fill grid cell */
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition-medium);
+      text-decoration: none;
+      position: relative;
+    }
+    .creator-card:hover {
+      border-color: var(--glass-border-hover);
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(255, 90, 31, 0.12);
     }
     .creator-card__image-wrap {
-      height: 280px; /* shorter in browse */
+      width: 100%;
+      height: 280px;
+      overflow: hidden;
+      position: relative;
+    }
+    .creator-card__image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%);
+      transition: var(--transition-slow);
+    }
+    .creator-card:hover .creator-card__image {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+    }
+    .creator-card__badge-row {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .availability-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .availability-dot.available { background-color: #00E676; box-shadow: 0 0 8px #00E676; }
+    .availability-dot.limited { background-color: #FFD600; box-shadow: 0 0 8px #FFD600; }
+    .availability-dot.booked { background-color: #FF1744; box-shadow: 0 0 8px #FF1744; }
+    
+    .availability-pill {
+      background: rgba(15, 15, 16, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      color: var(--volt);
+    }
+    .verified-badge {
+      background: var(--fire);
+      color: var(--volt);
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(255, 90, 31, 0.3);
+    }
+    .creator-card__details {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-grow: 1;
+    }
+    .creator-card__meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--mist);
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+    .creator-card__name {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+    .creator-card__intro {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--mist);
+      margin-bottom: 8px;
+    }
+    .creator-card__footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
+      margin-top: auto;
+    }
+    .creator-card__cta {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--fire);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
   </style>
 </head>
@@ -483,10 +642,12 @@
   </nav>
 
   <!-- BROWSE HUB CONTAINER -->
-  <section class="section-padding" style="padding-top: 160px; min-height: 100vh;">
+  <section class="section-padding browse-section">
     <div class="grid-bg-overlay"></div>
-    <span class="overline reveal-item">Collective Directory</span>
-    <h1 class="heading-large reveal-item">Explore Vetted Creators</h1>
+    <div class="browse-header">
+      <span class="overline reveal-item">Collective Directory</span>
+      <h1 class="heading-large reveal-item" style="margin-top: 10px; margin-bottom: 0;">Explore Vetted Creators</h1>
+    </div>
     
     <div class="browse-container">
       
@@ -578,7 +739,10 @@
 
         <!-- Creators Grid -->
         <div id="directory-grid" class="results-grid">
-          <!-- Loaded dynamically -->
+          <div class="directory-loader" id="directory-loader">
+            <div class="directory-loader__spinner"></div>
+            <span>Loading verified creators...</span>
+          </div>
         </div>
 
         <!-- Empty State Container -->
@@ -786,6 +950,48 @@
             }
             select.appendChild(opt);
           });
+
+          // If custom select wrapper was already created, refresh its custom options
+          const customWrapper = select.closest('.custom-select-wrapper');
+          if (customWrapper) {
+            const list = customWrapper.querySelector('.custom-select__options');
+            const trigger = customWrapper.querySelector('.custom-select__trigger');
+            if (list) {
+              list.innerHTML = '';
+              Array.from(select.options).forEach((opt, i) => {
+                const li = document.createElement('li');
+                li.className = 'custom-select__option' + (select.selectedIndex === i ? ' is-selected' : '');
+                li.textContent = opt.text;
+                li.dataset.value = opt.value;
+                li.setAttribute('role', 'option');
+                li.setAttribute('aria-selected', String(select.selectedIndex === i));
+                li.setAttribute('tabindex', '-1');
+
+                li.addEventListener('click', () => {
+                  select.value = opt.value;
+                  select.dispatchEvent(new Event('change', { bubbles: true }));
+                  if (trigger) trigger.querySelector('.custom-select__label').textContent = opt.text;
+                  list.querySelectorAll('.custom-select__option').forEach(o => {
+                    o.classList.remove('is-selected');
+                    o.setAttribute('aria-selected', 'false');
+                  });
+                  li.classList.add('is-selected');
+                  li.setAttribute('aria-selected', 'true');
+                  customWrapper.classList.remove('is-open');
+                  if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                    trigger.focus();
+                  }
+                });
+
+                list.appendChild(li);
+              });
+              if (trigger) {
+                const activeOpt = select.options[select.selectedIndex];
+                trigger.querySelector('.custom-select__label').textContent = activeOpt ? activeOpt.text : 'All Locations';
+              }
+            }
+          }
         });
 
       // 3. Setup event listeners for other filters & search
@@ -855,6 +1061,19 @@
       const verified = document.getElementById('filter-verified').checked;
       const sort = document.getElementById('sort-select').value;
       
+      const grid = document.getElementById('directory-grid');
+      const emptyState = document.getElementById('empty-state');
+      if (grid) {
+        grid.style.display = 'grid';
+        grid.innerHTML = `
+          <div class="directory-loader" id="directory-loader">
+            <div class="directory-loader__spinner"></div>
+            <span>Loading verified creators...</span>
+          </div>
+        `;
+      }
+      if (emptyState) emptyState.style.display = 'none';
+
       // Get selected categories
       const selectedCats = [];
       document.querySelectorAll('.category-checkbox:checked').forEach(cb => {
@@ -990,7 +1209,13 @@
           document.getElementById('btn-prev-page').disabled = (currentPage === 1);
           document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
 
-          // Re-trigger scroll animations for cards
+          // Force cards to be immediately visible (avoiding trapped opacity: 0)
+          grid.querySelectorAll('.creator-card').forEach(card => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          });
+
+          // Re-trigger scroll animations and lenis calculations
           if (typeof ScrollTrigger !== 'undefined') {
             setTimeout(() => ScrollTrigger.refresh(), 100);
           }
