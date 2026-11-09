@@ -132,84 +132,198 @@
       z-index: 2;
     }
 
-    /* Horizontal scroll featured creators */
-    .featured-creators-container {
+    /* Featured Creators Section — Structured Separation & Responsive Row */
+    .featured-creators-section {
       position: relative;
       width: 100%;
       background-color: #0b0b0c;
       overflow: hidden;
+      padding-top: 100px;
+      padding-bottom: 110px;
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
     }
-    .horizontal-scroll-creators {
-      display: flex;
-      width: max-content;
-      padding: 100px 8%;
+    @media (max-width: 768px) {
+      .featured-creators-section {
+        padding-top: 70px;
+        padding-bottom: 80px;
+      }
+    }
+
+    /* Section A — Introduction */
+    .featured-creators__intro {
+      max-width: 1320px;
+      margin: 0 auto 48px auto;
+      padding: 0 5%;
+      position: relative;
+      z-index: 2;
+    }
+    .featured-creators__intro-eyebrow {
+      display: inline-flex;
       align-items: center;
-      gap: 40px;
-    }
-    .featured-creators__header {
-      width: 420px;
-      flex-shrink: 0;
-    }
-    .vetted-status-badge {
-      display: block;
-      background: rgba(255, 90, 31, 0.10);
-      border: 1px solid rgba(255, 90, 31, 0.30);
-      color: #FF5A1F;
-      border-radius: 999px;
-      padding: 10px 18px;
-      font-family: var(--font-body);
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      font-size: 13px;
-      width: fit-content;
-      margin-top: 24px;
-      margin-bottom: 28px;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--fire);
+      font-family: var(--font-display);
+      font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
     }
+    .featured-creators__intro-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--fire);
+      box-shadow: 0 0 10px rgba(255, 90, 31, 0.6);
+    }
+    .featured-creators__intro-heading {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      color: var(--volt);
+      margin: 0 0 16px 0;
+      word-break: break-word;
+    }
+    .featured-creators__intro-desc {
+      font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+      color: var(--mist);
+      max-width: 680px;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .featured-creators__intro-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .featured-creators__controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .featured-scroll-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      color: var(--volt);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      user-select: none;
+    }
+    .featured-scroll-btn:hover {
+      background: rgba(255, 90, 31, 0.15);
+      border-color: var(--fire);
+      color: var(--fire);
+      transform: translateY(-2px);
+    }
+    .featured-scroll-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+      border-color: var(--glass-border);
+      color: var(--mist);
+    }
+
+    /* Section B — Creator Cards Horizontally Scrollable Row */
+    .featured-creators__cards-wrapper {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+    .featured-creators__track {
+      display: flex;
+      gap: 28px;
+      padding: 10px 5% 30px 5%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      scroll-snap-type: x mandatory;
+      width: 100%;
+      box-sizing: border-box;
+      align-items: stretch;
+    }
+    .featured-creators__track::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge */
+    }
+
+    /* Creator Card Component */
     .creator-card {
       width: 320px;
+      min-width: 320px;
+      max-width: 320px;
       background: var(--card-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: var(--transition-medium);
+      transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
       flex-shrink: 0;
-      cursor: none;
       position: relative;
+      text-decoration: none;
+      scroll-snap-align: start;
+      box-sizing: border-box;
+    }
+    @media (max-width: 480px) {
+      .creator-card {
+        width: 82vw;
+        min-width: 82vw;
+        max-width: 85vw;
+      }
     }
     .creator-card:hover {
-      border-color: var(--glass-border-hover);
-      transform: translateY(-8px);
-      box-shadow: 0 15px 40px rgba(255, 90, 31, 0.12);
+      border-color: rgba(255, 90, 31, 0.5);
+      transform: translateY(-6px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 90, 31, 0.12);
     }
     .creator-card__image-wrap {
       width: 100%;
-      height: 380px;
+      height: 280px;
       overflow: hidden;
       position: relative;
+      background-color: #121215;
+    }
+    @media (max-width: 480px) {
+      .creator-card__image-wrap {
+        height: 240px;
+      }
     }
     .creator-card__image {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: grayscale(100%);
-      transition: var(--transition-slow);
+      display: block;
+      transition: transform 0.5s ease;
     }
     .creator-card:hover .creator-card__image {
-      filter: grayscale(0%);
-      scale: 1.05;
+      transform: scale(1.04);
     }
     .creator-card__badge-row {
       position: absolute;
-      top: 15px;
-      left: 15px;
-      right: 15px;
+      top: 14px;
+      left: 14px;
+      right: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       pointer-events: none;
+      z-index: 3;
     }
     .availability-dot {
       width: 8px;
@@ -223,83 +337,135 @@
     .availability-dot.booked { background-color: #FF1744; box-shadow: 0 0 8px #FF1744; }
     
     .availability-pill {
-      background: rgba(15, 15, 16, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 6px 12px;
+      background: rgba(15, 15, 16, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 5px 11px;
       border-radius: 50px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-family: var(--font-display);
       font-weight: 700;
       display: flex;
       align-items: center;
       color: var(--volt);
+      letter-spacing: 0.5px;
     }
     .verified-badge {
       background: var(--fire);
       color: var(--volt);
-      font-size: 0.75rem;
-      padding: 6px 12px;
+      font-size: 0.72rem;
+      padding: 5px 11px;
       border-radius: 50px;
       font-family: var(--font-display);
       font-weight: 700;
-      box-shadow: 0 4px 10px rgba(255, 90, 31, 0.3);
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(255, 90, 31, 0.35);
     }
     .creator-card__details {
-      padding: 24px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      flex-grow: 1;
+      background: var(--card-bg);
     }
     .creator-card__meta {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       color: var(--mist);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       letter-spacing: 0.5px;
+      font-weight: 500;
+      text-transform: uppercase;
+      gap: 8px;
+    }
+    .creator-card__primary-role {
+      color: var(--fire);
+      font-family: var(--font-display);
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .creator-card__location {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .creator-card__name {
       font-family: var(--font-display);
-      font-size: 1.5rem;
+      font-size: 1.35rem;
       font-weight: 700;
       text-transform: uppercase;
       color: var(--volt);
+      line-height: 1.2;
+      margin: 0;
+      word-break: break-word;
+    }
+    .creator-card__skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .creator-card__skill-pill {
+      font-size: 0.7rem;
+      font-family: var(--font-body);
+      color: var(--mist);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: capitalize;
     }
     .creator-card__intro {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       line-height: 1.5;
       color: var(--mist);
-      margin-bottom: 8px;
+      margin: 4px 0 0 0;
+      word-break: break-word;
     }
     .creator-card__footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
       padding-top: 16px;
       margin-top: auto;
     }
-    .creator-card__socials {
-      display: flex;
-      gap: 12px;
-    }
-    .creator-card__social-link {
-      color: var(--mist);
-      font-size: 1.1rem;
-      transition: var(--transition-fast);
-    }
-    .creator-card__social-link:hover {
-      color: var(--fire);
-    }
     .creator-card__cta {
       font-family: var(--font-display);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--fire);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      transition: gap 0.2s ease;
+    }
+    .creator-card:hover .creator-card__cta {
+      gap: 10px;
+    }
+
+    /* Single and Empty States */
+    .featured-creators__empty-state {
+      padding: 50px 30px;
+      border: 1px dashed var(--glass-border);
+      border-radius: 8px;
+      text-align: center;
+      max-width: 600px;
+      color: var(--mist);
+      font-size: 0.95rem;
+      margin: 0 auto;
+    }
+    .featured-creators__single-wrap {
+      display: flex;
+      justify-content: flex-start;
+      width: 100%;
     }
 
     /* Category Grid Tiles */
@@ -763,27 +929,44 @@
     </div>
   </section>
 
-  <!-- 2. FEATURED CREATORS (HORIZONTAL SCROLL) -->
-  <div class="featured-creators-container" id="featured-creators-section">
-    <div class="horizontal-scroll-creators" id="creators-scroll-container">
-      
-      <div class="featured-creators__header">
-        <span class="overline">Vetted Talent</span>
-        <h2 class="heading-large">Featured<br>Creators</h2>
-        <div id="vetted-status-badge" class="vetted-status-badge" style="display: none;">VETTED NETWORK IS SEEDING...</div>
-        <p style="color: var(--mist); line-height: 1.6; margin-top: 10px;">
-          Scroll horizontally to see hand-picked professionals who produce flagship results on client projects.
-        </p>
+  <!-- 2. FEATURED CREATORS SECTION -->
+  <section class="featured-creators-section" id="featured-creators-section">
+    <!-- Section A — Introduction -->
+    <div class="featured-creators__intro">
+      <div class="featured-creators__intro-bar">
+        <div>
+          <span class="featured-creators__intro-eyebrow">Vetted Talent</span>
+          <h2 class="featured-creators__intro-heading">Featured Creators</h2>
+          <p class="featured-creators__intro-desc">
+            Hand-picked creative specialists and visionary designers verified by YAWMATIC administrators to deliver flagship client productions.
+          </p>
+        </div>
+        <div class="featured-creators__controls" id="featured-creators-controls">
+          <button class="featured-scroll-btn magnetic" id="featured-scroll-prev" aria-label="Scroll left" title="Scroll left">
+            <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button class="featured-scroll-btn magnetic" id="featured-scroll-next" aria-label="Scroll right" title="Scroll right">
+            <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
-
-      <!-- Seeded dynamically via client-side fetch -->
-      <div id="featured-creators-grid" style="display: flex; gap: 40px;">
-        <!-- Loading state -->
-        <div style="font-family: var(--font-display); color: var(--mist); letter-spacing: 1px;">LOADING SELECT CREATORS...</div>
-      </div>
-
+      <div id="vetted-status-badge" class="vetted-status-badge" style="display: none; margin-top: 18px;">VETTED NETWORK IS SEEDING...</div>
     </div>
-  </div>
+
+    <!-- Section B — Creator Cards Row -->
+    <div class="featured-creators__cards-wrapper">
+      <div class="featured-creators__track" id="featured-creators-grid" role="region" aria-label="Featured Creators Carousel">
+        <!-- Loading state -->
+        <div style="font-family: var(--font-display); color: var(--mist); letter-spacing: 1px; padding: 40px 0;">
+          LOADING SELECT CREATORS...
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- 3. CATEGORIES -->
   <section class="section-padding" id="categories">
@@ -1251,7 +1434,7 @@
     // 1. Fetch Approved Creators from Supabase (order by featured first, then newest)
     function loadFeaturedCreators() {
       const publicCols = 'id,full_name,city,country,categories,years_experience,availability,verified,featured,profile_image,bio,slug';
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&status=eq.approved&order=featured.desc,submitted_at.desc&limit=8`, {
+      fetch(`${SUPABASE_URL}/rest/v1/creator_applications?select=${publicCols}&status=eq.approved&order=featured.desc,submitted_at.desc&limit=12`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -1259,37 +1442,55 @@
       })
         .then(res => res.json())
         .then(creators => {
-          const grid = document.getElementById('featured-creators-grid');
+          const track = document.getElementById('featured-creators-grid');
           const badge = document.getElementById('vetted-status-badge');
-          const headerHeading = document.querySelector('.featured-creators__header h2');
-          grid.innerHTML = ''; // clear loading state
+          const controls = document.getElementById('featured-creators-controls');
+          if (!track) return;
+          track.innerHTML = ''; // clear loading state
           
           if (!creators || creators.length === 0) {
             if (badge) {
               badge.textContent = 'NO APPROVED CREATORS YET';
               badge.style.display = 'block';
             }
-            if (headerHeading) headerHeading.style.marginBottom = '0';
+            if (controls) controls.style.display = 'none';
+            track.innerHTML = `
+              <div class="featured-creators__empty-state">
+                <strong style="color: var(--fire); display: block; font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 8px;">
+                  Collective Talent Network In Review
+                </strong>
+                Approved creative specialists and vetted professionals will appear in this showcase once verified by YAWMATIC administrators.
+              </div>
+            `;
             return;
           }
 
           if (badge) badge.style.display = 'none';
-          if (headerHeading) headerHeading.style.marginBottom = '';
+
+          // Single card layout check
+          const isSingle = creators.length === 1;
+          if (controls) {
+            controls.style.display = isSingle ? 'none' : 'flex';
+          }
 
           creators.forEach(c => {
             const card = document.createElement('a');
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative Specialization';
+            // Format Categories
+            const categories = Array.isArray(c.categories) ? c.categories : [];
+            const primaryRole = categories.length > 0 ? categories[0].replace(/-/g, ' ') : 'Collective Specialist';
+            const secondaryRoles = categories.slice(1, 3);
             
             // Genuine uploaded profile image only; neutral abstract avatar if absent or stock photo
             const isStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');
             const avatarUrl = isStockOrEmpty ? DEFAULT_AVATAR : c.profile_image;
 
             // Only display bio paragraph if member actually supplied genuine text
-            const hasBio = Boolean(c.bio && c.bio.trim() && c.bio.trim().toLowerCase() !== 'nil' && c.bio.trim().toLowerCase() !== 'nill');
-            const bioHtml = hasBio ? `<p class="creator-card__intro">${c.bio.trim().substring(0, 90)}${c.bio.trim().length > 90 ? '...' : ''}</p>` : '';
+            const cleanBio = (c.bio || '').trim();
+            const hasBio = Boolean(cleanBio && !['nil', 'nill', 'none', 'null'].includes(cleanBio.toLowerCase()));
+            const bioHtml = hasBio ? `<p class="creator-card__intro">${cleanBio.substring(0, 85)}${cleanBio.length > 85 ? '...' : ''}</p>` : '';
 
             // Status badges: only render if supported by real status
             const hasAvailability = Boolean(c.availability && c.availability.trim());
@@ -1309,6 +1510,16 @@
               </div>
             ` : '';
 
+            // Secondary skills pills
+            let skillsPillsHtml = '';
+            if (secondaryRoles.length > 0) {
+              skillsPillsHtml = `
+                <div class="creator-card__skills">
+                  ${secondaryRoles.map(skill => `<span class="creator-card__skill-pill">${skill.replace(/-/g, ' ')}</span>`).join('')}
+                </div>
+              `;
+            }
+
             card.innerHTML = `
               <div class="creator-card__image-wrap">
                 <img src="${avatarUrl}" alt="${c.full_name}" class="creator-card__image" ${isStockOrEmpty ? 'style="filter: none; object-fit: cover;"' : ''}>
@@ -1316,45 +1527,70 @@
               </div>
               <div class="creator-card__details">
                 <div class="creator-card__meta">
-                  <span style="text-transform: uppercase;">${primaryCat}</span>
-                  <span>${c.city || ''}</span>
+                  <span class="creator-card__primary-role">${primaryRole}</span>
+                  <span class="creator-card__location">${c.city || ''}${c.country ? ', ' + c.country : ''}</span>
                 </div>
                 <h3 class="creator-card__name">${c.full_name}</h3>
+                ${skillsPillsHtml}
                 ${bioHtml}
                 <div class="creator-card__footer">
                   <span class="creator-card__cta">View Collective Profile →</span>
                 </div>
               </div>
             `;
-            grid.appendChild(card);
+            track.appendChild(card);
           });
 
-          initializeDynamicReveals(grid);
-
-          // Re-trigger scroll trigger calculations after injecting DOM elements
-          setTimeout(() => {
-            if (typeof ScrollTrigger !== 'undefined') {
-              ScrollTrigger.refresh();
-              initCreatorsHorizontalScroll();
-            }
-          }, 100);
+          initializeDynamicReveals(track);
+          setupCarouselScrollControls();
         })
         .catch(err => {
           console.warn('Featured creators endpoint unreachable:', err);
-          const grid = document.getElementById('featured-creators-grid');
+          const track = document.getElementById('featured-creators-grid');
           const badge = document.getElementById('vetted-status-badge');
+          const controls = document.getElementById('featured-creators-controls');
           if (badge) badge.style.display = 'block';
-          if (grid) {
-            grid.innerHTML = `
-              <div class="creator-card reveal-item" style="grid-column: 1 / -1; min-height: 200px; justify-content: center; align-items: center; text-align: center; border: 1px dashed var(--glass-border);">
-                <div style="color: var(--mist); font-size: 0.95rem; line-height: 1.6; max-width: 480px; margin: 0 auto; padding: 24px;">
-                  <strong style="color: var(--fire); display: block; margin-bottom: 6px;">Talent Network Synchronizing</strong>
-                  Our verified creator database is currently undergoing scheduled synchronization. Verified talent rosters will appear once connection is established.
-                </div>
+          if (controls) controls.style.display = 'none';
+          if (track) {
+            track.innerHTML = `
+              <div class="featured-creators__empty-state">
+                <strong style="color: var(--fire); display: block; font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 8px;">
+                  Talent Network Synchronizing
+                </strong>
+                Our verified creator database is currently synchronizing. Hand-picked professionals will appear once connection is established.
               </div>
             `;
           }
         });
+    }
+
+    // Carousel Scroll Buttons Logic
+    function setupCarouselScrollControls() {
+      const track = document.getElementById('featured-creators-grid');
+      const prevBtn = document.getElementById('featured-scroll-prev');
+      const nextBtn = document.getElementById('featured-scroll-next');
+      if (!track || !prevBtn || !nextBtn) return;
+
+      const updateButtonStates = () => {
+        const atStart = track.scrollLeft <= 5;
+        const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 10;
+        prevBtn.disabled = atStart;
+        nextBtn.disabled = atEnd;
+      };
+
+      prevBtn.onclick = () => {
+        const cardWidth = track.querySelector('.creator-card')?.offsetWidth || 340;
+        track.scrollBy({ left: -(cardWidth + 28), behavior: 'smooth' });
+      };
+
+      nextBtn.onclick = () => {
+        const cardWidth = track.querySelector('.creator-card')?.offsetWidth || 340;
+        track.scrollBy({ left: (cardWidth + 28), behavior: 'smooth' });
+      };
+
+      track.addEventListener('scroll', updateButtonStates, { passive: true });
+      window.addEventListener('resize', updateButtonStates);
+      updateButtonStates();
     }
 
     // 2. Fetch Categories from Supabase
@@ -1536,36 +1772,9 @@
       });
     });
 
-    // 5. Featured creators horizontal scroll timeline
+    // Clean up any legacy horizontal pin triggers
     function initCreatorsHorizontalScroll() {
-      const container = document.getElementById('creators-scroll-container');
-      if (!container) return;
-
-      const existingTrigger = ScrollTrigger.getById('creators-scroll-trigger');
-      if (existingTrigger) {
-        existingTrigger.kill(true);
-      }
-
-      if (window.innerWidth <= 1024) {
-        gsap.set(container, { clearProps: 'all' });
-        return;
-      }
-
-      gsap.to(container, {
-        x: () => -(container.scrollWidth - window.innerWidth),
-        ease: 'none',
-        scrollTrigger: {
-          id: 'creators-scroll-trigger',
-          trigger: '#featured-creators-section',
-          start: 'top top',
-          end: () => "+=" + (container.scrollWidth - window.innerWidth),
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 1,
-          scrub: true,
-          invalidateOnRefresh: true
-        }
-      });
+      // Carousel is handled via native CSS flex-row + horizontal smooth scroll + controls
     }
   </script>
 </body>
