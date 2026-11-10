@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Dashboard — YAWMATIC Collective</title>
+  <meta name="description" content="Manage your professional profile, skills, rig capabilities, and portfolio showcase deliverables.">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --dash-sidebar-w: 260px;
+    }
+    .dash-wrapper {
+      display: flex;
+      min-height: 100vh;
+      background: var(--abyss);
+      color: var(--volt);
+    }
+    /* Sidebar */
+    .dash-sidebar {
+      width: var(--dash-sidebar-w);
+      background: #0d0d0f;
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+    }
+    @media (max-width: 900px) {
+      .dash-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      .dash-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+    }
+    .dash-brand {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dash-brand-title {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--volt);
+    }
+    .dash-brand-tag {
+      font-size: 0.65rem;
+      color: var(--fire);
+      letter-spacing: 1px;
+    }
+    .dash-nav {
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .dash-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 4px;
+      color: var(--mist);
+      text-decoration: none;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: var(--transition-fast);
+      cursor: pointer;
+    }
+    .dash-nav-item:hover, .dash-nav-item.active {
+      background: rgba(255, 90, 31, 0.1);
+      color: var(--volt);
+      border-left: 2px solid var(--fire);
+    }
+    .dash-user-footer {
+      padding: 18px 20px;
+      border-top: 1px solid var(--glass-border);
+      background: #09090a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dash-user-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .dash-user-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--volt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dash-user-id {
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      color: var(--fire);
+      letter-spacing: 0.5px;
+    }
+    .dash-btn-logout {
+      background: transparent;
+      border: none;
+      color: var(--mist);
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+    .dash-btn-logout:hover {
+      color: #ff5252;
+    }
+
+    /* Main Content Area */
+    .dash-main {
+      flex-grow: 1;
+      margin-left: var(--dash-sidebar-w);
+      padding: 36px 48px 80px;
+      min-width: 0;
+    }
+    @media (max-width: 900px) {
+      .dash-main {
+        margin-left: 0;
+        padding: 24px 20px 60px;
+      }
+    }
+    .dash-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .dash-header-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+    .dash-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Cards & Containers */
+    .dash-card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+    }
+    .dash-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 14px;
+    }
+    .dash-card-title {
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--fire);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+    }
+    .dash-card-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fire);
+    }
+    .dash-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 1100px) {
+      .dash-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .dash-stats-grid { grid-template-columns: 1fr; }
+    }
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-label {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mist);
+    }
+    .stat-val {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--volt);
+    }
+    .badge-status {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+    }
+    .badge-status.active {
+      background: rgba(0, 230, 118, 0.12);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      color: #00e676;
+    }
+    .badge-status.pending {
+      background: rgba(255, 214, 0, 0.12);
+      border: 1px solid rgba(255, 214, 0, 0.3);
+      color: #ffd600;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Form rows */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 700px) {
+      .grid-2col { grid-template-columns: 1fr; }
+    }
+    .form-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--mist);
+    }
+    .form-control {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      color: var(--volt);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      outline: none;
+      transition: var(--transition-fast);
+    }
+    .form-control:focus {
+      border-color: var(--fire);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    /* Showcase items table */
+    .showcase-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .showcase-table th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--glass-border);
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mist);
+    }
+    .showcase-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <div class="dash-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="dash-sidebar" id="dash-sidebar">
+      <div class="dash-brand">
+        <svg style="width:28px; height:28px;" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.15)" stroke-width="2" fill="none"/>
+          <circle cx="24" cy="8" r="2.5" fill="#FF5A1F" />
+        </svg>
+        <div>
+          <div class="dash-brand-title">YAWMATIC</div>
+          <div class="dash-brand-tag">COLLECTIVE CREATOR</div>
+        </div>
+      </div>
+
+      <nav class="dash-nav">
+        <a class="dash-nav-item active" data-tab="overview">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview
+        </a>
+        <a class="dash-nav-item" data-tab="profile">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
+        </a>
+        <a class="dash-nav-item" data-tab="craft">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Skills & Craft
+        </a>
+        <a class="dash-nav-item" data-tab="capabilities">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Equipment & Rig
+        </a>
+        <a class="dash-nav-item" data-tab="showcase">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Portfolio Showcase
+        </a>
+        <a class="dash-nav-item" data-tab="settings">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Account Settings
+        </a>
+      </nav>
+
+      <div class="dash-user-footer">
+        <div class="dash-user-meta">
+          <span class="dash-user-name" id="user-display-name">Loading Member...</span>
+          <span class="dash-user-id" id="user-display-mid">YWC-2026-0000</span>
+        </div>
+        <button id="btn-dash-logout" class="dash-btn-logout" title="Sign Out">
+          <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dash-main">
+      <div class="dash-topbar">
+        <div>
+          <span class="dash-brand-tag">MEMBER PORTAL</span>
+          <h1 class="dash-header-title" id="page-heading">Dashboard Overview</h1>
+        </div>
+        <div class="dash-header-actions">
+          <a id="btn-view-public-profile" href="#" target="_blank" class="btn btn--ghost" style="padding: 8px 16px; font-size: 0.8rem;">
+            Inspect Public Profile ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="dash-stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">Membership Status</span>
+            <span class="badge-status active" id="stat-membership-status">Vetted Member</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Primary Craft</span>
+            <span class="stat-val" style="font-size:1.1rem;" id="stat-primary-craft">UI/UX Designer</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Showcase Deliverables</span>
+            <span class="stat-val" id="stat-showcase-count">0 Published</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Revision Queue</span>
+            <span class="stat-val" style="font-size:1.1rem;" id="stat-revision-status">Up to Date</span>
+          </div>
+        </div>
+
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Collective Publishing Workflow</h2>
+          </div>
+          <p style="font-size:0.92rem; color:var(--mist); line-height:1.6; margin-bottom:16px;">
+            YAWMATIC Collective maintains vetted standards for high-value enterprise deliverables. All submitted profile revisions, skills updates, and portfolio showcase deliverables are staged into a pending revision queue and audited by YAWMATIC management prior to live public publication.
+          </p>
+          <div style="background:rgba(255,90,31,0.05); border:1px solid rgba(255,90,31,0.2); padding:16px 20px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700; color:var(--volt); font-size:0.92rem;">Direct Client Booking Management</div>
+              <div style="font-size:0.8rem; color:var(--mist);">Client contracts and enquiries are handled centrally through YAWMATIC management to protect member rates and delivery.</div>
+            </div>
+            <a href="/contact" target="_blank" class="btn btn--primary" style="padding:6px 14px; font-size:0.75rem;">Agency Desk</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: MY PROFILE -->
+      <section id="tab-profile" class="tab-pane">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Public Profile Parameters</h2>
+            <span class="badge-status pending" id="profile-revision-badge" style="display:none;">Revision Staged for Review</span>
+          </div>
+
+          <form id="form-update-profile">
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="prof-fullname">Full Display Name</label>
+                <input type="text" id="prof-fullname" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-location">Location (City, Country)</label>
+                <input type="text" id="prof-location" class="form-control" placeholder="Kozhikode, India">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="prof-bio">Editorial Biography</label>
+              <textarea id="prof-bio" class="form-control" placeholder="Professional summary and creative focus..."></textarea>
+            </div>
+
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="prof-portfolio-url">Primary Website / Portfolio URL</label>
+                <input type="url" id="prof-portfolio-url" class="form-control" placeholder="https://creator.domain">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-instagram">Instagram Handle (Username Only)</label>
+                <input type="text" id="prof-instagram" class="form-control" placeholder="handle">
+              </div>
+            </div>
+
+            <button type="submit" id="btn-save-profile" class="btn btn--primary" style="margin-top:10px;">
+              Submit Profile Revision for Admin Approval →
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 3: CRAFT & SKILLS -->
+      <section id="tab-craft" class="tab-pane">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Craft Specialization & Skill Stack</h2>
+          </div>
+
+          <form id="form-update-skills">
+            <div class="form-group">
+              <label class="form-label" for="craft-primary-spec">Primary Professional Specialization</label>
+              <input type="text" id="craft-primary-spec" class="form-control" placeholder="e.g. UI/UX Designer" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="craft-skills-list">Additional Skills & Software (Comma-separated)</label>
+              <textarea id="craft-skills-list" class="form-control" placeholder="e.g. Figma, Design Systems, Blender, Next.js, DaVinci Resolve"></textarea>
+            </div>
+
+            <button type="submit" id="btn-save-craft" class="btn btn--primary" style="margin-top:10px;">
+              Request Skill Stack Update →
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 4: EQUIPMENT & CAPABILITIES -->
+      <section id="tab-capabilities" class="tab-pane">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Creative Rig & Production Setup</h2>
+          </div>
+
+          <form id="form-update-rig">
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="rig-years-exp">Professional Experience (Years)</label>
+                <input type="number" id="rig-years-exp" class="form-control" min="0" max="40">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="rig-availability">Work Capacity / Availability</label>
+                <select id="rig-availability" class="form-control">
+                  <option value="available">Immediate / Active Capacity</option>
+                  <option value="limited">Selective / Limited Capacity</option>
+                  <option value="booked">Fully Booked This Cycle</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="rig-equipment-list">Key Equipment, Workstation & Rig Gear (Comma-separated)</label>
+              <textarea id="rig-equipment-list" class="form-control" placeholder="e.g. Sony A7 IV, DJI Mavic 3 Pro, MacBook Pro M3 Max, Rode Wireless Pro"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="rig-languages-list">Languages Spoken (Comma-separated)</label>
+              <input type="text" id="rig-languages-list" class="form-control" placeholder="English, Malayalam, Arabic">
+            </div>
+
+            <button type="submit" id="btn-save-rig" class="btn btn--primary" style="margin-top:10px;">
+              Submit Capability Updates for Verification →
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 5: PORTFOLIO SHOWCASE -->
+      <section id="tab-showcase" class="tab-pane">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Submit Showcase Project Deliverable</h2>
+          </div>
+
+          <form id="form-add-showcase">
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="showcase-title">Project Title</label>
+                <input type="text" id="showcase-title" class="form-control" placeholder="Fintech Design System 2026" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="showcase-type">Media Format</label>
+                <select id="showcase-type" class="form-control">
+                  <option value="image">Image / High-Res Visual</option>
+                  <option value="video">Showreel / Motion Clip</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="showcase-url">Direct Media URL (Image or Hosted Video)</label>
+              <input type="url" id="showcase-url" class="form-control" placeholder="https://..." required>
+            </div>
+
+            <div class="form-group">
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; color:var(--mist); cursor:pointer;">
+                <input type="checkbox" id="showcase-wide" style="accent-color:var(--fire);">
+                Display as Wide Aspect Ratio (16:9 span in public gallery)
+              </label>
+            </div>
+
+            <button type="submit" id="btn-submit-showcase" class="btn btn--primary" style="margin-top:10px;">
+              Submit Project Deliverable for Moderation →
+            </button>
+          </form>
+        </div>
+
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Existing Showcase Items</h2>
+          </div>
+          <table class="showcase-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Layout</th>
+                <th>Moderation Status</th>
+              </tr>
+            </thead>
+            <tbody id="dash-showcase-tbody">
+              <tr>
+                <td colspan="4" style="text-align:center; color:var(--mist); padding:24px;">No showcase items submitted yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 6: SETTINGS -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Security & Account Credentials</h2>
+          </div>
+
+          <form id="form-update-password">
+            <div class="form-group">
+              <label class="form-label" for="set-new-pwd">Change Password</label>
+              <input type="password" id="set-new-pwd" class="form-control" placeholder="New password (min 8 characters)" minlength="8" required>
+            </div>
+            <button type="submit" id="btn-save-pwd" class="btn btn--primary">
+              Update Password
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    let currentAppRecord = null;
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Authenticate Session
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.replace('/collective/login');
+        return;
+      }
+
+      currentUser = session.user;
+
+      // 2. Tab Navigation
+      document.querySelectorAll('.dash-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const tab = item.dataset.tab;
+          document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+          item.classList.add('active');
+          const targetPane = document.getElementById(`tab-${tab}`);
+          if (targetPane) targetPane.classList.add('active');
+
+          const titles = {
+            overview: 'Dashboard Overview',
+            profile: 'My Profile',
+            craft: 'Skills & Craft',
+            capabilities: 'Equipment & Rig',
+            showcase: 'Portfolio Showcase',
+            settings: 'Account Settings'
+          };
+          document.getElementById('page-heading').textContent = titles[tab] || 'Creator Dashboard';
+        });
+      });
+
+      // 3. Logout handler
+      document.getElementById('btn-dash-logout').addEventListener('click', async () => {
+        await supabaseClient.auth.signOut();
+        window.location.replace('/collective/login');
+      });
+
+      // 4. Fetch Creator Application & Profile Details
+      await loadCreatorData();
+
+      // 5. Setup Forms
+      setupProfileForm();
+      setupCraftForm();
+      setupRigForm();
+      setupShowcaseForm();
+      setupPasswordForm();
+    });
+
+    async function loadCreatorData() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('creator_applications')
+          .select('*')
+          .or(`auth_user_id.eq.${currentUser.id},email.eq.${currentUser.email}`)
+          .single();
+
+        if (error || !data) {
+          alert('No associated creator application profile found for this account.');
+          return;
+        }
+
+        currentAppRecord = data;
+
+        // Populate User display
+        const pData = data.profile_data || {};
+        const memberId = pData.member_id || `YWC-2026-${String(data.id).padStart(4, '0')}`;
+        document.getElementById('user-display-name').textContent = data.full_name;
+        document.getElementById('user-display-mid').textContent = memberId;
+
+        // Overview stats
+        document.getElementById('stat-primary-craft').textContent = pData.primary_specialization || (data.categories && data.categories[0]) || 'Collective Talent';
+        
+        let showcaseItems = [];
+        if (Array.isArray(data.portfolio_links)) showcaseItems = data.portfolio_links;
+        else if (typeof data.portfolio_links === 'string') {
+          try { showcaseItems = JSON.parse(data.portfolio_links) || []; } catch(e){}
+        }
+        const publishedCount = showcaseItems.filter(i => i.approved).length;
+        document.getElementById('stat-showcase-count').textContent = `${publishedCount} Published (${showcaseItems.length} Total)`;
+
+        // Public profile link
+        const btnPublic = document.getElementById('btn-view-public-profile');
+        btnPublic.href = `/creators/${data.slug || 'sinan-k'}`;
+
+        // Populate Form Fields
+        // Profile
+        document.getElementById('prof-fullname').value = data.full_name || '';
+        document.getElementById('prof-location').value = [data.city, data.country].filter(Boolean).join(', ');
+        document.getElementById('prof-bio').value = data.bio || '';
+        document.getElementById('prof-portfolio-url').value = data.portfolio_url || data.website || '';
+        document.getElementById('prof-instagram').value = data.instagram || '';
+
+        // Craft
+        document.getElementById('craft-primary-spec').value = pData.primary_specialization || (data.categories && data.categories[0]) || '';
+        document.getElementById('craft-skills-list').value = (pData.additional_skills || []).join(', ');
+
+        // Rig
+        document.getElementById('rig-years-exp').value = data.years_experience || 1;
+        document.getElementById('rig-availability').value = data.availability || 'limited';
+        document.getElementById('rig-equipment-list').value = Array.isArray(data.equipment) ? data.equipment.join(', ') : (data.equipment || '');
+        document.getElementById('rig-languages-list').value = Array.isArray(data.languages) ? data.languages.join(', ') : (data.languages || '');
+
+        // Render Showcase items table
+        renderShowcaseTable(showcaseItems);
+
+      } catch (e) {
+        console.error('Error loading creator dashboard data:', e);
+      }
+    }
+
+    function renderShowcaseTable(items) {
+      const tbody = document.getElementById('dash-showcase-tbody');
+      tbody.innerHTML = '';
+      if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--mist); padding:24px;">No showcase items submitted yet.</td></tr>';
+        return;
+      }
+
+      items.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        const isApproved = Boolean(item.approved);
+        const statusHtml = isApproved 
+          ? '<span class="badge-status active">Published Publicly</span>' 
+          : '<span class="badge-status pending">Pending Admin Moderation</span>';
+
+        tr.innerHTML = `
+          <td><strong>${item.title || 'Untitled'}</strong></td>
+          <td><span style="text-transform:uppercase; font-size:0.75rem; color:var(--mist);">${item.type || 'image'}</span></td>
+          <td>${item.wide ? 'Wide (16:9)' : 'Square (1:1)'}</td>
+          <td>${statusHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setupProfileForm() {
+      const form = document.getElementById('form-update-profile');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-profile');
+        btn.disabled = true;
+        btn.textContent = 'Submitting Revision...';
+
+        const locationRaw = document.getElementById('prof-location').value.split(',');
+        const city = (locationRaw[0] || '').trim();
+        const country = (locationRaw[1] || '').trim();
+
+        const pendingUpdate = {
+          full_name: document.getElementById('prof-fullname').value.trim(),
+          city: city,
+          country: country,
+          bio: document.getElementById('prof-bio').value.trim(),
+          portfolio_url: document.getElementById('prof-portfolio-url').value.trim(),
+          instagram: document.getElementById('prof-instagram').value.trim(),
+          submitted_at: new Date().toISOString()
+        };
+
+        const existingProfileData = currentAppRecord.profile_data || {};
+        existingProfileData.pending_profile_revision = pendingUpdate;
+
+        const { error } = await supabaseClient
+          .from('creator_applications')
+          .update({ profile_data: existingProfileData })
+          .eq('id', currentAppRecord.id);
+
+        btn.disabled = false;
+        btn.textContent = 'Submit Profile Revision for Admin Approval →';
+
+        if (error) {
+          alert('Submission error: ' + error.message);
+        } else {
+          alert('Profile revision submitted! An administrator will review and approve changes prior to public directory update.');
+          document.getElementById('stat-revision-status').textContent = 'Staged for Review';
+          document.getElementById('profile-revision-badge').style.display = 'inline-flex';
+        }
+      });
+    }
+
+    function setupCraftForm() {
+      const form = document.getElementById('form-update-skills');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-craft');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        const primarySpec = document.getElementById('craft-primary-spec').value.trim();
+        const skillsList = document.getElementById('craft-skills-list').value.split(',').map(s => s.trim()).filter(Boolean);
+
+        const existingProfileData = currentAppRecord.profile_data || {};
+        existingProfileData.pending_craft_revision = {
+          primary_specialization: primarySpec,
+          additional_skills: skillsList,
+          submitted_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient
+          .from('creator_applications')
+          .update({ profile_data: existingProfileData })
+          .eq('id', currentAppRecord.id);
+
+        btn.disabled = false;
+        btn.textContent = 'Request Skill Stack Update →';
+
+        if (error) {
+          alert('Submission error: ' + error.message);
+        } else {
+          alert('Skills update staged for administrator moderation.');
+        }
+      });
+    }
+
+    function setupRigForm() {
+      const form = document.getElementById('form-update-rig');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-rig');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        const yearsExp = parseInt(document.getElementById('rig-years-exp').value, 10) || 1;
+        const availability = document.getElementById('rig-availability').value;
+        const equipment = document.getElementById('rig-equipment-list').value.split(',').map(s => s.trim()).filter(Boolean);
+        const languages = document.getElementById('rig-languages-list').value.split(',').map(s => s.trim()).filter(Boolean);
+
+        const existingProfileData = currentAppRecord.profile_data || {};
+        existingProfileData.pending_rig_revision = {
+          years_experience: yearsExp,
+          availability,
+          equipment,
+          languages,
+          submitted_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient
+          .from('creator_applications')
+          .update({ profile_data: existingProfileData })
+          .eq('id', currentAppRecord.id);
+
+        btn.disabled = false;
+        btn.textContent = 'Submit Capability Updates for Verification →';
+
+        if (error) {
+          alert('Submission error: ' + error.message);
+        } else {
+          alert('Equipment & Rig updates staged for administrator approval.');
+        }
+      });
+    }
+
+    function setupShowcaseForm() {
+      const form = document.getElementById('form-add-showcase');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-showcase');
+        btn.disabled = true;
+        btn.textContent = 'Staging Deliverable...';
+
+        const title = document.getElementById('showcase-title').value.trim();
+        const type = document.getElementById('showcase-type').value;
+        const url = document.getElementById('showcase-url').value.trim();
+        const wide = document.getElementById('showcase-wide').checked;
+
+        let showcaseItems = [];
+        if (Array.isArray(currentAppRecord.portfolio_links)) showcaseItems = [...currentAppRecord.portfolio_links];
+        else if (typeof currentAppRecord.portfolio_links === 'string') {
+          try { showcaseItems = JSON.parse(currentAppRecord.portfolio_links) || []; } catch(e){}
+        }
+
+        const newItem = {
+          title,
+          type,
+          url,
+          wide,
+          approved: false, // Mandatory: unapproved until vetted by Admin
+          submitted_at: new Date().toISOString()
+        };
+
+        showcaseItems.push(newItem);
+
+        const { error } = await supabaseClient
+          .from('creator_applications')
+          .update({ portfolio_links: showcaseItems })
+          .eq('id', currentAppRecord.id);
+
+        btn.disabled = false;
+        btn.textContent = 'Submit Project Deliverable for Moderation →';
+
+        if (error) {
+          alert('Submission error: ' + error.message);
+        } else {
+          alert('Showcase deliverable added to moderation queue! Admin will inspect media before it appears on your public profile.');
+          form.reset();
+          currentAppRecord.portfolio_links = showcaseItems;
+          renderShowcaseTable(showcaseItems);
+        }
+      });
+    }
+
+    function setupPasswordForm() {
+      const form = document.getElementById('form-update-password');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-pwd');
+        btn.disabled = true;
+        btn.textContent = 'Updating...';
+
+        const newPwd = document.getElementById('set-new-pwd').value;
+        const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+
+        btn.disabled = false;
+        btn.textContent = 'Update Password';
+
+        if (error) {
+          alert('Password update error: ' + error.message);
+        } else {
+          alert('Password updated successfully.');
+          form.reset();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

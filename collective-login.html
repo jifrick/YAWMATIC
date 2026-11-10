@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Portal Login — YAWMATIC Collective</title>
+  <meta name="description" content="Sign in to your YAWMATIC Collective Creator Dashboard.">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 120px 24px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+    .auth-badge {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--fire);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fire);
+    }
+    .auth-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--volt);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .auth-subtitle {
+      font-size: 0.88rem;
+      color: var(--mist);
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--mist);
+    }
+    .form-input {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      color: var(--volt);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--fire);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .auth-footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+    .auth-footer a {
+      color: var(--mist);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+    .auth-footer a:hover {
+      color: var(--fire);
+    }
+    .auth-error {
+      background: rgba(255, 23, 68, 0.1);
+      border: 1px solid rgba(255, 23, 68, 0.3);
+      color: #ff5252;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      margin-bottom: 18px;
+      display: none;
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <!-- Navbar -->
+  <nav class="navbar magnetic-wrap">
+    <a href="/" class="navbar__logo magnetic">
+      <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img">
+    </a>
+    <ul class="navbar__menu">
+      <li><a href="/" class="navbar__link magnetic">Home</a></li>
+      <li><a href="/creators/browse" class="navbar__link magnetic">Collective</a></li>
+      <li><a href="/creators/apply" class="navbar__link magnetic">Apply</a></li>
+    </ul>
+    <div class="magnetic-wrap navbar__cta">
+      <a href="/contact" class="btn btn--ghost magnetic">Let's Talk →</a>
+    </div>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-badge">Collective Portal</div>
+      <h1 class="auth-title">Creator Login</h1>
+      <p class="auth-subtitle">Access your verified YAWMATIC Collective Dashboard to manage your profile, equipment specs, and showcase projects.</p>
+
+      <div id="auth-error-box" class="auth-error"></div>
+
+      <form id="creator-login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-email">Approved Member Email</label>
+          <input type="email" id="login-email" class="form-input" placeholder="creator@domain.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label class="form-label" for="login-password">Password</label>
+            <a href="/collective/forgot-password" style="font-size:0.75rem; color:var(--fire); text-decoration:none;">Forgot?</a>
+          </div>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+          Sign In to Dashboard →
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span>Not yet approved?</span>
+        <a href="/creators/apply">Submit Application →</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check existing session
+      if (supabaseClient) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          window.location.replace('/collective/dashboard');
+          return;
+        }
+      }
+
+      const form = document.getElementById('creator-login-form');
+      const errBox = document.getElementById('auth-error-box');
+      const submitBtn = document.getElementById('btn-login-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Authenticating...';
+
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        try {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+
+          // Verify if user is approved collective member or admin
+          const userId = data.user.id;
+          const { data: appData, error: appErr } = await supabaseClient
+            .from('creator_applications')
+            .select('id, status, slug')
+            .or(`auth_user_id.eq.${userId},email.eq.${email}`)
+            .single();
+
+          if (appData && appData.status !== 'approved') {
+            await supabaseClient.auth.signOut();
+            throw new Error('Your application is still under review or pending administrator approval.');
+          }
+
+          window.location.replace('/collective/dashboard');
+        } catch (err) {
+          errBox.textContent = err.message || 'Authentication failed. Please verify credentials.';
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In to Dashboard →';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

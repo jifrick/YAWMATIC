@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activate Membership — YAWMATIC Collective</title>
+  <meta name="description" content="Set up your password and activate your YAWMATIC Collective Creator Account.">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/logo_y_only.png">
+  <link rel="apple-touch-icon" href="/logo_y_only.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 120px 24px 60px;
+      position: relative;
+      z-index: 2;
+    }
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+    .auth-badge {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--fire);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fire);
+    }
+    .auth-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--volt);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .auth-subtitle {
+      font-size: 0.88rem;
+      color: var(--mist);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .member-id-pill {
+      background: rgba(255, 90, 31, 0.1);
+      border: 1px solid rgba(255, 90, 31, 0.3);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--fire);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--mist);
+    }
+    .form-input {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      color: var(--volt);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition-fast);
+    }
+    .form-input:focus {
+      border-color: var(--fire);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .auth-error {
+      background: rgba(255, 23, 68, 0.1);
+      border: 1px solid rgba(255, 23, 68, 0.3);
+      color: #ff5252;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .auth-success {
+      background: rgba(0, 230, 118, 0.1);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      color: #00e676;
+      padding: 14px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="loading">
+
+  <nav class="navbar magnetic-wrap">
+    <a href="/" class="navbar__logo magnetic">
+      <img src="/logo_dark_theme.png" alt="YAWMATIC" class="logo-wordmark-img">
+    </a>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-badge">Member Activation</div>
+      <h1 class="auth-title">Set Up Account</h1>
+      <p class="auth-subtitle">Congratulations on being vetted for the YAWMATIC Collective. Choose a secure password to activate your Creator Dashboard.</p>
+
+      <div id="member-pill-box" class="member-id-pill" style="display:none;">
+        <span>MEMBER ID:</span> <span id="display-member-id">YWC-2026-0005</span>
+      </div>
+
+      <div id="auth-error-box" class="auth-error"></div>
+      <div id="auth-success-box" class="auth-success">
+        ✓ Your Creator account is active! Redirecting to Dashboard...
+      </div>
+
+      <form id="creator-activate-form">
+        <div class="form-group">
+          <label class="form-label" for="act-email">Approved Email</label>
+          <input type="email" id="act-email" class="form-input" placeholder="creator@domain.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="act-password">Create New Password</label>
+          <input type="password" id="act-password" class="form-input" placeholder="Minimum 8 characters" minlength="8" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="act-password-confirm">Confirm Password</label>
+          <input type="password" id="act-password-confirm" class="form-input" placeholder="Repeat password" minlength="8" required autocomplete="new-password">
+        </div>
+
+        <button type="submit" id="btn-act-submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+          Activate & Open Dashboard →
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const emailParam = urlParams.get('email');
+      const memberIdParam = urlParams.get('mid');
+
+      if (emailParam) {
+        document.getElementById('act-email').value = emailParam;
+      }
+      if (memberIdParam) {
+        document.getElementById('display-member-id').textContent = memberIdParam;
+        document.getElementById('member-pill-box').style.display = 'inline-flex';
+      }
+
+      const form = document.getElementById('creator-activate-form');
+      const errBox = document.getElementById('auth-error-box');
+      const successBox = document.getElementById('auth-success-box');
+      const submitBtn = document.getElementById('btn-act-submit');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errBox.style.display = 'none';
+
+        const email = document.getElementById('act-email').value.trim();
+        const pwd = document.getElementById('act-password').value;
+        const pwdConfirm = document.getElementById('act-password-confirm').value;
+
+        if (pwd !== pwdConfirm) {
+          errBox.textContent = 'Passwords do not match.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Activating Membership...';
+
+        try {
+          // 1. Verify that email belongs to an approved application
+          const { data: appData, error: appErr } = await supabaseClient
+            .from('creator_applications')
+            .select('id, full_name, status, profile_data, auth_user_id')
+            .eq('email', email)
+            .single();
+
+          if (appErr || !appData) {
+            throw new Error('No creator record matches this email address. Please apply first.');
+          }
+
+          if (appData.status !== 'approved') {
+            throw new Error('Your application status is currently: ' + (appData.status || 'pending') + '. You can only activate an account after admin approval.');
+          }
+
+          // 2. Register/Sign up or Update User in Supabase Auth
+          let authUser = null;
+          const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({
+            email,
+            password: pwd,
+            options: {
+              data: {
+                full_name: appData.full_name,
+                role: 'creator',
+                application_id: appData.id
+              }
+            }
+          });
+
+          if (signUpErr) {
+            // If already registered, attempt signIn and password update
+            if (signUpErr.message.includes('already registered')) {
+              const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password: pwd });
+              if (signInErr) {
+                // If wrong password, send password reset link
+                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/collective/activate' });
+                throw new Error('This account was already created. A password reset link has been dispatched to your email.');
+              }
+              authUser = signInData.user;
+            } else {
+              throw signUpErr;
+            }
+          } else {
+            authUser = signUpData.user;
+          }
+
+          // 3. Link auth_user_id into creator_applications and set status to active
+          const existingProfileData = appData.profile_data || {};
+          existingProfileData.account_status = 'active';
+          existingProfileData.activated_at = new Date().toISOString();
+
+          await supabaseClient
+            .from('creator_applications')
+            .update({
+              profile_data: existingProfileData
+            })
+            .eq('id', appData.id);
+
+          form.style.display = 'none';
+          successBox.style.display = 'block';
+
+          setTimeout(() => {
+            window.location.replace('/collective/dashboard');
+          }, 1500);
+
+        } catch (err) {
+          errBox.textContent = err.message || 'Activation failed. Please contact admin.';
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Activate & Open Dashboard →';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

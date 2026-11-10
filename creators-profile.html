@@ -1007,9 +1007,10 @@
             if (locationDotEl) locationDotEl.style.display = 'none';
           }
 
-          // Primary Professional Role
+          // Primary Professional Role (Display primary specialization or lead category)
+          const pData = c.profile_data || {};
           const categories = Array.isArray(c.categories) ? c.categories : [];
-          const primaryRole = categories.length > 0 ? categories[0].replace(/-/g, ' ') : 'Collective Talent';
+          const primaryRole = pData.primary_specialization || (categories.length > 0 ? categories[0].replace(/-/g, ' ') : 'Collective Talent');
           const roleEyebrow = document.getElementById('creator-role-eyebrow');
           if (roleEyebrow) {
             roleEyebrow.textContent = primaryRole.toUpperCase();
@@ -1051,17 +1052,23 @@
             btnDiscuss.href = `/contact?talent=${encodeURIComponent(c.full_name)}&id=${encodeURIComponent(c.id)}`;
           }
 
-          // 2. Populate Skills Section (B)
+          // 2. Populate Skills Section (B) (Include both categorized skills & additional submitted tools)
           const skillsSection = document.getElementById('section-skills');
           const skillsCloud = document.getElementById('creator-skills-cloud');
+          const additionalSkills = Array.isArray(pData.additional_skills) ? pData.additional_skills : [];
+          const allSkills = Array.from(new Set([
+            ...categories.map(cat => cat.replace(/-/g, ' ')),
+            ...additionalSkills
+          ])).filter(Boolean);
+
           if (skillsSection && skillsCloud) {
-            if (categories.length > 0) {
+            if (allSkills.length > 0) {
               skillsSection.style.display = 'flex';
               skillsCloud.innerHTML = '';
-              categories.forEach(cat => {
+              allSkills.forEach(skill => {
                 const tag = document.createElement('span');
                 tag.className = 'skill-tag';
-                tag.textContent = cat.replace(/-/g, ' ');
+                tag.textContent = skill;
                 skillsCloud.appendChild(tag);
               });
             } else {

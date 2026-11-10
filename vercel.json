@@ -27,6 +27,10 @@
     { "source": "/creators/copywriter", "destination": "/creators-category.html" },
     { "source": "/creators/ai-creative-specialist", "destination": "/creators-category.html" },
     { "source": "/creators/:slug", "destination": "/creators-profile.html" },
+    { "source": "/collective/login", "destination": "/collective-login.html" },
+    { "source": "/collective/activate", "destination": "/collective-activate.html" },
+    { "source": "/collective/forgot-password", "destination": "/collective-forgot-password.html" },
+    { "source": "/collective/dashboard", "destination": "/collective-dashboard.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/admin/:path*", "destination": "/admin.html" }
   ]

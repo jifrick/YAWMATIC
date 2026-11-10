@@ -1889,14 +1889,23 @@
       const equipmentText = (c.equipment || []).join(', ');
 
       content.innerHTML = `
+      const pData = c.profile_data || {};
+      const memberId = pData.member_id || `YWC-2026-${String(c.id).padStart(4, '0')}`;
+      const primarySpec = pData.primary_specialization || (c.categories && c.categories[0]) || 'Collective Specialist';
+      const additionalSkillsText = (pData.additional_skills || []).join(', ') || 'Standard Core Skills';
+      const accountStatus = pData.account_status || (c.status === 'approved' ? 'invitation_pending' : 'unprovisioned');
+
+      content.innerHTML = `
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; border-bottom: 1px solid var(--border-color); padding-bottom:20px;">
           <div>
             <span class="stat-label">Full Name</span>
             <div style="font-weight:700; font-size:1.1rem; margin-top:4px;">${c.full_name}</div>
+            <div style="font-size:0.75rem; color:var(--brand-orange); font-weight:700;">Member ID: ${memberId}</div>
           </div>
           <div>
             <span class="stat-label">Location</span>
             <div style="font-weight:700; font-size:1.1rem; margin-top:4px; text-transform:capitalize;">${c.city}, ${c.country}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Account: ${accountStatus.toUpperCase()}</div>
           </div>
           <div>
             <span class="stat-label">Email</span>
@@ -1909,7 +1918,9 @@
         </div>
 
         <div style="display:flex; flex-direction:column; gap:12px;">
-          <div><span class="stat-label">Categories:</span> <span style="font-weight:700;">${categoriesText}</span></div>
+          <div><span class="stat-label">Primary Craft:</span> <span style="font-weight:700; color:var(--brand-orange);">${primarySpec}</span></div>
+          <div><span class="stat-label">Additional Skills:</span> <span style="color:var(--text-main); font-weight:600;">${additionalSkillsText}</span></div>
+          <div><span class="stat-label">Spheres & Categories:</span> <span style="font-weight:700;">${categoriesText}</span></div>
           <div><span class="stat-label">Years of Experience:</span> <span style="font-weight:700;">${c.years_experience} Years</span></div>
           <div><span class="stat-label">Biography:</span> <p style="margin:4px 0; color:var(--text-muted); line-height:1.5;">${c.bio || 'None'}</p></div>
           <div><span class="stat-label">Equipment List:</span> <span style="color:var(--text-muted);">${equipmentText || 'None'}</span></div>
@@ -1923,6 +1934,21 @@
               <span>Website: ${c.website || 'N/A'}</span>
             </div>
           </div>
+
+          ${pData.pending_profile_revision ? `
+            <div style="background:rgba(255, 90, 31, 0.08); border:1px solid rgba(255, 90, 31, 0.3); border-radius:6px; padding:16px; margin-top:10px;">
+              <div style="font-weight:800; color:var(--brand-orange); font-size:0.85rem; text-transform:uppercase; margin-bottom:8px;">★ Pending Profile Revision Staged by Member</div>
+              <div style="font-size:0.85rem; color:var(--text-main); line-height:1.5;">
+                <strong>Name:</strong> ${pData.pending_profile_revision.full_name || 'Unchanged'}<br>
+                <strong>Location:</strong> ${pData.pending_profile_revision.city}, ${pData.pending_profile_revision.country}<br>
+                <strong>Bio:</strong> ${pData.pending_profile_revision.bio || 'Unchanged'}
+              </div>
+              <div style="display:flex; gap:10px; margin-top:12px;">
+                <button onclick="approveMemberRevision(${c.id})" class="btn-main" style="padding:4px 10px; font-size:0.75rem;">Approve & Publish Revision</button>
+                <button onclick="rejectMemberRevision(${c.id})" class="btn-main btn-ghost" style="padding:4px 10px; font-size:0.75rem;">Reject Revision</button>
+              </div>
+            </div>
+          ` : ''}
         </div>
 
         <div class="form-group" style="margin-top:10px;">
@@ -1935,7 +1961,10 @@
             <button onclick="rejectApplication(${c.id})" class="btn-main" style="background:#FF1744;">Reject</button>
             <button onclick="requestChangesApplication(${c.id})" class="btn-main btn-ghost">Request Changes</button>
           </div>
-          <button onclick="approveApplication(${c.id})" class="btn-main">Approve Profile</button>
+          <div style="display:flex; gap:10px;">
+            <button onclick="resendMemberActivation(${c.id})" class="btn-main btn-ghost" style="border-color:var(--brand-orange); color:var(--brand-orange);">Copy/Resend Activation</button>
+            <button onclick="approveApplication(${c.id})" class="btn-main">Approve Profile</button>
+          </div>
         </div>
       `;
 
@@ -1944,10 +1973,22 @@
 
     async function approveApplication(id) {
       const notes = document.getElementById('app-vetting-notes').value;
+      const { data: appRecord } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      
+      const memberId = (appRecord && appRecord.profile_data && appRecord.profile_data.member_id) 
+        ? appRecord.profile_data.member_id 
+        : `YWC-2026-${String(id).padStart(4, '0')}`;
+
+      const existingProfileData = (appRecord && appRecord.profile_data) || {};
+      existingProfileData.member_id = memberId;
+      existingProfileData.account_status = existingProfileData.account_status || 'invitation_pending';
+      existingProfileData.invitation_sent_at = new Date().toISOString();
+
       const { error } = await supabaseClient.from('creator_applications').update({ 
         status: 'approved',
         internal_notes: notes,
-        verified: true 
+        verified: true,
+        profile_data: existingProfileData
       }).eq('id', id);
 
       if (error) {
@@ -1955,7 +1996,63 @@
         return;
       }
 
-      logActivity('Approved Creator Application', 'creator_applications', id);
+      logActivity('Approved Creator Application & Provisioned Membership', 'creator_applications', id, { memberId });
+      closeModal('modal-app-details');
+      loadApplications();
+
+      // Show activation link
+      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(appRecord.email)}&mid=${memberId}`;
+      prompt('Application approved and Member ID assigned (' + memberId + '). Activation link generated for candidate:', actUrl);
+    }
+
+    async function resendMemberActivation(id) {
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (!c) return;
+      const pData = c.profile_data || {};
+      const memberId = pData.member_id || `YWC-2026-${String(c.id).padStart(4, '0')}`;
+      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(c.email)}&mid=${memberId}`;
+      prompt('Copy member account activation URL:', actUrl);
+    }
+
+    async function approveMemberRevision(id) {
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (!c || !c.profile_data || !c.profile_data.pending_profile_revision) return;
+
+      const rev = c.profile_data.pending_profile_revision;
+      const pData = { ...c.profile_data };
+      delete pData.pending_profile_revision;
+
+      const { error } = await supabaseClient.from('creator_applications').update({
+        full_name: rev.full_name || c.full_name,
+        city: rev.city || c.city,
+        country: rev.country || c.country,
+        bio: rev.bio || c.bio,
+        portfolio_url: rev.portfolio_url || c.portfolio_url,
+        instagram: rev.instagram || c.instagram,
+        profile_data: pData
+      }).eq('id', id);
+
+      if (error) {
+        alert('Error approving revision: ' + error.message);
+      } else {
+        alert('Member profile revision approved and published to Collective directory.');
+        logActivity('Approved Member Profile Revision', 'creator_applications', id);
+        closeModal('modal-app-details');
+        loadApplications();
+      }
+    }
+
+    async function rejectMemberRevision(id) {
+      if (!confirm('Reject this staged revision?')) return;
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (!c || !c.profile_data) return;
+
+      const pData = { ...c.profile_data };
+      delete pData.pending_profile_revision;
+
+      await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
+      alert('Revision rejected.');
+      logActivity('Rejected Member Profile Revision', 'creator_applications', id);
       closeModal('modal-app-details');
       loadApplications();
     }

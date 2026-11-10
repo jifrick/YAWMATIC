@@ -278,6 +278,141 @@
       font-weight: bold;
     }
 
+    /* Primary Specialization Cards */
+    .specialization-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    @media(max-width: 540px) {
+      .specialization-grid { grid-template-columns: 1fr; }
+    }
+    .spec-card-label {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--mist);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      user-select: none;
+    }
+    .spec-card-label:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 90, 31, 0.4);
+      color: var(--volt);
+    }
+    .spec-radio {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--glass-border);
+      border-radius: 50%;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: var(--transition-fast);
+    }
+    .spec-radio:checked {
+      border-color: var(--fire);
+    }
+    .spec-radio:checked::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--fire);
+      border-radius: 50%;
+    }
+    .spec-card-label:has(.spec-radio:checked) {
+      background: rgba(255, 90, 31, 0.08);
+      border-color: var(--fire);
+      color: var(--volt);
+      font-weight: 600;
+    }
+
+    /* Domain-grouped skills tabs/sections */
+    .skills-filter-input {
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      padding: 10px 14px;
+      border-radius: 4px;
+      color: var(--volt);
+      font-size: 0.88rem;
+      width: 100%;
+      outline: none;
+    }
+    .skills-filter-input:focus {
+      border-color: var(--fire);
+    }
+    .skill-domain-group {
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .skill-domain-title {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--fire);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .skill-domain-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--fire);
+    }
+    .skills-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-chip {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--mist);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-fast);
+      user-select: none;
+    }
+    .skill-chip:hover {
+      border-color: rgba(255, 90, 31, 0.3);
+      color: var(--volt);
+    }
+    .skill-chip input {
+      display: none;
+    }
+    .skill-chip.active {
+      background: rgba(255, 90, 31, 0.15);
+      border-color: var(--fire);
+      color: #fff;
+      font-weight: 600;
+    }
+
     /* Buttons Row */
     .btn-row {
       display: flex;
@@ -559,16 +694,47 @@
           </div>
         </div>
 
-        <!-- STEP 2: CRAFT -->
+        <!-- STEP 2: CRAFT & SPECIALIZATION -->
         <div class="form-step" data-step="2">
-          <h2 class="step-title">2. Your Craft</h2>
+          <h2 class="step-title">2. Your Craft & Specialization</h2>
+          
+          <!-- A. Primary Professional Specialization (Exactly 1) -->
           <div class="form-group">
-            <label class="form-label">Core Creative Spheres (Select All That Apply)</label>
-            <div id="category-checkbox-grid" class="checkbox-grid">
-              <!-- Seeded dynamically -->
+            <label class="form-label" style="color: var(--volt);">
+              A. Primary Professional Specialization <span style="color:var(--fire); font-size:0.75rem;">(Select Exactly One)</span>
+            </label>
+            <p style="font-size:0.82rem; color:var(--mist); margin-top:-4px; margin-bottom:8px;">
+              Your lead identity in the YAWMATIC directory. Clients will identify your profile under this craft.
+            </p>
+            <div id="primary-specialization-grid" class="specialization-grid">
+              <!-- Seeded dynamically with radio controls -->
+            </div>
+            <div id="custom-specialization-wrap" style="display:none; margin-top:10px;">
+              <label class="form-label" for="app-custom-spec">Specify Custom Specialization</label>
+              <input type="text" id="app-custom-spec" class="form-control" placeholder="e.g. Creative Technologist">
             </div>
           </div>
-          <div class="form-group">
+
+          <!-- B. Additional Skills Checklist (Grouped by Domain) -->
+          <div class="form-group" style="margin-top: 24px;">
+            <label class="form-label" style="color: var(--volt);">
+              B. Additional Skills & Technical Stack <span style="color:var(--fire); font-size:0.75rem;">(Select All That Apply)</span>
+            </label>
+            <p style="font-size:0.82rem; color:var(--mist); margin-top:-4px; margin-bottom:12px;">
+              Specific tools, software packages, frameworks, and techniques in your creative arsenal.
+            </p>
+            <input type="text" id="skills-filter-search" class="skills-filter-input" placeholder="Search skills or tools (e.g. Figma, Blender, React, DaVinci)...">
+            <div id="domain-skills-container">
+              <!-- Seeded dynamically by domain -->
+            </div>
+            
+            <div style="margin-top: 10px;">
+              <label class="form-label" for="app-other-skills">Other Skills / Custom Tools (Optional, Comma-separated)</label>
+              <input type="text" id="app-other-skills" class="form-control" placeholder="e.g. Webflow, TouchDesigner, Substance Painter">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 20px;">
             <label class="form-label" for="app-yearsExperience">Years of Professional Experience</label>
             <select id="app-yearsExperience" class="form-control" required>
               <option value="1">1-2 Years</option>
@@ -736,48 +902,147 @@
     const totalSteps = 4;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Build category checkboxes from static list (no API needed)
-      const CATEGORIES = [
-        { slug: 'photography',          name: 'Photography' },
-        { slug: 'videography',          name: 'Videography' },
-        { slug: 'drone-operator',       name: 'Drone Operator' },
-        { slug: 'video-editor',         name: 'Video Editor' },
-        { slug: 'motion-designer',      name: 'Motion Designer' },
-        { slug: 'graphic-designer',     name: 'Graphic Designer' },
-        { slug: 'brand-designer',       name: 'Brand Designer' },
-        { slug: 'ui-ux-designer',       name: 'UI/UX Designer' },
-        { slug: 'web-designer',         name: 'Web Designer' },
-        { slug: '3d-artist',            name: '3D Artist' },
-        { slug: 'content-creator',      name: 'Content Creator' },
-        { slug: 'social-media-manager', name: 'Social Media Manager' },
-        { slug: 'copywriter',           name: 'Copywriter' },
-        { slug: 'ai-creative-specialist', name: 'AI Creative Specialist' }
-      ];
+    // Primary Specializations Proposals
+    const PRIMARY_SPECIALIZATIONS = [
+      { id: 'ui-ux-designer', title: 'UI/UX Designer', desc: 'Interfaces, design systems & digital products' },
+      { id: 'web-developer', title: 'Web Developer', desc: 'Modern frontend, backend & JAMstack web builds' },
+      { id: 'full-stack-developer', title: 'Full-Stack Developer', desc: 'End-to-end architectures, APIs & client apps' },
+      { id: 'web-designer', title: 'Web Designer', desc: 'Visual web layouts, interactive sites & aesthetics' },
+      { id: 'graphic-designer', title: 'Graphic Designer', desc: 'Brand assets, identity, print & digital collaterals' },
+      { id: 'brand-designer', title: 'Brand Designer', desc: 'Strategic positioning, logomarks & visual language' },
+      { id: 'video-editor', title: 'Video Editor', desc: 'Commercial cuts, reels, pacing & post-production' },
+      { id: 'videographer', title: 'Videographer', desc: 'Cinematography, lighting & live production capture' },
+      { id: 'photographer', title: 'Photographer', desc: 'Editorial, portrait, architectural & product captures' },
+      { id: 'motion-designer', title: 'Motion Designer', desc: 'Kinetic typography, 2D/3D broadcast & animations' },
+      { id: '3d-artist', title: '3D Artist', desc: 'Hard-surface modeling, spatial CGI & render pipelines' },
+      { id: 'ai-creative-specialist', title: 'AI Creative Specialist', desc: 'Diffusion pipelines, generative video & workflow AI' },
+      { id: 'drone-operator', title: 'Drone Operator', desc: 'Aerial cinematography, FPV flight & topographical shots' },
+      { id: 'copywriter', title: 'Copywriter', desc: 'Creative scripts, editorial copy & narrative concepts' },
+      { id: 'content-creator', title: 'Content Creator', desc: 'Digital storytelling, formats & creator media' },
+      { id: 'other', title: 'Other Specialization', desc: 'Unique multidisciplinary craft' }
+    ];
 
-      const container = document.getElementById('category-checkbox-grid');
-      CATEGORIES.forEach(cat => {
+    // Structured Domain Skills Catalog
+    const DOMAIN_SKILLS = [
+      {
+        domain: 'Design & Visual Strategy',
+        skills: ['Figma', 'Adobe Photoshop', 'Adobe Illustrator', 'Adobe InDesign', 'UI Design', 'UX Research', 'Wireframing', 'Prototyping', 'Design Systems', 'Branding', 'Typography']
+      },
+      {
+        domain: 'Web & Software Engineering',
+        skills: ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Next.js', 'Vue', 'Node.js', 'Python', 'FastAPI', 'WordPress', 'Supabase', 'PostgreSQL', 'API Integration']
+      },
+      {
+        domain: 'Video, Motion & Post-Production',
+        skills: ['Adobe Premiere Pro', 'After Effects', 'DaVinci Resolve', 'CapCut', 'Video Editing', 'Motion Graphics', 'Color Grading', 'VFX', '3D Animation']
+      },
+      {
+        domain: 'Photography, Camera & Rig',
+        skills: ['Photography', 'Videography', 'Product Photography', 'Portrait Photography', 'Cinematography', 'Studio Lighting', 'Audio Recording', 'Drone Operation']
+      },
+      {
+        domain: '3D Spatial & Generative AI',
+        skills: ['Blender', 'Cinema 4D', '3D Modeling', '3D Rendering', 'AI Image Generation', 'AI Video Generation', 'AI Automation', 'AI Workflow Integration']
+      },
+      {
+        domain: 'Marketing & Digital Narrative',
+        skills: ['SEO', 'Social Media Management', 'Content Strategy', 'Copywriting', 'Digital Marketing', 'Performance Marketing', 'Social Media Design']
+      }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Render Primary Specialization Radio Cards
+      const specGrid = document.getElementById('primary-specialization-grid');
+      const customSpecWrap = document.getElementById('custom-specialization-wrap');
+      const customSpecInput = document.getElementById('app-custom-spec');
+
+      PRIMARY_SPECIALIZATIONS.forEach(spec => {
         const label = document.createElement('label');
-        label.className = 'checkbox-label magnetic';
+        label.className = 'spec-card-label';
         label.innerHTML = `
-          <input type="checkbox" value="${cat.slug}" class="checkbox-input app-category">
-          ${cat.name}
+          <input type="radio" name="primary_specialization" value="${spec.id}" class="spec-radio">
+          <div>
+            <div style="font-size:0.9rem; font-weight:700; color:var(--volt);">${spec.title}</div>
+            <div style="font-size:0.75rem; color:var(--mist);">${spec.desc}</div>
+          </div>
         `;
-        container.appendChild(label);
+        specGrid.appendChild(label);
       });
 
-      // 2. Button navigation
+      // Show/hide custom specialization input
+      specGrid.addEventListener('change', (e) => {
+        if (e.target.name === 'primary_specialization') {
+          if (e.target.value === 'other') {
+            customSpecWrap.style.display = 'block';
+            customSpecInput.focus();
+          } else {
+            customSpecWrap.style.display = 'none';
+          }
+        }
+      });
+
+      // 2. Render Domain-Grouped Additional Skills
+      const skillsContainer = document.getElementById('domain-skills-container');
+      DOMAIN_SKILLS.forEach(grp => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'skill-domain-group';
+        groupEl.innerHTML = `
+          <div class="skill-domain-title">${grp.domain}</div>
+          <div class="skills-chips-wrap">
+            ${grp.skills.map(sk => `
+              <label class="skill-chip">
+                <input type="checkbox" value="${sk}" class="skill-checkbox">
+                <span>+</span> ${sk}
+              </label>
+            `).join('')}
+          </div>
+        `;
+        skillsContainer.appendChild(groupEl);
+      });
+
+      // Active state styling for skill chips
+      skillsContainer.addEventListener('change', (e) => {
+        if (e.target.classList.contains('skill-checkbox')) {
+          const chip = e.target.closest('.skill-chip');
+          if (chip) {
+            chip.classList.toggle('active', e.target.checked);
+            chip.querySelector('span').textContent = e.target.checked ? '✓' : '+';
+          }
+        }
+      });
+
+      // Quick filter search for skills
+      const searchInput = document.getElementById('skills-filter-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const q = e.target.value.toLowerCase().trim();
+          document.querySelectorAll('.skill-domain-group').forEach(grp => {
+            let visibleInGroup = 0;
+            grp.querySelectorAll('.skill-chip').forEach(chip => {
+              const text = chip.textContent.toLowerCase();
+              if (!q || text.includes(q)) {
+                chip.style.display = 'inline-flex';
+                visibleInGroup++;
+              } else {
+                chip.style.display = 'none';
+              }
+            });
+            grp.style.display = visibleInGroup > 0 ? 'block' : 'none';
+          });
+        });
+      }
+
+      // 3. Button navigation
       const btnNext = document.getElementById('btn-next');
       const btnPrev = document.getElementById('btn-prev');
 
       btnNext.addEventListener('click', () => {
         if (currentStep < totalSteps) {
-          // Validate current step fields before going to next
           if (validateStep(currentStep)) {
             currentStep++;
             updateStepView();
           }
         } else {
-          // Final Submit
           if (validateStep(currentStep)) {
             submitApplication();
           }
@@ -815,12 +1080,31 @@
         }
       });
 
-      // Step 2 validation: Must select at least one category checkbox
+      // Step 2 validation: Must select exactly one primary specialization and at least one skill
       if (step === 2) {
-        const checkedCount = document.querySelectorAll('.app-category:checked').length;
-        if (checkedCount === 0) {
+        const primarySelected = document.querySelector('input[name="primary_specialization"]:checked');
+        if (!primarySelected) {
           valid = false;
-          alert('Please select at least one core creative category.');
+          alert('Please select your Primary Professional Specialization (exactly one).');
+          return false;
+        }
+
+        if (primarySelected.value === 'other') {
+          const customVal = document.getElementById('app-custom-spec').value.trim();
+          if (!customVal) {
+            valid = false;
+            document.getElementById('app-custom-spec').style.borderColor = 'var(--fire)';
+            alert('Please specify your custom Primary Specialization.');
+            return false;
+          }
+        }
+
+        const skillsSelected = document.querySelectorAll('.skill-checkbox:checked').length;
+        const otherSkillsVal = document.getElementById('app-other-skills').value.trim();
+        if (skillsSelected === 0 && !otherSkillsVal) {
+          valid = false;
+          alert('Please select at least one additional skill or software tool.');
+          return false;
         }
       }
 
@@ -876,11 +1160,45 @@
       btnNext.disabled = true;
       btnNext.textContent = 'Sending...';
 
-      // Gather categories
-      const categories = [];
-      document.querySelectorAll('.app-category:checked').forEach(cb => {
-        categories.push(cb.value);
+      // Gather Primary Specialization
+      const primaryRadio = document.querySelector('input[name="primary_specialization"]:checked');
+      let primarySpecSlug = primaryRadio ? primaryRadio.value : '';
+      let primarySpecTitle = '';
+      if (primarySpecSlug === 'other') {
+        primarySpecTitle = document.getElementById('app-custom-spec').value.trim() || 'Multidisciplinary Specialist';
+      } else {
+        const found = PRIMARY_SPECIALIZATIONS.find(s => s.id === primarySpecSlug);
+        primarySpecTitle = found ? found.title : primarySpecSlug;
+      }
+
+      // Gather Additional Skills
+      const additionalSkills = [];
+      document.querySelectorAll('.skill-checkbox:checked').forEach(cb => {
+        additionalSkills.push(cb.value);
       });
+      const otherSkillsRaw = document.getElementById('app-other-skills').value;
+      if (otherSkillsRaw.trim()) {
+        otherSkillsRaw.split(',').forEach(s => {
+          const trimmed = s.trim();
+          if (trimmed && !additionalSkills.includes(trimmed)) additionalSkills.push(trimmed);
+        });
+      }
+
+      // Maintain legacy categories array for seamless directory filtering
+      const categories = [primarySpecSlug];
+      // Map domain skills to categories if relevant
+      if (additionalSkills.some(s => ['Figma', 'UI Design', 'Wireframing', 'Prototyping'].includes(s)) && !categories.includes('ui-ux-designer')) {
+        categories.push('ui-ux-designer');
+      }
+      if (additionalSkills.some(s => ['HTML', 'CSS', 'JavaScript', 'React', 'Vue', 'Next.js'].includes(s)) && !categories.includes('web-designer')) {
+        categories.push('web-designer');
+      }
+      if (additionalSkills.some(s => ['Blender', 'Cinema 4D', '3D Modeling'].includes(s)) && !categories.includes('3d-artist')) {
+        categories.push('3d-artist');
+      }
+      if (additionalSkills.some(s => ['AI Image Generation', 'AI Video Generation', 'AI Automation'].includes(s)) && !categories.includes('ai-creative-specialist')) {
+        categories.push('ai-creative-specialist');
+      }
 
       // Split comma-separated equipment and languages
       const equipment = document.getElementById('app-equipment').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -896,7 +1214,9 @@
         phone: phoneE164,
         city: document.getElementById('app-city').value,
         country: document.getElementById('app-country').value,
-        categories,
+        primarySpecialization: primarySpecTitle,
+        additionalSkills: additionalSkills,
+        categories: categories.filter(Boolean),
         yearsExperience: parseInt(document.getElementById('app-yearsExperience').value, 10) || 1,
         equipment,
         languages,
@@ -936,7 +1256,12 @@
         bio:              payload.bio,
         availability:     payload.availability,
         status:           'pending',
-        slug:             slug
+        slug:             slug,
+        profile_data: {
+          primary_specialization: payload.primarySpecialization,
+          additional_skills:      payload.additionalSkills,
+          account_status:         'unprovisioned'
+        }
       };
 
       fetch(`${SUPABASE_URL}/rest/v1/creator_applications`, {
