@@ -754,6 +754,8 @@
 
         <!-- Discovery Form -->
         <form id="discovery-form" novalidate>
+          <!-- Anti-Spam Honeypot Field -->
+          <input type="checkbox" name="botcheck" id="disc-botcheck" style="display:none!important;" tabindex="-1" autocomplete="off">
         
         <!-- STEP 1: Who are you? -->
         <div class="discovery-step active" id="step-1" data-step="1">
@@ -1015,6 +1017,7 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="/js/main.js"></script>
+  <script src="/js/email-service.js"></script>
 
   <!-- Project Discovery Onboarding script -->
   <script>
@@ -1036,7 +1039,31 @@
     const totalSteps = 6;
     let supabaseClient;
 
+    let talentContext = null;
+
     document.addEventListener('DOMContentLoaded', () => {
+      // Check for talent query parameters (Creator Collaboration Inquiry)
+      const urlParams = new URLSearchParams(window.location.search);
+      const talentName = urlParams.get('talent');
+      const talentId = urlParams.get('id');
+      const ref = urlParams.get('ref');
+
+      if (talentName) {
+        talentContext = {
+          name: decodeURIComponent(talentName),
+          id: talentId ? decodeURIComponent(talentId) : ''
+        };
+
+        // Contextualize the hero text
+        const heroTitle = document.querySelector('.contact-hero__title');
+        if (heroTitle) {
+          heroTitle.innerHTML = `COLLABORATE WITH<br><span class="orange">${escapeHtml(talentContext.name).toUpperCase()}</span>`;
+        }
+        const heroSub = document.querySelector('.contact-hero__sub');
+        if (heroSub) {
+          heroSub.textContent = `Discuss your production scope, talent availability, and project terms with YAWMATIC management.`;
+        }
+      }
       // Connect buttons
       const btnNext = document.getElementById('btn-next-step');
       const btnPrev = document.getElementById('btn-prev-step');
@@ -1259,59 +1286,125 @@
       });
     }
 
-    function handleDiscoverySubmit() {
+    async function handleDiscoverySubmit() {
       const submitBtn = document.getElementById('btn-next-step');
       const errBanner = document.getElementById('contact-submission-error');
       if (errBanner) errBanner.style.display = 'none';
 
+      const botcheck = document.getElementById('disc-botcheck') ? document.getElementById('disc-botcheck').checked : false;
+      if (botcheck) {
+        console.warn('Bot detected via honeypot.');
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting Request...';
 
-      // Post to Supabase inquiries table
-      fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
-          client_name: state.name,
-          email: state.email,
-          phone: `${state.phonePrefix} ${state.phoneNum}`,
-          company: state.company,
-          project_type: state.needs.join(', '),
-          budget: state.budget,
-          message: `Timeline: ${state.timeline}\n\nProject Brief:\n${state.details}`,
-          status: 'new'
-        })
-      })
-      .then(res => {
-        if (res.ok || res.status === 201) {
-          showSuccessScreen();
-        } else {
-          if (errBanner) {
-            errBanner.style.display = 'block';
-            errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          } else {
-            alert('Submission could not be completed. Your details are saved on this screen. Please try again or email us.');
-          }
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Retry Submission';
+      // Determine Inquiry Nature & Dynamic Subject
+      let inquiryType = 'Project Inquiry';
+      let subject = `YAWMATIC — New Project Inquiry — ${state.name}`;
+
+      if (talentContext && talentContext.name) {
+        inquiryType = 'Creator Collaboration Inquiry';
+        subject = `YAWMATIC — Creator Collaboration Inquiry — ${talentContext.name}`;
+      }
+
+      // Compile human-readable Web3Forms email fields
+      const web3FormsData = {
+        'Inquiry Type': inquiryType,
+        'Client Name': state.name,
+        'Email Address': state.email,
+        'Phone Number': `${state.phonePrefix} ${state.phoneNum}`,
+        'Company / Organization': state.company,
+        'Services Requested': state.needs.join(', ') || 'Not specified',
+        'Budget Tier': state.budget || 'Not specified',
+        'Timeline': state.timeline || 'Not specified',
+        'Project Brief': state.details || 'None provided'
+      };
+
+      if (talentContext && talentContext.name) {
+        web3FormsData['Target Creator'] = talentContext.name;
+        if (talentContext.id) {
+          web3FormsData['Creator ID'] = talentContext.id;
         }
-      })
-      .catch(err => {
-        console.warn('Inquiry endpoint offline or unreachable:', err);
+      }
+
+      // 1. Dispatch Web3Forms Email
+      let emailSuccess = false;
+      try {
+        if (window.YawmaticEmailService && window.YawmaticEmailService.send) {
+          const emailRes = await window.YawmaticEmailService.send({
+            subject: subject,
+            fromName: 'YAWMATIC Website',
+            replyTo: state.email,
+            botcheck: '',
+            data: web3FormsData
+          });
+          emailSuccess = emailRes.success;
+        } else {
+          // Direct fallback fetch to Web3Forms API
+          const directRes = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              access_key: '43189427-c23a-4e86-9c89-6a1044794528',
+              subject: subject,
+              from_name: 'YAWMATIC Website',
+              replyto: state.email,
+              ...web3FormsData
+            })
+          });
+          const json = await directRes.json().catch(() => ({}));
+          emailSuccess = directRes.ok && json.success;
+        }
+      } catch (err) {
+        console.warn('Web3Forms dispatch error:', err);
+      }
+
+      // 2. Persist to Supabase Inquiries table
+      let dbSuccess = false;
+      try {
+        const fullMessage = (talentContext && talentContext.name)
+          ? `[CREATOR COLLABORATION: ${talentContext.name}]\nTimeline: ${state.timeline}\n\nProject Brief:\n${state.details}`
+          : `Timeline: ${state.timeline}\n\nProject Brief:\n${state.details}`;
+
+        const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/inquiries`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            client_name: state.name,
+            email: state.email,
+            phone: `${state.phonePrefix} ${state.phoneNum}`,
+            company: state.company,
+            project_type: state.needs.join(', '),
+            budget: state.budget,
+            message: fullMessage,
+            status: 'new'
+          })
+        });
+        dbSuccess = dbRes.ok || dbRes.status === 201;
+      } catch (err) {
+        console.warn('Database persistence error:', err);
+      }
+
+      // If either Web3Forms or DB succeeded, consider submission complete
+      if (emailSuccess || dbSuccess) {
+        showSuccessScreen();
+      } else {
         if (errBanner) {
           errBanner.style.display = 'block';
           errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
-          alert('Submission could not be completed. Your details are saved on this screen. Please try again or email us directly.');
+          alert('Submission could not be completed. Your details are saved on this screen. Please try again.');
         }
         submitBtn.disabled = false;
         submitBtn.textContent = 'Retry Submission';
-      });
+      }
     }
 
     function showSuccessScreen() {

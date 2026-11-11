@@ -609,6 +609,8 @@
 
       <!-- Multi-step Form -->
       <form id="form-creator-application">
+        <!-- Anti-Spam Honeypot Field -->
+        <input type="checkbox" name="botcheck" id="app-botcheck" style="display:none!important;" tabindex="-1" autocomplete="off">
         
         <!-- STEP 1: BASICS -->
         <div class="form-step active" data-step="1">
@@ -967,6 +969,7 @@
 
   <!-- Custom Shared JavaScript -->
   <script src="/js/main.js"></script>
+  <script src="/js/email-service.js"></script>
 
   <!-- intl-tel-input JS -->
   <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInputWithUtils.js"></script>
@@ -1393,6 +1396,13 @@
         availability: document.getElementById('app-availability').value
       };
 
+      // Honeypot check
+      const botcheck = document.getElementById('app-botcheck') ? document.getElementById('app-botcheck').checked : false;
+      if (botcheck) {
+        console.warn('Bot detected via honeypot.');
+        return;
+      }
+
       // Submit directly to Supabase REST API (no backend needed)
       const SUPABASE_URL = 'https://nopqslszbntoqewnemby.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
@@ -1429,7 +1439,63 @@
         }
       };
 
-      fetch(`${SUPABASE_URL}/rest/v1/creator_applications`, {
+      // Compile human-readable Web3Forms email fields across all 4 steps
+      const web3FormsData = {
+        'Applicant Name': payload.fullName,
+        'Email Address': payload.email,
+        'Phone Number': payload.phone || 'Not provided',
+        'Location': `${payload.city || ''}, ${payload.country || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Not provided',
+        'Primary Profession': payload.primarySpecialization + (isCustomProfession ? ' (Custom)' : ''),
+        'Additional Skills': (payload.additionalSkills && payload.additionalSkills.length) ? payload.additionalSkills.join(', ') : 'None selected',
+        'Selected Categories': (payload.categories && payload.categories.length) ? payload.categories.join(', ') : 'None',
+        'Years of Experience': `${payload.yearsExperience} Year(s)`,
+        'Primary Equipment / Rig': (payload.equipment && payload.equipment.length) ? payload.equipment.join(', ') : 'None specified',
+        'Languages Spoken': (payload.languages && payload.languages.length) ? payload.languages.join(', ') : 'Not specified',
+        'Portfolio URL': payload.portfolioUrl || 'None provided',
+        'Instagram': payload.instagram || 'None',
+        'Behance': payload.behance || 'None',
+        'Dribbble': payload.dribbble || 'None',
+        'YouTube': payload.youtube || 'None',
+        'Vimeo': payload.vimeo || 'None',
+        'Availability': payload.availability || 'Not specified',
+        'Biography': payload.bio || 'None provided'
+      };
+
+      const emailSubject = `YAWMATIC Collective — New Creator Application — ${payload.fullName}`;
+
+      // Parallel execution: Dispatch Web3Forms notification & save to Supabase
+      const emailPromise = (async () => {
+        try {
+          if (window.YawmaticEmailService && window.YawmaticEmailService.send) {
+            return await window.YawmaticEmailService.send({
+              subject: emailSubject,
+              fromName: 'YAWMATIC Collective',
+              replyTo: payload.email,
+              botcheck: '',
+              data: web3FormsData
+            });
+          } else {
+            const directRes = await fetch('https://api.web3forms.com/submit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({
+                access_key: '43189427-c23a-4e86-9c89-6a1044794528',
+                subject: emailSubject,
+                from_name: 'YAWMATIC Collective',
+                replyto: payload.email,
+                ...web3FormsData
+              })
+            });
+            const json = await directRes.json().catch(() => ({}));
+            return { success: directRes.ok && json.success };
+          }
+        } catch (err) {
+          console.warn('[Creators Apply] Web3Forms dispatch error:', err);
+          return { success: false };
+        }
+      })();
+
+      const dbPromise = fetch(`${SUPABASE_URL}/rest/v1/creator_applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1438,20 +1504,20 @@
           'Prefer': 'return=minimal'
         },
         body: JSON.stringify(supabasePayload)
-      })
-      .then(res => {
-          if (res.ok || res.status === 201) {
-            // Success — Supabase returns 201 Created with empty body
+      }).then(res => ({ ok: res.ok || res.status === 201, res })).catch(err => ({ ok: false, err }));
+
+      Promise.allSettled([emailPromise, dbPromise])
+        .then(([emailResult, dbResult]) => {
+          const emailOk = emailResult.status === 'fulfilled' && emailResult.value && emailResult.value.success;
+          const dbOk = dbResult.status === 'fulfilled' && dbResult.value && dbResult.value.ok;
+
+          if (dbOk || emailOk) {
+            // Succeeded in saving application
             renderSuccessState();
           } else {
-            // Parse error body for useful message
-            return res.text().then(text => {
-              let msg = 'Submission failed. Please try again.';
-              try { msg = JSON.parse(text).message || msg; } catch (e) {}
-              alert(msg);
-              btnNext.disabled = false;
-              btnNext.textContent = 'Submit Application';
-            });
+            alert('Submission failed. Please check your network and try again.');
+            btnNext.disabled = false;
+            btnNext.textContent = 'Submit Application';
           }
         })
         .catch(() => {
