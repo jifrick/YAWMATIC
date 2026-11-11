@@ -1086,7 +1086,7 @@
       // Build Query URL for Supabase REST API
       const params = new URLSearchParams();
       params.set('status', 'eq.approved');
-      params.set('select', 'id,full_name,city,country,categories,years_experience,availability,verified,featured,rating,profile_image,bio,slug');
+      params.set('select', 'id,full_name,city,country,categories,years_experience,availability,verified,featured,rating,profile_image,bio,slug,profile_data');
       params.set('limit', String(itemsPerPage));
       params.set('offset', String((currentPage - 1) * itemsPerPage));
 
@@ -1176,7 +1176,8 @@
             card.href = `/creators/${c.slug}`;
             card.className = 'creator-card reveal-item';
             
-            const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
+            const pData = c.profile_data || {};
+            const primaryCat = pData.primary_specialization || ((c.categories && c.categories.length > 0) ? c.categories[0].replace(/-/g, ' ') : 'Creative');
             
             // Genuine uploaded profile image only; neutral abstract avatar if absent or stock photo
             const isStockOrEmpty = !c.profile_image || c.profile_image.includes('unsplash.com') || c.profile_image.includes('placeholder');

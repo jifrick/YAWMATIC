@@ -1888,10 +1888,11 @@
       const languagesText = (c.languages || []).join(', ');
       const equipmentText = (c.equipment || []).join(', ');
 
-      content.innerHTML = `
       const pData = c.profile_data || {};
       const memberId = pData.member_id || `YWC-2026-${String(c.id).padStart(4, '0')}`;
       const primarySpec = pData.primary_specialization || (c.categories && c.categories[0]) || 'Collective Specialist';
+      const isCustomProfession = Boolean(pData.is_custom_profession || pData.profession_source === 'custom');
+      const customProfessionText = pData.custom_profession_text || '';
       const additionalSkillsText = (pData.additional_skills || []).join(', ') || 'Standard Core Skills';
       const accountStatus = pData.account_status || (c.status === 'approved' ? 'invitation_pending' : 'unprovisioned');
 
@@ -1917,9 +1918,33 @@
           </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <div><span class="stat-label">Primary Craft:</span> <span style="font-weight:700; color:var(--brand-orange);">${primarySpec}</span></div>
-          <div><span class="stat-label">Additional Skills:</span> <span style="color:var(--text-main); font-weight:600;">${additionalSkillsText}</span></div>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px;">
+          <div>
+            <span class="stat-label">Primary Profession:</span> 
+            <span style="font-weight:800; color:var(--brand-orange); font-size:1.05rem;">${primarySpec}</span>
+            ${isCustomProfession ? `
+              <span style="background:rgba(255, 90, 31, 0.15); border:1px solid var(--brand-orange); color:var(--brand-orange); font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:3px; margin-left:8px;">
+                Custom Profession Entry
+              </span>
+            ` : `
+              <span style="background:rgba(255, 255, 255, 0.05); color:var(--text-muted); font-size:0.7rem; padding:2px 8px; border-radius:3px; margin-left:8px;">
+                Predefined List
+              </span>
+            `}
+          </div>
+
+          ${isCustomProfession ? `
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:4px; padding:12px 14px; font-size:0.85rem;">
+              <span class="stat-label">Original Submitted Custom Title:</span>
+              <div style="font-weight:700; color:var(--text-main); margin:4px 0 8px 0;">"${customProfessionText || primarySpec}"</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <label for="override-primary-prof" style="font-size:0.75rem; color:var(--text-muted);">Approve as is, or standardize to:</label>
+                <input type="text" id="override-primary-prof" class="form-control" style="width:240px; padding:4px 8px; font-size:0.85rem;" value="${primarySpec}">
+              </div>
+            </div>
+          ` : ''}
+
+          <div><span class="stat-label">Additional Skills Stack:</span> <span style="color:var(--text-main); font-weight:600;">${additionalSkillsText}</span></div>
           <div><span class="stat-label">Spheres & Categories:</span> <span style="font-weight:700;">${categoriesText}</span></div>
           <div><span class="stat-label">Years of Experience:</span> <span style="font-weight:700;">${c.years_experience} Years</span></div>
           <div><span class="stat-label">Biography:</span> <p style="margin:4px 0; color:var(--text-muted); line-height:1.5;">${c.bio || 'None'}</p></div>
@@ -1973,6 +1998,7 @@
 
     async function approveApplication(id) {
       const notes = document.getElementById('app-vetting-notes').value;
+      const overrideProfInput = document.getElementById('override-primary-prof');
       const { data: appRecord } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
       
       const memberId = (appRecord && appRecord.profile_data && appRecord.profile_data.member_id) 
@@ -1983,6 +2009,12 @@
       existingProfileData.member_id = memberId;
       existingProfileData.account_status = existingProfileData.account_status || 'invitation_pending';
       existingProfileData.invitation_sent_at = new Date().toISOString();
+
+      // If administrator adjusted or standardized the profession
+      if (overrideProfInput && overrideProfInput.value.trim()) {
+        existingProfileData.primary_specialization = overrideProfInput.value.trim();
+        existingProfileData.approved_primary_profession = overrideProfInput.value.trim();
+      }
 
       const { error } = await supabaseClient.from('creator_applications').update({ 
         status: 'approved',

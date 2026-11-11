@@ -129,3 +129,4 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_provision_creator_account TO authenticated;
+

@@ -413,6 +413,67 @@
       font-weight: 600;
     }
 
+    /* Summary Card Styling */
+    .summary-card-block {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .summary-card-block__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .summary-card-block__label {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--fire);
+    }
+    .summary-card-block__edit-btn {
+      background: transparent;
+      border: none;
+      color: var(--mist);
+      font-size: 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      padding: 2px 6px;
+      transition: color 0.2s;
+    }
+    .summary-card-block__edit-btn:hover {
+      color: var(--fire);
+      text-decoration: underline;
+    }
+    .summary-card-block__val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--volt);
+      line-height: 1.4;
+    }
+    .summary-skills-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .summary-skill-tag {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--volt);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
     /* Buttons Row */
     .btn-row {
       display: flex;
@@ -700,28 +761,33 @@
           
           <!-- A. Primary Professional Specialization (Exactly 1) -->
           <div class="form-group">
-            <label class="form-label" style="color: var(--volt);">
-              A. Primary Professional Specialization <span style="color:var(--fire); font-size:0.75rem;">(Select Exactly One)</span>
+            <label class="form-label" style="color: var(--volt); font-size:0.85rem;">
+              What is your primary profession? <span style="color:var(--fire); font-size:0.75rem;">(Required — Exactly One)</span>
             </label>
             <p style="font-size:0.82rem; color:var(--mist); margin-top:-4px; margin-bottom:8px;">
-              Your lead identity in the YAWMATIC directory. Clients will identify your profile under this craft.
+              Your lead identity in the YAWMATIC directory. Clients and agency producers will identify your profile under this craft.
             </p>
             <div id="primary-specialization-grid" class="specialization-grid">
               <!-- Seeded dynamically with radio controls -->
             </div>
-            <div id="custom-specialization-wrap" style="display:none; margin-top:10px;">
-              <label class="form-label" for="app-custom-spec">Specify Custom Specialization</label>
-              <input type="text" id="app-custom-spec" class="form-control" placeholder="e.g. Creative Technologist">
+            
+            <!-- Custom Profession Input (Revealed strictly when 'Other' is selected) -->
+            <div id="custom-specialization-wrap" style="display:none; margin-top:14px; background:rgba(255, 90, 31, 0.04); border:1px solid rgba(255, 90, 31, 0.25); border-radius:6px; padding:16px;">
+              <label class="form-label" for="app-custom-spec" style="color:var(--fire);">
+                Enter your primary profession <span style="font-size:0.75rem;">(Required when Other is selected)</span>
+              </label>
+              <input type="text" id="app-custom-spec" class="form-control" maxlength="80" placeholder="e.g. Software Engineer, Robotics Specialist, AR/VR Developer...">
+              <span id="custom-spec-error" style="color:#ff5252; font-size:0.75rem; margin-top:4px; display:none;">Please enter a valid, non-empty primary profession title.</span>
             </div>
           </div>
 
           <!-- B. Additional Skills Checklist (Grouped by Domain) -->
-          <div class="form-group" style="margin-top: 24px;">
-            <label class="form-label" style="color: var(--volt);">
-              B. Additional Skills & Technical Stack <span style="color:var(--fire); font-size:0.75rem;">(Select All That Apply)</span>
+          <div class="form-group" style="margin-top: 28px;">
+            <label class="form-label" style="color: var(--volt); font-size:0.85rem;">
+              What other skills do you have? <span style="color:var(--fire); font-size:0.75rem;">(Multiple Selection)</span>
             </label>
             <p style="font-size:0.82rem; color:var(--mist); margin-top:-4px; margin-bottom:12px;">
-              Specific tools, software packages, frameworks, and techniques in your creative arsenal.
+              Select all secondary tools, software packages, frameworks, and techniques in your creative arsenal.
             </p>
             <input type="text" id="skills-filter-search" class="skills-filter-input" placeholder="Search skills or tools (e.g. Figma, Blender, React, DaVinci)...">
             <div id="domain-skills-container">
@@ -730,7 +796,7 @@
             
             <div style="margin-top: 10px;">
               <label class="form-label" for="app-other-skills">Other Skills / Custom Tools (Optional, Comma-separated)</label>
-              <input type="text" id="app-other-skills" class="form-control" placeholder="e.g. Webflow, TouchDesigner, Substance Painter">
+              <input type="text" id="app-other-skills" class="form-control" maxlength="200" placeholder="e.g. Webflow, TouchDesigner, Substance Painter">
             </div>
           </div>
 
@@ -787,9 +853,36 @@
           </div>
         </div>
 
-        <!-- STEP 4: ABOUT & AVAILABILITY -->
+        <!-- STEP 4: ABOUT, AVAILABILITY & SUMMARY -->
         <div class="form-step" data-step="4">
-          <h2 class="step-title">4. Scope & Availability</h2>
+          <h2 class="step-title">4. Summary & Confirmation</h2>
+          
+          <!-- Summary Review Blocks -->
+          <div style="margin-bottom: 24px;">
+            <div style="font-family:var(--font-display); font-size:0.85rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--volt); margin-bottom:12px;">
+              Review Your Professional Profile
+            </div>
+            
+            <div class="summary-card-block">
+              <div class="summary-card-block__header">
+                <span class="summary-card-block__label">Primary Profession</span>
+                <button type="button" class="summary-card-block__edit-btn" onclick="jumpToStep(2)">Edit</button>
+              </div>
+              <div id="summary-primary-profession" class="summary-card-block__val">—</div>
+              <div id="summary-profession-type-badge" style="font-size:0.7rem; color:var(--mist); margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">Standard Predefined</div>
+            </div>
+
+            <div class="summary-card-block">
+              <div class="summary-card-block__header">
+                <span class="summary-card-block__label">Additional Skills Stack</span>
+                <button type="button" class="summary-card-block__edit-btn" onclick="jumpToStep(2)">Edit</button>
+              </div>
+              <div id="summary-additional-skills" class="summary-skills-chips">
+                <span style="color:var(--mist); font-size:0.85rem;">None selected</span>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="app-bio">Short Creative Bio / Elevator Pitch</label>
             <textarea id="app-bio" class="form-control" placeholder="Describe your stylistic voice, visual principles, and what kind of agency briefs you excel at..." required></textarea>
@@ -969,14 +1062,19 @@
         specGrid.appendChild(label);
       });
 
-      // Show/hide custom specialization input
+      // Show/hide custom specialization input & clear stale values
       specGrid.addEventListener('change', (e) => {
         if (e.target.name === 'primary_specialization') {
+          const errEl = document.getElementById('custom-spec-error');
+          if (errEl) errEl.style.display = 'none';
+          customSpecInput.style.borderColor = '';
+
           if (e.target.value === 'other') {
             customSpecWrap.style.display = 'block';
             customSpecInput.focus();
           } else {
             customSpecWrap.style.display = 'none';
+            customSpecInput.value = ''; // Clear stale custom value
           }
         }
       });
@@ -1085,17 +1183,25 @@
         const primarySelected = document.querySelector('input[name="primary_specialization"]:checked');
         if (!primarySelected) {
           valid = false;
-          alert('Please select your Primary Professional Specialization (exactly one).');
+          alert('Please select your Primary Profession (exactly one).');
           return false;
         }
 
         if (primarySelected.value === 'other') {
-          const customVal = document.getElementById('app-custom-spec').value.trim();
-          if (!customVal) {
+          const customInput = document.getElementById('app-custom-spec');
+          const customVal = customInput.value.trim().replace(/\s+/g, ' ');
+          const errEl = document.getElementById('custom-spec-error');
+
+          if (!customVal || customVal.length < 2) {
             valid = false;
-            document.getElementById('app-custom-spec').style.borderColor = 'var(--fire)';
-            alert('Please specify your custom Primary Specialization.');
+            customInput.style.borderColor = 'var(--fire)';
+            if (errEl) errEl.style.display = 'block';
+            customInput.focus();
+            alert('Please enter your primary profession title (cannot be blank).');
             return false;
+          } else {
+            customInput.style.borderColor = '';
+            if (errEl) errEl.style.display = 'none';
           }
         }
 
@@ -1111,7 +1217,60 @@
       return valid;
     }
 
+    // Direct jump back to edit step from summary
+    window.jumpToStep = function(targetStep) {
+      currentStep = targetStep;
+      updateStepView();
+    };
+
+    function updateStepSummary() {
+      // 1. Primary Profession
+      const primaryRadio = document.querySelector('input[name="primary_specialization"]:checked');
+      const summaryProfEl = document.getElementById('summary-primary-profession');
+      const summaryBadgeEl = document.getElementById('summary-profession-type-badge');
+
+      if (primaryRadio) {
+        if (primaryRadio.value === 'other') {
+          const customTitle = document.getElementById('app-custom-spec').value.trim().replace(/\s+/g, ' ');
+          summaryProfEl.textContent = customTitle || 'Custom Profession';
+          summaryBadgeEl.textContent = 'Custom Submitted Profession';
+          summaryBadgeEl.style.color = 'var(--fire)';
+        } else {
+          const found = PRIMARY_SPECIALIZATIONS.find(s => s.id === primaryRadio.value);
+          summaryProfEl.textContent = found ? found.title : primaryRadio.value;
+          summaryBadgeEl.textContent = 'Standard Predefined Category';
+          summaryBadgeEl.style.color = 'var(--mist)';
+        }
+      } else {
+        summaryProfEl.textContent = 'None selected';
+      }
+
+      // 2. Additional Skills
+      const summarySkillsEl = document.getElementById('summary-additional-skills');
+      const selectedSkills = [];
+      document.querySelectorAll('.skill-checkbox:checked').forEach(cb => {
+        selectedSkills.push(cb.value);
+      });
+      const otherSkillsRaw = document.getElementById('app-other-skills').value.trim();
+      if (otherSkillsRaw) {
+        otherSkillsRaw.split(',').forEach(s => {
+          const trimmed = s.trim();
+          if (trimmed && !selectedSkills.includes(trimmed)) selectedSkills.push(trimmed);
+        });
+      }
+
+      if (selectedSkills.length > 0) {
+        summarySkillsEl.innerHTML = selectedSkills.map(sk => `<span class="summary-skill-tag">${sk}</span>`).join('');
+      } else {
+        summarySkillsEl.innerHTML = '<span style="color:var(--mist); font-size:0.85rem;">None selected</span>';
+      }
+    }
+
     function updateStepView() {
+      // If entering step 4, update summary review
+      if (currentStep === 4) {
+        updateStepSummary();
+      }
       // Toggle form steps visibility
       document.querySelectorAll('.form-step').forEach(step => {
         step.classList.remove('active');
@@ -1162,10 +1321,14 @@
 
       // Gather Primary Specialization
       const primaryRadio = document.querySelector('input[name="primary_specialization"]:checked');
+      const isCustomProfession = primaryRadio && primaryRadio.value === 'other';
       let primarySpecSlug = primaryRadio ? primaryRadio.value : '';
       let primarySpecTitle = '';
-      if (primarySpecSlug === 'other') {
-        primarySpecTitle = document.getElementById('app-custom-spec').value.trim() || 'Multidisciplinary Specialist';
+      let customProfessionText = '';
+
+      if (isCustomProfession) {
+        customProfessionText = document.getElementById('app-custom-spec').value.trim().replace(/\s+/g, ' ');
+        primarySpecTitle = customProfessionText || 'Multidisciplinary Specialist';
       } else {
         const found = PRIMARY_SPECIALIZATIONS.find(s => s.id === primarySpecSlug);
         primarySpecTitle = found ? found.title : primarySpecSlug;
@@ -1259,6 +1422,9 @@
         slug:             slug,
         profile_data: {
           primary_specialization: payload.primarySpecialization,
+          is_custom_profession:   isCustomProfession,
+          custom_profession_text: isCustomProfession ? customProfessionText : '',
+          profession_source:      isCustomProfession ? 'custom' : 'predefined',
           additional_skills:      payload.additionalSkills,
           account_status:         'unprovisioned'
         }
