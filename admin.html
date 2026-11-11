@@ -826,6 +826,7 @@
         <li><button class="sidebar-btn active" data-view="dashboard"><i data-lucide="layout-dashboard" style="width:16px;"></i>Dashboard</button></li>
         <li><button class="sidebar-btn" data-view="applications"><i data-lucide="user-check" style="width:16px;"></i>Applications</button></li>
         <li><button class="sidebar-btn" data-view="creators"><i data-lucide="users" style="width:16px;"></i>Approved Members</button></li>
+        <li><button class="sidebar-btn" data-view="passwords"><i data-lucide="key-round" style="width:16px;"></i>Password Management</button></li>
         <li><button class="sidebar-btn" data-view="showcases"><i data-lucide="image" style="width:16px;"></i>Portfolio Moderation</button></li>
         <li><button class="sidebar-btn" data-view="leads"><i data-lucide="file-text" style="width:16px;"></i>Client Enquiries</button></li>
         <li><button class="sidebar-btn" data-view="projects"><i data-lucide="folder-kanban" style="width:16px;"></i>Projects</button></li>
@@ -982,6 +983,41 @@
                   </tr>
                 </thead>
                 <tbody id="creators-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: PASSWORD MANAGEMENT -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-passwords">
+          <div class="cc-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+              <div>
+                <span class="cc-card-title" style="margin-bottom:4px;">Creator Password & Credential Lifecycle</span>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">
+                  Manage authentication status, password reset tokens, and security events. Plaintext passwords are never stored or displayed.
+                </p>
+              </div>
+              <button onclick="loadPasswordManagement()" class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;">
+                <i data-lucide="refresh-cw" style="width:14px; margin-right:6px;"></i>Refresh Status
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Creator Name & Email</th>
+                    <th>Login ID</th>
+                    <th>Account Status</th>
+                    <th>Last Login</th>
+                    <th>Last Password Change</th>
+                    <th>Reset Status</th>
+                    <th style="text-align: right;">Security Action</th>
+                  </tr>
+                </thead>
+                <tbody id="passwords-table-body"></tbody>
               </table>
             </div>
           </div>
@@ -1268,7 +1304,7 @@
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-color); padding-top:16px;">
           <div style="display:flex; gap:10px;">
-            <button type="button" onclick="sendCreatorPasswordReset()" class="btn-main btn-ghost" style="color:var(--brand-orange); border-color:rgba(255,90,31,0.3);">Send Password Reset</button>
+            <button type="button" onclick="triggerPasswordResetForCreator(document.getElementById('edit-c-id').value)" class="btn-main btn-ghost" style="color:var(--brand-orange); border-color:rgba(255,90,31,0.3);">Send Password Reset</button>
             <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
             <button type="button" onclick="reactivateCreator()" class="btn-main btn-ghost" style="color:#00E676; border-color:rgba(0,230,118,0.2);">Reactivate</button>
             <button type="button" onclick="revokeCreatorApproval()" class="btn-main btn-ghost" style="color:#ff9800; border-color:rgba(255,152,0,0.2);">Revoke Approval</button>
@@ -1667,6 +1703,7 @@
       if (viewId === 'analytics' || viewId === 'dashboard') loadDashboard();
       else if (viewId === 'applications') loadApplications();
       else if (viewId === 'creators') loadCreators();
+      else if (viewId === 'passwords') loadPasswordManagement();
       else if (viewId === 'showcases') loadShowcases();
       else if (viewId === 'leads') loadLeads();
       else if (viewId === 'projects') loadProjects();
@@ -2387,29 +2424,133 @@
       loadCreators();
     }
 
-    async function sendCreatorPasswordReset() {
-      const id = document.getElementById('edit-c-id').value;
-      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
-      if (!c || !c.email) {
-        alert('No registered email found for this creator.');
+    // --------------------------------------------------
+    // VIEW HANDLER: PASSWORD MANAGEMENT
+    // --------------------------------------------------
+    async function loadPasswordManagement() {
+      const { data, error } = await supabaseClient
+        .from('creator_applications')
+        .select('*')
+        .eq('status', 'approved')
+        .order('full_name', { ascending: true });
+
+      const body = document.getElementById('passwords-table-body');
+      if (!body) return;
+      body.innerHTML = '';
+
+      if (error || !data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--text-muted);">No approved creator records found.</td></tr>';
         return;
       }
 
+      data.forEach(c => {
+        const tr = document.createElement('tr');
+        const pData = c.profile_data || {};
+        const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+        const accountStatus = pData.account_status || (c.status === 'approved' ? 'active' : 'unprovisioned');
+
+        // Determine Last Login timestamp
+        const lastLogin = pData.last_login_at 
+          ? new Date(pData.last_login_at).toLocaleString() 
+          : '<span style="color:var(--text-muted);">Never</span>';
+
+        // Determine Last Password Change timestamp
+        const lastPwdChange = pData.last_password_change_at 
+          ? new Date(pData.last_password_change_at).toLocaleString() 
+          : (pData.activated_at ? new Date(pData.activated_at).toLocaleString() : '<span style="color:var(--text-muted);">Initial Setup</span>');
+
+        // Determine Password Reset Status
+        let resetStatusHtml = '<span style="color:var(--text-muted); font-size:0.75rem;">Not Requested</span>';
+        if (pData.last_password_reset_sent_at) {
+          const sentDate = new Date(pData.last_password_reset_sent_at);
+          const isExpired = (Date.now() - sentDate.getTime()) > (24 * 60 * 60 * 1000); // 24h expiration
+          const isCompleted = pData.last_password_change_at && (new Date(pData.last_password_change_at) > sentDate);
+
+          if (isCompleted) {
+            resetStatusHtml = '<span style="color:#00E676; font-size:0.75rem; font-weight:600;">✓ Password Reset Completed</span>';
+          } else if (isExpired) {
+            resetStatusHtml = '<span style="color:#FF1744; font-size:0.75rem; font-weight:600;">Reset Link Expired</span>';
+          } else {
+            resetStatusHtml = `<span style="color:var(--brand-orange); font-size:0.75rem; font-weight:600;">Reset Email Sent (${sentDate.toLocaleDateString()})</span>`;
+          }
+        }
+
+        tr.innerHTML = `
+          <td>
+            <strong style="color:var(--text-main); font-size:0.92rem;">${c.full_name}</strong>
+            <br>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${c.email}</span>
+          </td>
+          <td>
+            <span style="font-family:var(--font-display); font-size:0.82rem; font-weight:700; color:var(--brand-orange); background:rgba(255,90,31,0.08); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,90,31,0.2);">${loginId}</span>
+          </td>
+          <td>
+            <span style="display:inline-block; font-size:0.72rem; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${accountStatus === 'active' ? 'rgba(0,230,118,0.1)' : 'rgba(255,152,0,0.1)'}; color:${accountStatus === 'active' ? '#00E676' : '#ff9800'}; font-weight:600;">${accountStatus}</span>
+          </td>
+          <td style="font-size:0.8rem;">${lastLogin}</td>
+          <td style="font-size:0.8rem;">${lastPwdChange}</td>
+          <td>${resetStatusHtml}</td>
+          <td style="text-align: right;">
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+              <button class="btn-main" style="padding:6px 10px; font-size:0.75rem;" onclick="triggerPasswordResetForCreator(${c.id})">
+                ${pData.last_password_reset_sent_at ? 'Resend Reset Link' : 'Send Reset Link'}
+              </button>
+            </div>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    async function triggerPasswordResetForCreator(id) {
+      const { data: c, error } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (error || !c) {
+        alert('Could not locate creator application record.');
+        return;
+      }
+
+      if (c.status !== 'approved') {
+        alert('Password reset is restricted to approved, vetted creator accounts.');
+        return;
+      }
+
+      const pData = c.profile_data || {};
+      const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+
+      const confirmed = confirm(
+        `Send a password reset link to this creator's registered email address?\n\n` +
+        `Creator: ${c.full_name}\n` +
+        `Login ID: ${loginId}\n` +
+        `Target Email: ${c.email}`
+      );
+      if (!confirmed) return;
+
       try {
-        const { error } = await supabaseClient.auth.resetPasswordForEmail(c.email, {
+        const { error: resetErr } = await supabaseClient.auth.resetPasswordForEmail(c.email, {
           redirectTo: window.location.origin + '/creator-activate'
         });
-        if (error) throw error;
+        if (resetErr) throw resetErr;
 
-        // Record audit timestamp in profile_data
-        const pData = c.profile_data || {};
+        // Record audit timestamp and reset status in profile_data
         pData.last_password_reset_sent_at = new Date().toISOString();
-        await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
+        pData.password_reset_status = 'email_sent';
 
-        logActivity('Dispatched Password Reset Link', 'creator_applications', id, { email: c.email });
-        alert(`Password reset link dispatched to ${c.email}.`);
+        await supabaseClient
+          .from('creator_applications')
+          .update({ profile_data: pData })
+          .eq('id', id);
+
+        logActivity('Admin Initiated Password Reset Link', 'creator_applications', id, {
+          email: c.email,
+          loginId: loginId
+        });
+
+        alert(`✓ Password reset request verified and accepted by auth service.\nReset email successfully dispatched to: ${c.email}`);
+        loadPasswordManagement();
       } catch (err) {
-        alert('Error dispatching password reset: ' + err.message);
+        alert('Failed to send password reset: ' + (err.message || 'Auth service error.'));
       }
     }
 

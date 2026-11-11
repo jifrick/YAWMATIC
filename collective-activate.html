@@ -192,6 +192,27 @@
     const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Detect if this is a Password Recovery session from a Reset Link
+      let isPasswordRecovery = false;
+      const hash = window.location.hash;
+      if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+        isPasswordRecovery = true;
+      }
+
+      // Supabase Auth State Change Listener for recovery session
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          isPasswordRecovery = true;
+          document.querySelector('.auth-title').textContent = 'Set New Password';
+          document.querySelector('.auth-subtitle').textContent = 'Verify your identity and define your new secure password.';
+          document.getElementById('btn-act-submit').textContent = 'Save New Password & Log In →';
+          if (session && session.user && session.user.email) {
+            document.getElementById('act-email').value = session.user.email;
+            document.getElementById('act-email').readOnly = true;
+          }
+        }
+      });
+
       const urlParams = new URLSearchParams(window.location.search);
       const emailParam = urlParams.get('email');
       const memberIdParam = urlParams.get('mid') || urlParams.get('cid');
@@ -231,9 +252,39 @@
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Activating Membership...';
+        submitBtn.textContent = 'Updating Credentials...';
 
         try {
+          // If in an active Password Recovery session
+          if (isPasswordRecovery) {
+            const { error: updateErr } = await supabaseClient.auth.updateUser({ password: pwd });
+            if (updateErr) throw updateErr;
+
+            // Update timestamp in creator_applications
+            const { data: recData } = await supabaseClient
+              .from('creator_applications')
+              .select('id, profile_data')
+              .eq('email', email)
+              .maybeSingle();
+
+            if (recData) {
+              const pData = recData.profile_data || {};
+              pData.last_password_change_at = new Date().toISOString();
+              pData.password_reset_status = 'completed';
+              await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', recData.id);
+            }
+
+            form.style.display = 'none';
+            successBox.textContent = '✓ Password successfully updated! Redirecting to Creator Login...';
+            successBox.style.display = 'block';
+
+            setTimeout(() => {
+              window.location.replace('/creator-login');
+            }, 1800);
+            return;
+          }
+
+          // Otherwise, Standard Initial Account Activation flow
           // 1. Verify that email belongs to an approved application
           const { data: appData, error: appErr } = await supabaseClient
             .from('creator_applications')
