@@ -252,73 +252,73 @@
         }
 
         try {
-          let resolvedEmail = null;
           const normalized = rawIdentifier.toUpperCase();
 
+          // Reject raw email format on visible login field to protect identity privacy
           if (rawIdentifier.includes('@')) {
-            // Direct email fallback
-            resolvedEmail = rawIdentifier.toLowerCase();
-          } else {
-            // Lookup by Creator Login ID (e.g. YAW-CRE-0001 or legacy YWC-2026-0005)
-            const { data: matchedRecord, error: lookupErr } = await supabaseClient
-              .from('creator_applications')
-              .select('id, email, status, profile_data')
-              .or(`profile_data->>creator_login_id.eq.${normalized},profile_data->>member_id.eq.${normalized}`)
-              .limit(1)
-              .maybeSingle();
-
-            if (lookupErr || !matchedRecord || !matchedRecord.email) {
-              // Generic error to prevent identifier enumeration
-              throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
-            }
-
-            if (matchedRecord.status === 'suspended') {
-              throw new Error('This creator account has been suspended by administration. Please contact YAWMATIC.');
-            }
-
-            if (matchedRecord.status !== 'approved') {
-              throw new Error('This account is still under review or pending administrator approval.');
-            }
-
-            resolvedEmail = matchedRecord.email;
+            throw new Error('Please sign in using your assigned Creator Login ID (e.g. YAW-CRE-0001).');
           }
 
-          // Authenticate with Supabase Auth
+          // 1. Authenticate via secure serverless endpoint
+          let serverLoginSuccess = false;
+          try {
+            const apiRes = await fetch('/api/creator-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                loginId: normalized,
+                password: password
+              })
+            });
+
+            const apiData = await apiRes.json().catch(() => ({}));
+            if (apiRes.ok && apiData.success && apiData.session) {
+              serverLoginSuccess = true;
+              if (supabaseClient) {
+                await supabaseClient.auth.setSession({
+                  access_token: apiData.session.access_token,
+                  refresh_token: apiData.session.refresh_token
+                });
+              }
+              window.location.replace('/creator-dashboard');
+              return;
+            } else if (!apiRes.ok && apiRes.status !== 404) {
+              throw new Error(apiData.message || 'Invalid Creator Login ID or password. Please verify your credentials.');
+            }
+          } catch (apiErr) {
+            if (serverLoginSuccess) return;
+            if (apiErr.message && !apiErr.message.includes('fetch')) {
+              throw apiErr;
+            }
+          }
+
+          // 2. Direct fallback lookup (if API endpoint is unreachable)
+          const { data: matchedRecord, error: lookupErr } = await supabaseClient
+            .from('creator_applications')
+            .select('id, email, status, profile_data')
+            .or(`profile_data->>creator_login_id.eq.${normalized},profile_data->>member_id.eq.${normalized}`)
+            .limit(1)
+            .maybeSingle();
+
+          if (lookupErr || !matchedRecord || !matchedRecord.email) {
+            throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
+          }
+
+          if (matchedRecord.status === 'suspended') {
+            throw new Error('This creator account has been suspended by administration. Please contact YAWMATIC.');
+          }
+
+          if (matchedRecord.status !== 'approved') {
+            throw new Error('This account is still under review or pending administrator approval.');
+          }
+
           const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: resolvedEmail,
+            email: matchedRecord.email,
             password: password
           });
 
           if (error) {
-            // Generic security error message
             throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
-          }
-
-          // Verify account status
-          const userId = data.user.id;
-          const { data: appData } = await supabaseClient
-            .from('creator_applications')
-            .select('id, status, profile_data')
-            .or(`auth_user_id.eq.${userId},email.eq.${resolvedEmail}`)
-            .maybeSingle();
-
-          if (appData) {
-            if (appData.status === 'suspended') {
-              await supabaseClient.auth.signOut();
-              throw new Error('This creator account has been suspended by administration.');
-            }
-            if (appData.status !== 'approved') {
-              await supabaseClient.auth.signOut();
-              throw new Error('Your application is pending administrator approval.');
-            }
-
-            // Update last_login in profile_data for audit logging
-            const existingPData = appData.profile_data || {};
-            existingPData.last_login_at = new Date().toISOString();
-            await supabaseClient
-              .from('creator_applications')
-              .update({ profile_data: existingPData })
-              .eq('id', appData.id);
           }
 
           window.location.replace('/creator-dashboard');

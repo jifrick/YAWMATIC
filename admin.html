@@ -38,7 +38,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="/js/creator-email-service.js"></script>
   
   <!-- Custom Shared Stylesheet -->
   <link rel="stylesheet" href="/css/style.css">
@@ -2036,7 +2035,22 @@
       openModal('modal-app-details');
     }
 
-    // Helper: Generate next sequential Creator Login ID (e.g. YAW-CRE-0001)
+    // Helper: Compute SHA-256 hash using browser SubtleCrypto
+    async function sha256Hex(text) {
+      const msgBuffer = new TextEncoder().encode(text.trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Helper: Cryptographically secure single-use activation token generator
+    function generateActivationToken() {
+      const arr = new Uint8Array(32);
+      window.crypto.getRandomValues(arr);
+      return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Helper: Server-side atomic Creator Login ID retrieval (sequence fallback to highest existing)
     async function generateNextCreatorLoginId() {
       try {
         const { data } = await supabaseClient
@@ -2062,13 +2076,6 @@
       }
     }
 
-    // Helper: Cryptographically secure single-use activation token generator
-    function generateActivationToken() {
-      const arr = new Uint8Array(24);
-      window.crypto.getRandomValues(arr);
-      return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
-    }
-
     async function approveApplication(id) {
       const notes = document.getElementById('app-vetting-notes').value;
       const overrideProfInput = document.getElementById('override-primary-prof');
@@ -2084,14 +2091,15 @@
         existingProfileData.creator_login_id = creatorLoginId;
       }
 
-      // Legacy fallback member_id preserved
       existingProfileData.member_id = existingProfileData.member_id || `YWC-2026-${String(id).padStart(4, '0')}`;
       existingProfileData.account_status = 'pending_activation';
       existingProfileData.invitation_sent_at = new Date().toISOString();
 
-      // Generate single-use activation token expiring in 7 days
-      const activationToken = generateActivationToken();
-      existingProfileData.activation_token = activationToken;
+      // Generate single-use activation token and store its SHA-256 hash (never raw token)
+      const rawActivationToken = generateActivationToken();
+      const tokenHash = await sha256Hex(rawActivationToken);
+      existingProfileData.activation_token_hash = tokenHash;
+      delete existingProfileData.activation_token; // ensure raw token is never saved
       existingProfileData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       // If administrator adjusted or standardized the profession
@@ -2116,25 +2124,41 @@
       closeModal('modal-app-details');
       loadApplications();
 
-      // One-time activation URL
-      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(appRecord.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(activationToken)}`;
+      // One-time activation URL with the raw token passed only to the applicant
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(appRecord.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(rawActivationToken)}`;
 
-      // Attempt automated email delivery through CreatorEmailGateway
-      let emailResult = { success: false, message: 'Email gateway not called' };
-      if (window.CreatorEmailGateway && window.CreatorEmailGateway.sendActivation) {
-        emailResult = await window.CreatorEmailGateway.sendActivation({
-          creatorName: appRecord.full_name,
-          creatorEmail: appRecord.email,
-          creatorLoginId: creatorLoginId,
-          activationUrl: actUrl
+      // Attempt automated email delivery through secure serverless backend endpoint
+      let emailResult = { success: false, message: 'Server email endpoint not configured' };
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const adminToken = session ? session.access_token : '';
+        const emailRes = await fetch('/api/send-activation-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            appId: id,
+            activationUrl: actUrl
+          })
         });
+
+        const emailJson = await emailRes.json().catch(() => ({}));
+        if (emailRes.ok && emailJson.success) {
+          emailResult = { success: true, message: 'Email accepted by transactional provider.' };
+        } else if (emailJson.missingConfig) {
+          emailResult = { success: false, message: emailJson.message };
+        }
+      } catch (err) {
+        console.warn('[Admin Activation Email]:', err);
       }
 
       if (emailResult.success) {
-        alert(`Application Approved!\n\nCreator Login ID: ${creatorLoginId}\nActivation email successfully delivered to ${appRecord.email}.`);
+        alert(`Application Approved!\n\nCreator Login ID: ${creatorLoginId}\nActivation email successfully queued with transactional provider for ${appRecord.email}.`);
       } else {
         prompt(
-          `Application Approved!\n\nCreator Login ID: ${creatorLoginId}\n(Note: ${emailResult.message || 'Email delivery not configured'}).\n\nProvide this secure one-time activation link to the candidate:`,
+          `Application Approved!\n\nCreator Login ID: ${creatorLoginId}\n(Note: ${emailResult.message || 'Automated transactional email key not configured in environment'}).\n\nProvide this secure one-time activation link to the candidate:`,
           actUrl
         );
       }
@@ -2146,26 +2170,38 @@
       const pData = c.profile_data || {};
       const creatorLoginId = pData.creator_login_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
       
-      // Refresh activation token
-      const newToken = generateActivationToken();
-      pData.activation_token = newToken;
+      // Refresh single-use activation token and hash
+      const rawNewToken = generateActivationToken();
+      const tokenHash = await sha256Hex(rawNewToken);
+      pData.activation_token_hash = tokenHash;
+      delete pData.activation_token;
       pData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
 
-      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(c.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(newToken)}`;
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(c.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(rawNewToken)}`;
       
-      // Dispatch or display
-      if (window.CreatorEmailGateway && window.CreatorEmailGateway.sendActivation) {
-        const emailRes = await window.CreatorEmailGateway.sendActivation({
-          creatorName: c.full_name,
-          creatorEmail: c.email,
-          creatorLoginId: creatorLoginId,
-          activationUrl: actUrl
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const adminToken = session ? session.access_token : '';
+        const emailRes = await fetch('/api/send-activation-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            appId: id,
+            activationUrl: actUrl
+          })
         });
-        if (emailRes.success) {
-          alert(`Activation email resent successfully to ${c.email}.`);
+
+        const emailJson = await emailRes.json().catch(() => ({}));
+        if (emailRes.ok && emailJson.success) {
+          alert(`Activation email queued successfully with transactional provider for ${c.email}.`);
           return;
         }
+      } catch (err) {
+        console.warn('[Admin Resend Email]:', err);
       }
 
       prompt('Copy member account activation URL:', actUrl);

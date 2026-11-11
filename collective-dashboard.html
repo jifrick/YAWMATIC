@@ -824,6 +824,42 @@
       });
     }
 
+    async function submitRevisionToServer(revisionType, payload) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const token = session ? session.access_token : '';
+
+      try {
+        const res = await fetch('/api/creator-revisions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            revisionType,
+            data: payload
+          })
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (res.ok && json.success) {
+          return { success: true };
+        }
+      } catch (err) {
+        console.warn('[Dashboard Revision API fallback]:', err);
+      }
+
+      // Safe fallback via direct Supabase client if API route unreachable
+      const existingProfileData = currentAppRecord.profile_data || {};
+      existingProfileData[`pending_${revisionType}_revision`] = payload;
+      const { error } = await supabaseClient
+        .from('creator_applications')
+        .update({ profile_data: existingProfileData })
+        .eq('id', currentAppRecord.id);
+
+      return { success: !error, error };
+    }
+
     function setupProfileForm() {
       const form = document.getElementById('form-update-profile');
       form.addEventListener('submit', async (e) => {
@@ -850,19 +886,13 @@
           submitted_at: new Date().toISOString()
         };
 
-        const existingProfileData = currentAppRecord.profile_data || {};
-        existingProfileData.pending_profile_revision = pendingUpdate;
-
-        const { error } = await supabaseClient
-          .from('creator_applications')
-          .update({ profile_data: existingProfileData })
-          .eq('id', currentAppRecord.id);
+        const result = await submitRevisionToServer('profile', pendingUpdate);
 
         btn.disabled = false;
         btn.textContent = 'Submit Profile Revision for Admin Approval →';
 
-        if (error) {
-          alert('Submission error: ' + error.message);
+        if (!result.success) {
+          alert('Submission error: ' + (result.error ? result.error.message : 'Failed to submit revision.'));
         } else {
           alert('Profile revision submitted! An administrator will review and approve changes prior to public directory update.');
           document.getElementById('stat-revision-status').textContent = 'Staged for Review';
@@ -882,23 +912,19 @@
         const primarySpec = document.getElementById('craft-primary-spec').value.trim();
         const skillsList = document.getElementById('craft-skills-list').value.split(',').map(s => s.trim()).filter(Boolean);
 
-        const existingProfileData = currentAppRecord.profile_data || {};
-        existingProfileData.pending_craft_revision = {
+        const pendingUpdate = {
           primary_specialization: primarySpec,
           additional_skills: skillsList,
           submitted_at: new Date().toISOString()
         };
 
-        const { error } = await supabaseClient
-          .from('creator_applications')
-          .update({ profile_data: existingProfileData })
-          .eq('id', currentAppRecord.id);
+        const result = await submitRevisionToServer('craft', pendingUpdate);
 
         btn.disabled = false;
         btn.textContent = 'Request Skill Stack Update →';
 
-        if (error) {
-          alert('Submission error: ' + error.message);
+        if (!result.success) {
+          alert('Submission error: ' + (result.error ? result.error.message : 'Failed to stage skills.'));
         } else {
           alert('Skills update staged for administrator moderation.');
         }
@@ -918,8 +944,7 @@
         const equipment = document.getElementById('rig-equipment-list').value.split(',').map(s => s.trim()).filter(Boolean);
         const languages = document.getElementById('rig-languages-list').value.split(',').map(s => s.trim()).filter(Boolean);
 
-        const existingProfileData = currentAppRecord.profile_data || {};
-        existingProfileData.pending_rig_revision = {
+        const pendingUpdate = {
           years_experience: yearsExp,
           availability,
           equipment,
@@ -927,16 +952,13 @@
           submitted_at: new Date().toISOString()
         };
 
-        const { error } = await supabaseClient
-          .from('creator_applications')
-          .update({ profile_data: existingProfileData })
-          .eq('id', currentAppRecord.id);
+        const result = await submitRevisionToServer('rig', pendingUpdate);
 
         btn.disabled = false;
         btn.textContent = 'Submit Capability Updates for Verification →';
 
-        if (error) {
-          alert('Submission error: ' + error.message);
+        if (!result.success) {
+          alert('Submission error: ' + (result.error ? result.error.message : 'Failed to stage equipment details.'));
         } else {
           alert('Equipment & Rig updates staged for administrator approval.');
         }
@@ -971,21 +993,17 @@
           submitted_at: new Date().toISOString()
         };
 
-        showcaseItems.push(newItem);
-
-        const { error } = await supabaseClient
-          .from('creator_applications')
-          .update({ portfolio_links: showcaseItems })
-          .eq('id', currentAppRecord.id);
+        const result = await submitRevisionToServer('showcase', newItem);
 
         btn.disabled = false;
         btn.textContent = 'Submit Project Deliverable for Moderation →';
 
-        if (error) {
-          alert('Submission error: ' + error.message);
+        if (!result.success) {
+          alert('Submission error: ' + (result.error ? result.error.message : 'Failed to stage deliverable.'));
         } else {
           alert('Showcase deliverable added to moderation queue! Admin will inspect media before it appears on your public profile.');
           form.reset();
+          showcaseItems.push(newItem);
           currentAppRecord.portfolio_links = showcaseItems;
           renderShowcaseTable(showcaseItems);
         }

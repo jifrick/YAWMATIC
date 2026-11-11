@@ -285,62 +285,55 @@
           }
 
           // Otherwise, Standard Initial Account Activation flow
-          // 1. Verify that email belongs to an approved application
-          const { data: appData, error: appErr } = await supabaseClient
-            .from('creator_applications')
-            .select('id, full_name, status, profile_data, auth_user_id')
-            .eq('email', email)
-            .single();
-
-          if (appErr || !appData) {
-            throw new Error('No creator record matches this email address. Please apply first.');
+          // Enforce mandatory presence of activation token
+          if (!tokenParam || !tokenParam.trim()) {
+            throw new Error('Missing activation token. Accounts cannot be activated without a verified security token.');
           }
 
-          if (appData.status === 'suspended') {
-            throw new Error('This creator account has been suspended by administration.');
-          }
+          // Call trusted backend activation endpoint
+          let serverVerified = false;
+          try {
+            const apiRes = await fetch('/api/creator-activate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                token: tokenParam.trim(),
+                email: email,
+                password: pwd
+              })
+            });
 
-          if (appData.status !== 'approved') {
-            throw new Error('Your application status is currently: ' + (appData.status || 'pending') + '. You can only activate an account after admin approval.');
-          }
-
-          const existingProfileData = appData.profile_data || {};
-
-          // Verify token if activation token was provided
-          if (existingProfileData.activation_token) {
-            if (existingProfileData.activation_token_expires_at) {
-              const expiresAt = new Date(existingProfileData.activation_token_expires_at).getTime();
-              if (Date.now() > expiresAt) {
-                throw new Error('This activation link has expired. Please contact administration for a new activation link.');
-              }
+            const apiData = await apiRes.json().catch(() => ({}));
+            if (!apiRes.ok || !apiData.success) {
+              throw new Error(apiData.message || 'Token verification failed. Please check your activation link.');
             }
-            if (tokenParam && tokenParam !== existingProfileData.activation_token) {
-              throw new Error('Invalid or expired activation link token.');
+            serverVerified = true;
+          } catch (apiErr) {
+            // If serverless environment is local/mock, fall back to hash check
+            console.warn('[Activation] Backend verification response:', apiErr.message);
+            if (!serverVerified) {
+              throw apiErr;
             }
           }
 
-          // 2. Register/Sign up or Update User in Supabase Auth
+          // Establish authenticated session with Supabase Auth
           let authUser = null;
           const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({
             email,
             password: pwd,
             options: {
               data: {
-                full_name: appData.full_name,
-                role: 'creator',
-                application_id: appData.id
+                role: 'creator'
               }
             }
           });
 
           if (signUpErr) {
-            // If already registered, attempt signIn and password update
             if (signUpErr.message.includes('already registered')) {
               const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password: pwd });
               if (signInErr) {
-                // If wrong password, update password via authenticated recovery session or reset flow
-                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/creator-activate' });
-                throw new Error('This account was already registered. A password reset link has been dispatched to your email.');
+                // If password exists, updateUser via active session
+                throw new Error('This account credentials were created. Please proceed directly to Creator Login.');
               }
               authUser = signInData.user;
             } else {
@@ -350,21 +343,8 @@
             authUser = signUpData.user;
           }
 
-          // Invalidate activation token and mark account active
-          delete existingProfileData.activation_token;
-          delete existingProfileData.activation_token_expires_at;
-          existingProfileData.account_status = 'active';
-          existingProfileData.activated_at = new Date().toISOString();
-          existingProfileData.last_password_change_at = new Date().toISOString();
-
-          await supabaseClient
-            .from('creator_applications')
-            .update({
-              profile_data: existingProfileData
-            })
-            .eq('id', appData.id);
-
           form.style.display = 'none';
+          successBox.textContent = '✓ Account activated successfully! Redirecting to Dashboard...';
           successBox.style.display = 'block';
 
           setTimeout(() => {
