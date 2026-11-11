@@ -38,6 +38,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/js/creator-email-service.js"></script>
   
   <!-- Custom Shared Stylesheet -->
   <link rel="stylesheet" href="/css/style.css">
@@ -972,11 +973,11 @@
                 <thead>
                   <tr>
                     <th>Member Details</th>
-                    <th>Sphere</th>
+                    <th>Login ID</th>
+                    <th>Sphere & Skills</th>
                     <th>Location</th>
                     <th>Availability</th>
-                    <th>Status</th>
-                    <th>Badges</th>
+                    <th>Account & Badges</th>
                     <th style="text-align: right;">Action</th>
                   </tr>
                 </thead>
@@ -1265,9 +1266,11 @@
           <label class="form-label">Internal Vetting Remarks</label>
           <textarea id="edit-c-notes" class="form-control" style="height:80px; resize:none;"></textarea>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-color); padding-top:16px;">
           <div style="display:flex; gap:10px;">
+            <button type="button" onclick="sendCreatorPasswordReset()" class="btn-main btn-ghost" style="color:var(--brand-orange); border-color:rgba(255,90,31,0.3);">Send Password Reset</button>
             <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
+            <button type="button" onclick="reactivateCreator()" class="btn-main btn-ghost" style="color:#00E676; border-color:rgba(0,230,118,0.2);">Reactivate</button>
             <button type="button" onclick="revokeCreatorApproval()" class="btn-main btn-ghost" style="color:#ff9800; border-color:rgba(255,152,0,0.2);">Revoke Approval</button>
           </div>
           <button type="submit" class="btn-main">Save Updates</button>
@@ -1996,19 +1999,63 @@
       openModal('modal-app-details');
     }
 
+    // Helper: Generate next sequential Creator Login ID (e.g. YAW-CRE-0001)
+    async function generateNextCreatorLoginId() {
+      try {
+        const { data } = await supabaseClient
+          .from('creator_applications')
+          .select('id, profile_data')
+          .not('profile_data', 'is', null);
+
+        let maxNum = 0;
+        if (data && data.length) {
+          data.forEach(row => {
+            const pd = row.profile_data || {};
+            const cid = pd.creator_login_id || '';
+            const match = cid.match(/YAW-CRE-(\d+)/i);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > maxNum) maxNum = num;
+            }
+          });
+        }
+        return `YAW-CRE-${String(maxNum + 1).padStart(4, '0')}`;
+      } catch (e) {
+        return `YAW-CRE-${String(Date.now()).slice(-4)}`;
+      }
+    }
+
+    // Helper: Cryptographically secure single-use activation token generator
+    function generateActivationToken() {
+      const arr = new Uint8Array(24);
+      window.crypto.getRandomValues(arr);
+      return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     async function approveApplication(id) {
       const notes = document.getElementById('app-vetting-notes').value;
       const overrideProfInput = document.getElementById('override-primary-prof');
       const { data: appRecord } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
-      
-      const memberId = (appRecord && appRecord.profile_data && appRecord.profile_data.member_id) 
-        ? appRecord.profile_data.member_id 
-        : `YWC-2026-${String(id).padStart(4, '0')}`;
+      if (!appRecord) return;
 
-      const existingProfileData = (appRecord && appRecord.profile_data) || {};
-      existingProfileData.member_id = memberId;
-      existingProfileData.account_status = existingProfileData.account_status || 'invitation_pending';
+      const existingProfileData = appRecord.profile_data || {};
+
+      // Idempotency: Check if already assigned a Creator Login ID
+      let creatorLoginId = existingProfileData.creator_login_id;
+      if (!creatorLoginId) {
+        creatorLoginId = await generateNextCreatorLoginId();
+        existingProfileData.creator_login_id = creatorLoginId;
+      }
+
+      // Legacy fallback member_id preserved
+      existingProfileData.member_id = existingProfileData.member_id || `YWC-2026-${String(id).padStart(4, '0')}`;
+      existingProfileData.account_status = 'pending_activation';
       existingProfileData.invitation_sent_at = new Date().toISOString();
+
+      // Generate single-use activation token expiring in 7 days
+      const activationToken = generateActivationToken();
+      existingProfileData.activation_token = activationToken;
+      existingProfileData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       // If administrator adjusted or standardized the profession
       if (overrideProfInput && overrideProfInput.value.trim()) {
@@ -2028,21 +2075,62 @@
         return;
       }
 
-      logActivity('Approved Creator Application & Provisioned Membership', 'creator_applications', id, { memberId });
+      logActivity('Approved Creator Application & Generated Login ID', 'creator_applications', id, { creatorLoginId });
       closeModal('modal-app-details');
       loadApplications();
 
-      // Show activation link
-      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(appRecord.email)}&mid=${memberId}`;
-      prompt('Application approved and Member ID assigned (' + memberId + '). Activation link generated for candidate:', actUrl);
+      // One-time activation URL
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(appRecord.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(activationToken)}`;
+
+      // Attempt automated email delivery through CreatorEmailGateway
+      let emailResult = { success: false, message: 'Email gateway not called' };
+      if (window.CreatorEmailGateway && window.CreatorEmailGateway.sendActivation) {
+        emailResult = await window.CreatorEmailGateway.sendActivation({
+          creatorName: appRecord.full_name,
+          creatorEmail: appRecord.email,
+          creatorLoginId: creatorLoginId,
+          activationUrl: actUrl
+        });
+      }
+
+      if (emailResult.success) {
+        alert(`Application Approved!\n\nCreator Login ID: ${creatorLoginId}\nActivation email successfully delivered to ${appRecord.email}.`);
+      } else {
+        prompt(
+          `Application Approved!\n\nCreator Login ID: ${creatorLoginId}\n(Note: ${emailResult.message || 'Email delivery not configured'}).\n\nProvide this secure one-time activation link to the candidate:`,
+          actUrl
+        );
+      }
     }
 
     async function resendMemberActivation(id) {
       const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
       if (!c) return;
       const pData = c.profile_data || {};
-      const memberId = pData.member_id || `YWC-2026-${String(c.id).padStart(4, '0')}`;
-      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(c.email)}&mid=${memberId}`;
+      const creatorLoginId = pData.creator_login_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+      
+      // Refresh activation token
+      const newToken = generateActivationToken();
+      pData.activation_token = newToken;
+      pData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
+
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(c.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(newToken)}`;
+      
+      // Dispatch or display
+      if (window.CreatorEmailGateway && window.CreatorEmailGateway.sendActivation) {
+        const emailRes = await window.CreatorEmailGateway.sendActivation({
+          creatorName: c.full_name,
+          creatorEmail: c.email,
+          creatorLoginId: creatorLoginId,
+          activationUrl: actUrl
+        });
+        if (emailRes.success) {
+          alert(`Activation email resent successfully to ${c.email}.`);
+          return;
+        }
+      }
+
       prompt('Copy member account activation URL:', actUrl);
     }
 
@@ -2149,21 +2237,37 @@
 
       data.forEach(c => {
         const tr = document.createElement('tr');
-        const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
-        const rating = Number(c.rating || 5.0).toFixed(1);
+        const pData = c.profile_data || {};
+        const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+        const primaryCraft = pData.primary_specialization || (c.categories && c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative');
+        const additionalSkills = (pData.additional_skills || []).slice(0, 3).join(', ');
+        const accountStatus = pData.account_status || (c.status === 'approved' ? 'active' : 'unprovisioned');
 
         tr.innerHTML = `
-          <td><strong style="color:var(--text-main);">${c.full_name}</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">${c.email}</span></td>
-          <td style="text-transform: uppercase;">${primaryCat}</td>
-          <td style="text-transform: capitalize;">${c.city || 'N/A'}</td>
-          <td style="text-transform: capitalize;">${c.availability || 'available'}</td>
-          <td>${rating} ★</td>
           <td>
-            ${c.featured ? '<span style="color:var(--brand-orange); font-size:0.75rem; margin-right:8px;">★ Featured</span>' : ''}
+            <strong style="color:var(--text-main); font-size:0.95rem;">${c.full_name}</strong>
+            <br>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${c.email}</span>
+          </td>
+          <td>
+            <span style="font-family:var(--font-display); font-size:0.82rem; font-weight:700; color:var(--brand-orange); background:rgba(255,90,31,0.08); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,90,31,0.2);">${loginId}</span>
+          </td>
+          <td>
+            <span style="font-weight:600; text-transform:capitalize; color:var(--text-main);">${primaryCraft}</span>
+            ${additionalSkills ? `<br><span style="font-size:0.75rem; color:var(--text-muted);">${additionalSkills}</span>` : ''}
+          </td>
+          <td style="text-transform: capitalize;">${[c.city, c.country].filter(Boolean).join(', ') || 'N/A'}</td>
+          <td style="text-transform: capitalize;">${c.availability || 'available'}</td>
+          <td>
+            <span style="display:inline-block; font-size:0.72rem; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${accountStatus === 'active' ? 'rgba(0,230,118,0.1)' : 'rgba(255,152,0,0.1)'}; color:${accountStatus === 'active' ? '#00E676' : '#ff9800'}; margin-bottom:4px;">${accountStatus}</span>
+            <br>
+            ${c.featured ? '<span style="color:var(--brand-orange); font-size:0.75rem; margin-right:6px;">★ Featured</span>' : ''}
             ${c.verified ? '<span style="color:#00E676; font-size:0.75rem;">✓ Vetted</span>' : ''}
           </td>
           <td style="text-align: right;">
-            <button class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;" onclick="openCreatorEditModal(${c.id})">Modify Parameters</button>
+            <div style="display:flex; justify-content:flex-end; gap:6px;">
+              <button class="btn-main btn-ghost" style="padding:6px 10px; font-size:0.75rem;" onclick="openCreatorEditModal(${c.id})">Manage Account</button>
+            </div>
           </td>
         `;
         body.appendChild(tr);
@@ -2243,7 +2347,14 @@
       const id = document.getElementById('edit-c-id').value;
       if (!confirm('Are you sure you want to suspend this creator account?')) return;
 
-      const { error } = await supabaseClient.from('creator_applications').update({ status: 'suspended' }).eq('id', id);
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      const pData = (c && c.profile_data) || {};
+      pData.account_status = 'suspended';
+
+      const { error } = await supabaseClient.from('creator_applications').update({ 
+        status: 'suspended',
+        profile_data: pData
+      }).eq('id', id);
       if (error) {
         alert('Suspension error: ' + error.message);
         return;
@@ -2252,6 +2363,54 @@
       logActivity('Suspended Creator Account', 'creator_applications', id);
       closeModal('modal-edit-creator');
       loadCreators();
+    }
+
+    async function reactivateCreator() {
+      const id = document.getElementById('edit-c-id').value;
+      if (!confirm('Reactivate this creator account?')) return;
+
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      const pData = (c && c.profile_data) || {};
+      pData.account_status = 'active';
+
+      const { error } = await supabaseClient.from('creator_applications').update({ 
+        status: 'approved',
+        profile_data: pData
+      }).eq('id', id);
+      if (error) {
+        alert('Reactivation error: ' + error.message);
+        return;
+      }
+
+      logActivity('Reactivated Creator Account', 'creator_applications', id);
+      closeModal('modal-edit-creator');
+      loadCreators();
+    }
+
+    async function sendCreatorPasswordReset() {
+      const id = document.getElementById('edit-c-id').value;
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (!c || !c.email) {
+        alert('No registered email found for this creator.');
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(c.email, {
+          redirectTo: window.location.origin + '/creator-activate'
+        });
+        if (error) throw error;
+
+        // Record audit timestamp in profile_data
+        const pData = c.profile_data || {};
+        pData.last_password_reset_sent_at = new Date().toISOString();
+        await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
+
+        logActivity('Dispatched Password Reset Link', 'creator_applications', id, { email: c.email });
+        alert(`Password reset link dispatched to ${c.email}.`);
+      } catch (err) {
+        alert('Error dispatching password reset: ' + err.message);
+      }
     }
 
     async function revokeCreatorApproval() {

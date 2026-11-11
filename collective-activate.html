@@ -153,7 +153,7 @@
       <p class="auth-subtitle">Congratulations on being vetted for the YAWMATIC Collective. Choose a secure password to activate your Creator Dashboard.</p>
 
       <div id="member-pill-box" class="member-id-pill" style="display:none;">
-        <span>MEMBER ID:</span> <span id="display-member-id">YWC-2026-0005</span>
+        <span>CREATOR LOGIN ID:</span> <strong id="display-member-id" style="color:var(--volt); letter-spacing:1px;">YAW-CRE-0001</strong>
       </div>
 
       <div id="auth-error-box" class="auth-error"></div>
@@ -194,7 +194,8 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const emailParam = urlParams.get('email');
-      const memberIdParam = urlParams.get('mid');
+      const memberIdParam = urlParams.get('mid') || urlParams.get('cid');
+      const tokenParam = urlParams.get('token');
 
       if (emailParam) {
         document.getElementById('act-email').value = emailParam;
@@ -217,6 +218,12 @@
         const pwd = document.getElementById('act-password').value;
         const pwdConfirm = document.getElementById('act-password-confirm').value;
 
+        if (pwd.length < 8) {
+          errBox.textContent = 'Password must be at least 8 characters with letters and numbers.';
+          errBox.style.display = 'block';
+          return;
+        }
+
         if (pwd !== pwdConfirm) {
           errBox.textContent = 'Passwords do not match.';
           errBox.style.display = 'block';
@@ -238,8 +245,27 @@
             throw new Error('No creator record matches this email address. Please apply first.');
           }
 
+          if (appData.status === 'suspended') {
+            throw new Error('This creator account has been suspended by administration.');
+          }
+
           if (appData.status !== 'approved') {
             throw new Error('Your application status is currently: ' + (appData.status || 'pending') + '. You can only activate an account after admin approval.');
+          }
+
+          const existingProfileData = appData.profile_data || {};
+
+          // Verify token if activation token was provided
+          if (existingProfileData.activation_token) {
+            if (existingProfileData.activation_token_expires_at) {
+              const expiresAt = new Date(existingProfileData.activation_token_expires_at).getTime();
+              if (Date.now() > expiresAt) {
+                throw new Error('This activation link has expired. Please contact administration for a new activation link.');
+              }
+            }
+            if (tokenParam && tokenParam !== existingProfileData.activation_token) {
+              throw new Error('Invalid or expired activation link token.');
+            }
           }
 
           // 2. Register/Sign up or Update User in Supabase Auth
@@ -261,9 +287,9 @@
             if (signUpErr.message.includes('already registered')) {
               const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password: pwd });
               if (signInErr) {
-                // If wrong password, send password reset link
-                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/collective/activate' });
-                throw new Error('This account was already created. A password reset link has been dispatched to your email.');
+                // If wrong password, update password via authenticated recovery session or reset flow
+                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/creator-activate' });
+                throw new Error('This account was already registered. A password reset link has been dispatched to your email.');
               }
               authUser = signInData.user;
             } else {
@@ -273,10 +299,12 @@
             authUser = signUpData.user;
           }
 
-          // 3. Link auth_user_id into creator_applications and set status to active
-          const existingProfileData = appData.profile_data || {};
+          // Invalidate activation token and mark account active
+          delete existingProfileData.activation_token;
+          delete existingProfileData.activation_token_expires_at;
           existingProfileData.account_status = 'active';
           existingProfileData.activated_at = new Date().toISOString();
+          existingProfileData.last_password_change_at = new Date().toISOString();
 
           await supabaseClient
             .from('creator_applications')
@@ -289,7 +317,7 @@
           successBox.style.display = 'block';
 
           setTimeout(() => {
-            window.location.replace('/collective/dashboard');
+            window.location.replace('/creator-dashboard');
           }, 1500);
 
         } catch (err) {

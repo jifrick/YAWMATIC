@@ -485,6 +485,28 @@
               </div>
             </div>
 
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="prof-behance">Behance URL</label>
+                <input type="url" id="prof-behance" class="form-control" placeholder="https://behance.net/username">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-dribbble">Dribbble URL</label>
+                <input type="url" id="prof-dribbble" class="form-control" placeholder="https://dribbble.com/username">
+              </div>
+            </div>
+
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="prof-github">GitHub URL</label>
+                <input type="url" id="prof-github" class="form-control" placeholder="https://github.com/username">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-linkedin">LinkedIn URL</label>
+                <input type="url" id="prof-linkedin" class="form-control" placeholder="https://linkedin.com/in/username">
+              </div>
+            </div>
+
             <button type="submit" id="btn-save-profile" class="btn btn--primary" style="margin-top:10px;">
               Submit Profile Revision for Admin Approval →
             </button>
@@ -628,11 +650,21 @@
 
           <form id="form-update-password">
             <div class="form-group">
-              <label class="form-label" for="set-new-pwd">Change Password</label>
-              <input type="password" id="set-new-pwd" class="form-control" placeholder="New password (min 8 characters)" minlength="8" required>
+              <label class="form-label" for="set-current-pwd">Current Password</label>
+              <input type="password" id="set-current-pwd" class="form-control" placeholder="••••••••••••" required>
+            </div>
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label" for="set-new-pwd">New Password</label>
+                <input type="password" id="set-new-pwd" class="form-control" placeholder="Min 8 characters" minlength="8" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="set-confirm-pwd">Confirm New Password</label>
+                <input type="password" id="set-confirm-pwd" class="form-control" placeholder="Repeat new password" minlength="8" required>
+              </div>
             </div>
             <button type="submit" id="btn-save-pwd" class="btn btn--primary">
-              Update Password
+              Save Password
             </button>
           </form>
         </div>
@@ -718,9 +750,9 @@
 
         // Populate User display
         const pData = data.profile_data || {};
-        const memberId = pData.member_id || `YWC-2026-${String(data.id).padStart(4, '0')}`;
+        const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(data.id).padStart(4, '0')}`;
         document.getElementById('user-display-name').textContent = data.full_name;
-        document.getElementById('user-display-mid').textContent = memberId;
+        document.getElementById('user-display-mid').textContent = loginId;
 
         // Overview stats
         document.getElementById('stat-primary-craft').textContent = pData.primary_specialization || (data.categories && data.categories[0]) || 'Collective Talent';
@@ -744,6 +776,10 @@
         document.getElementById('prof-bio').value = data.bio || '';
         document.getElementById('prof-portfolio-url').value = data.portfolio_url || data.website || '';
         document.getElementById('prof-instagram').value = data.instagram || '';
+        if (document.getElementById('prof-behance')) document.getElementById('prof-behance').value = data.behance || '';
+        if (document.getElementById('prof-dribbble')) document.getElementById('prof-dribbble').value = data.dribbble || '';
+        if (document.getElementById('prof-github')) document.getElementById('prof-github').value = (pData.links && pData.links.github) || '';
+        if (document.getElementById('prof-linkedin')) document.getElementById('prof-linkedin').value = (pData.links && pData.links.linkedin) || '';
 
         // Craft
         document.getElementById('craft-primary-spec').value = pData.primary_specialization || (data.categories && data.categories[0]) || '';
@@ -807,6 +843,10 @@
           bio: document.getElementById('prof-bio').value.trim(),
           portfolio_url: document.getElementById('prof-portfolio-url').value.trim(),
           instagram: document.getElementById('prof-instagram').value.trim(),
+          behance: document.getElementById('prof-behance') ? document.getElementById('prof-behance').value.trim() : '',
+          dribbble: document.getElementById('prof-dribbble') ? document.getElementById('prof-dribbble').value.trim() : '',
+          github: document.getElementById('prof-github') ? document.getElementById('prof-github').value.trim() : '',
+          linkedin: document.getElementById('prof-linkedin') ? document.getElementById('prof-linkedin').value.trim() : '',
           submitted_at: new Date().toISOString()
         };
 
@@ -958,19 +998,48 @@
         e.preventDefault();
         const btn = document.getElementById('btn-save-pwd');
         btn.disabled = true;
-        btn.textContent = 'Updating...';
+        btn.textContent = 'Verifying & Updating...';
 
+        const currentPwd = document.getElementById('set-current-pwd').value;
         const newPwd = document.getElementById('set-new-pwd').value;
-        const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+        const confirmPwd = document.getElementById('set-confirm-pwd').value;
 
-        btn.disabled = false;
-        btn.textContent = 'Update Password';
+        if (newPwd !== confirmPwd) {
+          alert('New passwords do not match.');
+          btn.disabled = false;
+          btn.textContent = 'Save Password';
+          return;
+        }
 
-        if (error) {
-          alert('Password update error: ' + error.message);
-        } else {
-          alert('Password updated successfully.');
+        try {
+          // Re-authenticate with current password to protect account
+          const { error: signInErr } = await supabaseClient.auth.signInWithPassword({
+            email: currentUser.email,
+            password: currentPwd
+          });
+
+          if (signInErr) {
+            throw new Error('Current password incorrect. Please verify and retry.');
+          }
+
+          // Securely update password
+          const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+          if (error) throw error;
+
+          // Record password change timestamp in profile_data for audit trail
+          if (currentAppRecord) {
+            const pData = currentAppRecord.profile_data || {};
+            pData.last_password_change_at = new Date().toISOString();
+            await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', currentAppRecord.id);
+          }
+
+          alert('Password successfully updated.');
           form.reset();
+        } catch (err) {
+          alert(err.message || 'Error updating password.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Save Password';
         }
       });
     }
