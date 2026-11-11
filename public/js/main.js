@@ -45,6 +45,10 @@ function highlightActiveLink() {
       '/creators.html': '/creators',
       '/creators-browse.html': '/creators/browse',
       '/creators-apply.html': '/creators/apply',
+      '/collective-login.html': '/creator-login',
+      '/collective-activate.html': '/creator-activate',
+      '/collective-forgot-password.html': '/creator-forgot-password',
+      '/collective-dashboard.html': '/creator-dashboard',
       '/admin.html': '/admin'
     };
 
@@ -157,7 +161,15 @@ document.addEventListener('click', (e) => {
       '/creators': '/creators.html',
       '/creators/browse': '/creators-browse.html',
       '/creators/apply': '/creators-apply.html',
-      '/creators/success-stories': '/creators-browse.html'
+      '/creators/success-stories': '/creators-browse.html',
+      '/collective/login': '/collective-login.html',
+      '/collective/activate': '/collective-activate.html',
+      '/collective/forgot-password': '/collective-forgot-password.html',
+      '/collective/dashboard': '/collective-dashboard.html',
+      '/creator-login': '/collective-login.html',
+      '/creator-activate': '/collective-activate.html',
+      '/creator-forgot-password': '/collective-forgot-password.html',
+      '/creator-dashboard': '/collective-dashboard.html'
     };
 
     let targetUrl = null;

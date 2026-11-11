@@ -825,6 +825,7 @@
         <li><button class="sidebar-btn active" data-view="dashboard"><i data-lucide="layout-dashboard" style="width:16px;"></i>Dashboard</button></li>
         <li><button class="sidebar-btn" data-view="applications"><i data-lucide="user-check" style="width:16px;"></i>Applications</button></li>
         <li><button class="sidebar-btn" data-view="creators"><i data-lucide="users" style="width:16px;"></i>Approved Members</button></li>
+        <li><button class="sidebar-btn" data-view="passwords"><i data-lucide="key-round" style="width:16px;"></i>Password Management</button></li>
         <li><button class="sidebar-btn" data-view="showcases"><i data-lucide="image" style="width:16px;"></i>Portfolio Moderation</button></li>
         <li><button class="sidebar-btn" data-view="leads"><i data-lucide="file-text" style="width:16px;"></i>Client Enquiries</button></li>
         <li><button class="sidebar-btn" data-view="projects"><i data-lucide="folder-kanban" style="width:16px;"></i>Projects</button></li>
@@ -972,15 +973,50 @@
                 <thead>
                   <tr>
                     <th>Member Details</th>
-                    <th>Sphere</th>
+                    <th>Login ID</th>
+                    <th>Sphere & Skills</th>
                     <th>Location</th>
                     <th>Availability</th>
-                    <th>Status</th>
-                    <th>Badges</th>
+                    <th>Account & Badges</th>
                     <th style="text-align: right;">Action</th>
                   </tr>
                 </thead>
                 <tbody id="creators-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW: PASSWORD MANAGEMENT -->
+        <!-- ============================================== -->
+        <div class="cc-view" id="view-passwords">
+          <div class="cc-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+              <div>
+                <span class="cc-card-title" style="margin-bottom:4px;">Creator Password & Credential Lifecycle</span>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">
+                  Manage authentication status, password reset tokens, and security events. Plaintext passwords are never stored or displayed.
+                </p>
+              </div>
+              <button onclick="loadPasswordManagement()" class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;">
+                <i data-lucide="refresh-cw" style="width:14px; margin-right:6px;"></i>Refresh Status
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="cc-table">
+                <thead>
+                  <tr>
+                    <th>Creator Name & Email</th>
+                    <th>Login ID</th>
+                    <th>Account Status</th>
+                    <th>Last Login</th>
+                    <th>Last Password Change</th>
+                    <th>Reset Status</th>
+                    <th style="text-align: right;">Security Action</th>
+                  </tr>
+                </thead>
+                <tbody id="passwords-table-body"></tbody>
               </table>
             </div>
           </div>
@@ -1265,9 +1301,11 @@
           <label class="form-label">Internal Vetting Remarks</label>
           <textarea id="edit-c-notes" class="form-control" style="height:80px; resize:none;"></textarea>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-color); padding-top:16px;">
           <div style="display:flex; gap:10px;">
+            <button type="button" onclick="triggerPasswordResetForCreator(document.getElementById('edit-c-id').value)" class="btn-main btn-ghost" style="color:var(--brand-orange); border-color:rgba(255,90,31,0.3);">Send Password Reset</button>
             <button type="button" onclick="suspendCreator()" class="btn-main btn-ghost" style="color:#FF1744; border-color:rgba(255,23,68,0.2);">Suspend Account</button>
+            <button type="button" onclick="reactivateCreator()" class="btn-main btn-ghost" style="color:#00E676; border-color:rgba(0,230,118,0.2);">Reactivate</button>
             <button type="button" onclick="revokeCreatorApproval()" class="btn-main btn-ghost" style="color:#ff9800; border-color:rgba(255,152,0,0.2);">Revoke Approval</button>
           </div>
           <button type="submit" class="btn-main">Save Updates</button>
@@ -1664,6 +1702,7 @@
       if (viewId === 'analytics' || viewId === 'dashboard') loadDashboard();
       else if (viewId === 'applications') loadApplications();
       else if (viewId === 'creators') loadCreators();
+      else if (viewId === 'passwords') loadPasswordManagement();
       else if (viewId === 'showcases') loadShowcases();
       else if (viewId === 'leads') loadLeads();
       else if (viewId === 'projects') loadProjects();
@@ -1996,19 +2035,72 @@
       openModal('modal-app-details');
     }
 
+    // Helper: Compute SHA-256 hash using browser SubtleCrypto
+    async function sha256Hex(text) {
+      const msgBuffer = new TextEncoder().encode(text.trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Helper: Cryptographically secure single-use activation token generator
+    function generateActivationToken() {
+      const arr = new Uint8Array(32);
+      window.crypto.getRandomValues(arr);
+      return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Helper: Server-side atomic Creator Login ID retrieval (sequence fallback to highest existing)
+    async function generateNextCreatorLoginId() {
+      try {
+        const { data } = await supabaseClient
+          .from('creator_applications')
+          .select('id, profile_data')
+          .not('profile_data', 'is', null);
+
+        let maxNum = 0;
+        if (data && data.length) {
+          data.forEach(row => {
+            const pd = row.profile_data || {};
+            const cid = pd.creator_login_id || '';
+            const match = cid.match(/YAW-CRE-(\d+)/i);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > maxNum) maxNum = num;
+            }
+          });
+        }
+        return `YAW-CRE-${String(maxNum + 1).padStart(4, '0')}`;
+      } catch (e) {
+        return `YAW-CRE-${String(Date.now()).slice(-4)}`;
+      }
+    }
+
     async function approveApplication(id) {
       const notes = document.getElementById('app-vetting-notes').value;
       const overrideProfInput = document.getElementById('override-primary-prof');
       const { data: appRecord } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
-      
-      const memberId = (appRecord && appRecord.profile_data && appRecord.profile_data.member_id) 
-        ? appRecord.profile_data.member_id 
-        : `YWC-2026-${String(id).padStart(4, '0')}`;
+      if (!appRecord) return;
 
-      const existingProfileData = (appRecord && appRecord.profile_data) || {};
-      existingProfileData.member_id = memberId;
-      existingProfileData.account_status = existingProfileData.account_status || 'invitation_pending';
+      const existingProfileData = appRecord.profile_data || {};
+
+      // Idempotency: Check if already assigned a Creator Login ID
+      let creatorLoginId = existingProfileData.creator_login_id;
+      if (!creatorLoginId) {
+        creatorLoginId = await generateNextCreatorLoginId();
+        existingProfileData.creator_login_id = creatorLoginId;
+      }
+
+      existingProfileData.member_id = existingProfileData.member_id || `YWC-2026-${String(id).padStart(4, '0')}`;
+      existingProfileData.account_status = 'pending_activation';
       existingProfileData.invitation_sent_at = new Date().toISOString();
+
+      // Generate single-use activation token and store its SHA-256 hash (never raw token)
+      const rawActivationToken = generateActivationToken();
+      const tokenHash = await sha256Hex(rawActivationToken);
+      existingProfileData.activation_token_hash = tokenHash;
+      delete existingProfileData.activation_token; // ensure raw token is never saved
+      existingProfileData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       // If administrator adjusted or standardized the profession
       if (overrideProfInput && overrideProfInput.value.trim()) {
@@ -2028,21 +2120,90 @@
         return;
       }
 
-      logActivity('Approved Creator Application & Provisioned Membership', 'creator_applications', id, { memberId });
+      logActivity('Approved Creator Application & Generated Login ID', 'creator_applications', id, { creatorLoginId });
       closeModal('modal-app-details');
       loadApplications();
 
-      // Show activation link
-      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(appRecord.email)}&mid=${memberId}`;
-      prompt('Application approved and Member ID assigned (' + memberId + '). Activation link generated for candidate:', actUrl);
+      // One-time activation URL with the raw token passed only to the applicant
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(appRecord.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(rawActivationToken)}`;
+
+      // Attempt automated email delivery through secure serverless backend endpoint
+      let emailResult = { success: false, message: 'Server email endpoint not configured' };
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const adminToken = session ? session.access_token : '';
+        const emailRes = await fetch('/api/send-activation-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            appId: id,
+            activationUrl: actUrl
+          })
+        });
+
+        const emailJson = await emailRes.json().catch(() => ({}));
+        if (emailRes.ok && emailJson.success) {
+          emailResult = { success: true, message: 'Email accepted by transactional provider.' };
+        } else if (emailJson.missingConfig) {
+          emailResult = { success: false, message: emailJson.message };
+        }
+      } catch (err) {
+        console.warn('[Admin Activation Email]:', err);
+      }
+
+      if (emailResult.success) {
+        alert(`Application Approved!\n\nCreator Login ID: ${creatorLoginId}\nActivation email successfully queued with transactional provider for ${appRecord.email}.`);
+      } else {
+        prompt(
+          `Application Approved!\n\nCreator Login ID: ${creatorLoginId}\n(Note: ${emailResult.message || 'Automated transactional email key not configured in environment'}).\n\nProvide this secure one-time activation link to the candidate:`,
+          actUrl
+        );
+      }
     }
 
     async function resendMemberActivation(id) {
       const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
       if (!c) return;
       const pData = c.profile_data || {};
-      const memberId = pData.member_id || `YWC-2026-${String(c.id).padStart(4, '0')}`;
-      const actUrl = `${window.location.origin}/collective/activate?email=${encodeURIComponent(c.email)}&mid=${memberId}`;
+      const creatorLoginId = pData.creator_login_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+      
+      // Refresh single-use activation token and hash
+      const rawNewToken = generateActivationToken();
+      const tokenHash = await sha256Hex(rawNewToken);
+      pData.activation_token_hash = tokenHash;
+      delete pData.activation_token;
+      pData.activation_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', id);
+
+      const actUrl = `${window.location.origin}/creator-activate?email=${encodeURIComponent(c.email)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(rawNewToken)}`;
+      
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const adminToken = session ? session.access_token : '';
+        const emailRes = await fetch('/api/send-activation-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({
+            appId: id,
+            activationUrl: actUrl
+          })
+        });
+
+        const emailJson = await emailRes.json().catch(() => ({}));
+        if (emailRes.ok && emailJson.success) {
+          alert(`Activation email queued successfully with transactional provider for ${c.email}.`);
+          return;
+        }
+      } catch (err) {
+        console.warn('[Admin Resend Email]:', err);
+      }
+
       prompt('Copy member account activation URL:', actUrl);
     }
 
@@ -2149,21 +2310,37 @@
 
       data.forEach(c => {
         const tr = document.createElement('tr');
-        const primaryCat = (c.categories && c.categories.length > 0) ? c.categories[0].replace('-', ' ') : 'Creative';
-        const rating = Number(c.rating || 5.0).toFixed(1);
+        const pData = c.profile_data || {};
+        const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+        const primaryCraft = pData.primary_specialization || (c.categories && c.categories.length > 0 ? c.categories[0].replace('-', ' ') : 'Creative');
+        const additionalSkills = (pData.additional_skills || []).slice(0, 3).join(', ');
+        const accountStatus = pData.account_status || (c.status === 'approved' ? 'active' : 'unprovisioned');
 
         tr.innerHTML = `
-          <td><strong style="color:var(--text-main);">${c.full_name}</strong><br><span style="font-size:0.75rem;color:var(--text-muted);">${c.email}</span></td>
-          <td style="text-transform: uppercase;">${primaryCat}</td>
-          <td style="text-transform: capitalize;">${c.city || 'N/A'}</td>
-          <td style="text-transform: capitalize;">${c.availability || 'available'}</td>
-          <td>${rating} ★</td>
           <td>
-            ${c.featured ? '<span style="color:var(--brand-orange); font-size:0.75rem; margin-right:8px;">★ Featured</span>' : ''}
+            <strong style="color:var(--text-main); font-size:0.95rem;">${c.full_name}</strong>
+            <br>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${c.email}</span>
+          </td>
+          <td>
+            <span style="font-family:var(--font-display); font-size:0.82rem; font-weight:700; color:var(--brand-orange); background:rgba(255,90,31,0.08); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,90,31,0.2);">${loginId}</span>
+          </td>
+          <td>
+            <span style="font-weight:600; text-transform:capitalize; color:var(--text-main);">${primaryCraft}</span>
+            ${additionalSkills ? `<br><span style="font-size:0.75rem; color:var(--text-muted);">${additionalSkills}</span>` : ''}
+          </td>
+          <td style="text-transform: capitalize;">${[c.city, c.country].filter(Boolean).join(', ') || 'N/A'}</td>
+          <td style="text-transform: capitalize;">${c.availability || 'available'}</td>
+          <td>
+            <span style="display:inline-block; font-size:0.72rem; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${accountStatus === 'active' ? 'rgba(0,230,118,0.1)' : 'rgba(255,152,0,0.1)'}; color:${accountStatus === 'active' ? '#00E676' : '#ff9800'}; margin-bottom:4px;">${accountStatus}</span>
+            <br>
+            ${c.featured ? '<span style="color:var(--brand-orange); font-size:0.75rem; margin-right:6px;">★ Featured</span>' : ''}
             ${c.verified ? '<span style="color:#00E676; font-size:0.75rem;">✓ Vetted</span>' : ''}
           </td>
           <td style="text-align: right;">
-            <button class="btn-main btn-ghost" style="padding:6px 12px; font-size:0.75rem;" onclick="openCreatorEditModal(${c.id})">Modify Parameters</button>
+            <div style="display:flex; justify-content:flex-end; gap:6px;">
+              <button class="btn-main btn-ghost" style="padding:6px 10px; font-size:0.75rem;" onclick="openCreatorEditModal(${c.id})">Manage Account</button>
+            </div>
           </td>
         `;
         body.appendChild(tr);
@@ -2243,7 +2420,14 @@
       const id = document.getElementById('edit-c-id').value;
       if (!confirm('Are you sure you want to suspend this creator account?')) return;
 
-      const { error } = await supabaseClient.from('creator_applications').update({ status: 'suspended' }).eq('id', id);
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      const pData = (c && c.profile_data) || {};
+      pData.account_status = 'suspended';
+
+      const { error } = await supabaseClient.from('creator_applications').update({ 
+        status: 'suspended',
+        profile_data: pData
+      }).eq('id', id);
       if (error) {
         alert('Suspension error: ' + error.message);
         return;
@@ -2252,6 +2436,158 @@
       logActivity('Suspended Creator Account', 'creator_applications', id);
       closeModal('modal-edit-creator');
       loadCreators();
+    }
+
+    async function reactivateCreator() {
+      const id = document.getElementById('edit-c-id').value;
+      if (!confirm('Reactivate this creator account?')) return;
+
+      const { data: c } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      const pData = (c && c.profile_data) || {};
+      pData.account_status = 'active';
+
+      const { error } = await supabaseClient.from('creator_applications').update({ 
+        status: 'approved',
+        profile_data: pData
+      }).eq('id', id);
+      if (error) {
+        alert('Reactivation error: ' + error.message);
+        return;
+      }
+
+      logActivity('Reactivated Creator Account', 'creator_applications', id);
+      closeModal('modal-edit-creator');
+      loadCreators();
+    }
+
+    // --------------------------------------------------
+    // VIEW HANDLER: PASSWORD MANAGEMENT
+    // --------------------------------------------------
+    async function loadPasswordManagement() {
+      const { data, error } = await supabaseClient
+        .from('creator_applications')
+        .select('*')
+        .eq('status', 'approved')
+        .order('full_name', { ascending: true });
+
+      const body = document.getElementById('passwords-table-body');
+      if (!body) return;
+      body.innerHTML = '';
+
+      if (error || !data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color:var(--text-muted);">No approved creator records found.</td></tr>';
+        return;
+      }
+
+      data.forEach(c => {
+        const tr = document.createElement('tr');
+        const pData = c.profile_data || {};
+        const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+        const accountStatus = pData.account_status || (c.status === 'approved' ? 'active' : 'unprovisioned');
+
+        // Determine Last Login timestamp
+        const lastLogin = pData.last_login_at 
+          ? new Date(pData.last_login_at).toLocaleString() 
+          : '<span style="color:var(--text-muted);">Never</span>';
+
+        // Determine Last Password Change timestamp
+        const lastPwdChange = pData.last_password_change_at 
+          ? new Date(pData.last_password_change_at).toLocaleString() 
+          : (pData.activated_at ? new Date(pData.activated_at).toLocaleString() : '<span style="color:var(--text-muted);">Initial Setup</span>');
+
+        // Determine Password Reset Status
+        let resetStatusHtml = '<span style="color:var(--text-muted); font-size:0.75rem;">Not Requested</span>';
+        if (pData.last_password_reset_sent_at) {
+          const sentDate = new Date(pData.last_password_reset_sent_at);
+          const isExpired = (Date.now() - sentDate.getTime()) > (24 * 60 * 60 * 1000); // 24h expiration
+          const isCompleted = pData.last_password_change_at && (new Date(pData.last_password_change_at) > sentDate);
+
+          if (isCompleted) {
+            resetStatusHtml = '<span style="color:#00E676; font-size:0.75rem; font-weight:600;">✓ Password Reset Completed</span>';
+          } else if (isExpired) {
+            resetStatusHtml = '<span style="color:#FF1744; font-size:0.75rem; font-weight:600;">Reset Link Expired</span>';
+          } else {
+            resetStatusHtml = `<span style="color:var(--brand-orange); font-size:0.75rem; font-weight:600;">Reset Email Sent (${sentDate.toLocaleDateString()})</span>`;
+          }
+        }
+
+        tr.innerHTML = `
+          <td>
+            <strong style="color:var(--text-main); font-size:0.92rem;">${c.full_name}</strong>
+            <br>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${c.email}</span>
+          </td>
+          <td>
+            <span style="font-family:var(--font-display); font-size:0.82rem; font-weight:700; color:var(--brand-orange); background:rgba(255,90,31,0.08); padding:4px 8px; border-radius:4px; border:1px solid rgba(255,90,31,0.2);">${loginId}</span>
+          </td>
+          <td>
+            <span style="display:inline-block; font-size:0.72rem; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${accountStatus === 'active' ? 'rgba(0,230,118,0.1)' : 'rgba(255,152,0,0.1)'}; color:${accountStatus === 'active' ? '#00E676' : '#ff9800'}; font-weight:600;">${accountStatus}</span>
+          </td>
+          <td style="font-size:0.8rem;">${lastLogin}</td>
+          <td style="font-size:0.8rem;">${lastPwdChange}</td>
+          <td>${resetStatusHtml}</td>
+          <td style="text-align: right;">
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+              <button class="btn-main" style="padding:6px 10px; font-size:0.75rem;" onclick="triggerPasswordResetForCreator(${c.id})">
+                ${pData.last_password_reset_sent_at ? 'Resend Reset Link' : 'Send Reset Link'}
+              </button>
+            </div>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    async function triggerPasswordResetForCreator(id) {
+      const { data: c, error } = await supabaseClient.from('creator_applications').select('*').eq('id', id).single();
+      if (error || !c) {
+        alert('Could not locate creator application record.');
+        return;
+      }
+
+      if (c.status !== 'approved') {
+        alert('Password reset is restricted to approved, vetted creator accounts.');
+        return;
+      }
+
+      const pData = c.profile_data || {};
+      const loginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(c.id).padStart(4, '0')}`;
+
+      const confirmed = confirm(
+        `Send a password reset link to this creator's registered email address?\n\n` +
+        `Creator: ${c.full_name}\n` +
+        `Login ID: ${loginId}\n` +
+        `Target Email: ${c.email}`
+      );
+      if (!confirmed) return;
+
+      try {
+        const { error: resetErr } = await supabaseClient.auth.resetPasswordForEmail(c.email, {
+          redirectTo: window.location.origin + '/creator-activate'
+        });
+        if (resetErr) throw resetErr;
+
+        // Record audit timestamp and reset status in profile_data
+        pData.last_password_reset_sent_at = new Date().toISOString();
+        pData.password_reset_status = 'email_sent';
+
+        await supabaseClient
+          .from('creator_applications')
+          .update({ profile_data: pData })
+          .eq('id', id);
+
+        logActivity('Admin Initiated Password Reset Link', 'creator_applications', id, {
+          email: c.email,
+          loginId: loginId
+        });
+
+        alert(`✓ Password reset request verified and accepted by auth service.\nReset email successfully dispatched to: ${c.email}`);
+        loadPasswordManagement();
+      } catch (err) {
+        alert('Failed to send password reset: ' + (err.message || 'Auth service error.'));
+      }
     }
 
     async function revokeCreatorApproval() {

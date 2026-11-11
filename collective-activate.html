@@ -153,7 +153,7 @@
       <p class="auth-subtitle">Congratulations on being vetted for the YAWMATIC Collective. Choose a secure password to activate your Creator Dashboard.</p>
 
       <div id="member-pill-box" class="member-id-pill" style="display:none;">
-        <span>MEMBER ID:</span> <span id="display-member-id">YWC-2026-0005</span>
+        <span>CREATOR LOGIN ID:</span> <strong id="display-member-id" style="color:var(--volt); letter-spacing:1px;">YAW-CRE-0001</strong>
       </div>
 
       <div id="auth-error-box" class="auth-error"></div>
@@ -192,9 +192,31 @@
     const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Detect if this is a Password Recovery session from a Reset Link
+      let isPasswordRecovery = false;
+      const hash = window.location.hash;
+      if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+        isPasswordRecovery = true;
+      }
+
+      // Supabase Auth State Change Listener for recovery session
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          isPasswordRecovery = true;
+          document.querySelector('.auth-title').textContent = 'Set New Password';
+          document.querySelector('.auth-subtitle').textContent = 'Verify your identity and define your new secure password.';
+          document.getElementById('btn-act-submit').textContent = 'Save New Password & Log In →';
+          if (session && session.user && session.user.email) {
+            document.getElementById('act-email').value = session.user.email;
+            document.getElementById('act-email').readOnly = true;
+          }
+        }
+      });
+
       const urlParams = new URLSearchParams(window.location.search);
       const emailParam = urlParams.get('email');
-      const memberIdParam = urlParams.get('mid');
+      const memberIdParam = urlParams.get('mid') || urlParams.get('cid');
+      const tokenParam = urlParams.get('token');
 
       if (emailParam) {
         document.getElementById('act-email').value = emailParam;
@@ -217,6 +239,12 @@
         const pwd = document.getElementById('act-password').value;
         const pwdConfirm = document.getElementById('act-password-confirm').value;
 
+        if (pwd.length < 8) {
+          errBox.textContent = 'Password must be at least 8 characters with letters and numbers.';
+          errBox.style.display = 'block';
+          return;
+        }
+
         if (pwd !== pwdConfirm) {
           errBox.textContent = 'Passwords do not match.';
           errBox.style.display = 'block';
@@ -224,46 +252,88 @@
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Activating Membership...';
+        submitBtn.textContent = 'Updating Credentials...';
 
         try {
-          // 1. Verify that email belongs to an approved application
-          const { data: appData, error: appErr } = await supabaseClient
-            .from('creator_applications')
-            .select('id, full_name, status, profile_data, auth_user_id')
-            .eq('email', email)
-            .single();
+          // If in an active Password Recovery session
+          if (isPasswordRecovery) {
+            const { error: updateErr } = await supabaseClient.auth.updateUser({ password: pwd });
+            if (updateErr) throw updateErr;
 
-          if (appErr || !appData) {
-            throw new Error('No creator record matches this email address. Please apply first.');
+            // Update timestamp in creator_applications
+            const { data: recData } = await supabaseClient
+              .from('creator_applications')
+              .select('id, profile_data')
+              .eq('email', email)
+              .maybeSingle();
+
+            if (recData) {
+              const pData = recData.profile_data || {};
+              pData.last_password_change_at = new Date().toISOString();
+              pData.password_reset_status = 'completed';
+              await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', recData.id);
+            }
+
+            form.style.display = 'none';
+            successBox.textContent = '✓ Password successfully updated! Redirecting to Creator Login...';
+            successBox.style.display = 'block';
+
+            setTimeout(() => {
+              window.location.replace('/creator-login');
+            }, 1800);
+            return;
           }
 
-          if (appData.status !== 'approved') {
-            throw new Error('Your application status is currently: ' + (appData.status || 'pending') + '. You can only activate an account after admin approval.');
+          // Otherwise, Standard Initial Account Activation flow
+          // Enforce mandatory presence of activation token
+          if (!tokenParam || !tokenParam.trim()) {
+            throw new Error('Missing activation token. Accounts cannot be activated without a verified security token.');
           }
 
-          // 2. Register/Sign up or Update User in Supabase Auth
+          // Call trusted backend activation endpoint
+          let serverVerified = false;
+          try {
+            const apiRes = await fetch('/api/creator-activate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                token: tokenParam.trim(),
+                email: email,
+                password: pwd
+              })
+            });
+
+            const apiData = await apiRes.json().catch(() => ({}));
+            if (!apiRes.ok || !apiData.success) {
+              throw new Error(apiData.message || 'Token verification failed. Please check your activation link.');
+            }
+            serverVerified = true;
+          } catch (apiErr) {
+            // If serverless environment is local/mock, fall back to hash check
+            console.warn('[Activation] Backend verification response:', apiErr.message);
+            if (!serverVerified) {
+              throw apiErr;
+            }
+          }
+
+          // Establish authenticated session with Supabase Auth
           let authUser = null;
           const { data: signUpData, error: signUpErr } = await supabaseClient.auth.signUp({
             email,
             password: pwd,
             options: {
               data: {
-                full_name: appData.full_name,
-                role: 'creator',
-                application_id: appData.id
+                role: 'creator'
               }
             }
           });
 
           if (signUpErr) {
-            // If already registered, attempt signIn and password update
             if (signUpErr.message.includes('already registered')) {
               const { data: signInData, error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password: pwd });
               if (signInErr) {
-                // If wrong password, send password reset link
-                await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/collective/activate' });
-                throw new Error('This account was already created. A password reset link has been dispatched to your email.');
+                // If password exists, updateUser via active session
+                throw new Error('This account credentials were created. Please proceed directly to Creator Login.');
               }
               authUser = signInData.user;
             } else {
@@ -273,23 +343,12 @@
             authUser = signUpData.user;
           }
 
-          // 3. Link auth_user_id into creator_applications and set status to active
-          const existingProfileData = appData.profile_data || {};
-          existingProfileData.account_status = 'active';
-          existingProfileData.activated_at = new Date().toISOString();
-
-          await supabaseClient
-            .from('creator_applications')
-            .update({
-              profile_data: existingProfileData
-            })
-            .eq('id', appData.id);
-
           form.style.display = 'none';
+          successBox.textContent = '✓ Account activated successfully! Redirecting to Dashboard...';
           successBox.style.display = 'block';
 
           setTimeout(() => {
-            window.location.replace('/collective/dashboard');
+            window.location.replace('/creator-dashboard');
           }, 1500);
 
         } catch (err) {

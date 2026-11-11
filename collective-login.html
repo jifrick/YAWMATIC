@@ -157,16 +157,27 @@
 
       <form id="creator-login-form">
         <div class="form-group">
-          <label class="form-label" for="login-email">Approved Member Email</label>
-          <input type="email" id="login-email" class="form-input" placeholder="creator@domain.com" required autocomplete="email">
+          <label class="form-label" for="login-identifier">Creator Login ID</label>
+          <input type="text" id="login-identifier" class="form-input" placeholder="e.g. YAW-CRE-0001" required autocomplete="username" spellcheck="false" autocapitalize="characters">
+          <span style="font-size:0.75rem; color:var(--mist);">Assigned upon administrator approval</span>
         </div>
 
         <div class="form-group">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <label class="form-label" for="login-password">Password</label>
-            <a href="/collective/forgot-password" style="font-size:0.75rem; color:var(--fire); text-decoration:none;">Forgot?</a>
+            <a href="/creator-forgot-password" style="font-size:0.75rem; color:var(--fire); text-decoration:none;">Forgot?</a>
           </div>
-          <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required autocomplete="current-password" style="width:100%; padding-right:40px;">
+            <button type="button" id="btn-toggle-pwd" aria-label="Show or hide password" style="position:absolute; right:10px; background:transparent; border:none; color:var(--mist); cursor:pointer; padding:4px;">
+              <svg id="eye-icon" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:8px; margin-top:-6px; margin-bottom:14px;">
+          <input type="checkbox" id="login-remember" style="accent-color:var(--fire); cursor:pointer;">
+          <label for="login-remember" style="font-size:0.8rem; color:var(--mist); cursor:pointer;">Remember Login ID on this device</label>
         </div>
 
         <button type="submit" id="btn-login-submit" class="btn btn--primary" style="width: 100%; justify-content: center; margin-top: 10px;">
@@ -193,9 +204,31 @@
       if (supabaseClient) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
-          window.location.replace('/collective/dashboard');
+          window.location.replace('/creator-dashboard');
           return;
         }
+      }
+
+      // Password visibility toggle
+      const pwdInput = document.getElementById('login-password');
+      const toggleBtn = document.getElementById('btn-toggle-pwd');
+      if (toggleBtn && pwdInput) {
+        toggleBtn.addEventListener('click', () => {
+          const isPwd = pwdInput.type === 'password';
+          pwdInput.type = isPwd ? 'text' : 'password';
+          toggleBtn.innerHTML = isPwd
+            ? `<svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+            : `<svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        });
+      }
+
+      // Remember login ID retrieval
+      const rememberedId = localStorage.getItem('yawmatic_remember_creator_id');
+      const identInput = document.getElementById('login-identifier');
+      const remCheckbox = document.getElementById('login-remember');
+      if (rememberedId && identInput) {
+        identInput.value = rememberedId;
+        if (remCheckbox) remCheckbox.checked = true;
       }
 
       const form = document.getElementById('creator-login-form');
@@ -208,29 +241,89 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Authenticating...';
 
-        const email = document.getElementById('login-email').value.trim();
+        const rawIdentifier = document.getElementById('login-identifier').value.trim();
         const password = document.getElementById('login-password').value;
 
+        // Save or clear remember-me preference
+        if (remCheckbox && remCheckbox.checked) {
+          localStorage.setItem('yawmatic_remember_creator_id', rawIdentifier);
+        } else {
+          localStorage.removeItem('yawmatic_remember_creator_id');
+        }
+
         try {
-          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) throw error;
+          const normalized = rawIdentifier.toUpperCase();
 
-          // Verify if user is approved collective member or admin
-          const userId = data.user.id;
-          const { data: appData, error: appErr } = await supabaseClient
-            .from('creator_applications')
-            .select('id, status, slug')
-            .or(`auth_user_id.eq.${userId},email.eq.${email}`)
-            .single();
-
-          if (appData && appData.status !== 'approved') {
-            await supabaseClient.auth.signOut();
-            throw new Error('Your application is still under review or pending administrator approval.');
+          // Reject raw email format on visible login field to protect identity privacy
+          if (rawIdentifier.includes('@')) {
+            throw new Error('Please sign in using your assigned Creator Login ID (e.g. YAW-CRE-0001).');
           }
 
-          window.location.replace('/collective/dashboard');
+          // 1. Authenticate via secure serverless endpoint
+          let serverLoginSuccess = false;
+          try {
+            const apiRes = await fetch('/api/creator-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                loginId: normalized,
+                password: password
+              })
+            });
+
+            const apiData = await apiRes.json().catch(() => ({}));
+            if (apiRes.ok && apiData.success && apiData.session) {
+              serverLoginSuccess = true;
+              if (supabaseClient) {
+                await supabaseClient.auth.setSession({
+                  access_token: apiData.session.access_token,
+                  refresh_token: apiData.session.refresh_token
+                });
+              }
+              window.location.replace('/creator-dashboard');
+              return;
+            } else if (!apiRes.ok && apiRes.status !== 404) {
+              throw new Error(apiData.message || 'Invalid Creator Login ID or password. Please verify your credentials.');
+            }
+          } catch (apiErr) {
+            if (serverLoginSuccess) return;
+            if (apiErr.message && !apiErr.message.includes('fetch')) {
+              throw apiErr;
+            }
+          }
+
+          // 2. Direct fallback lookup (if API endpoint is unreachable)
+          const { data: matchedRecord, error: lookupErr } = await supabaseClient
+            .from('creator_applications')
+            .select('id, email, status, profile_data')
+            .or(`profile_data->>creator_login_id.eq.${normalized},profile_data->>member_id.eq.${normalized}`)
+            .limit(1)
+            .maybeSingle();
+
+          if (lookupErr || !matchedRecord || !matchedRecord.email) {
+            throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
+          }
+
+          if (matchedRecord.status === 'suspended') {
+            throw new Error('This creator account has been suspended by administration. Please contact YAWMATIC.');
+          }
+
+          if (matchedRecord.status !== 'approved') {
+            throw new Error('This account is still under review or pending administrator approval.');
+          }
+
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: matchedRecord.email,
+            password: password
+          });
+
+          if (error) {
+            throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
+          }
+
+          window.location.replace('/creator-dashboard');
         } catch (err) {
-          errBox.textContent = err.message || 'Authentication failed. Please verify credentials.';
+          errBox.textContent = err.message || 'Invalid Creator Login ID or password.';
           errBox.style.display = 'block';
           submitBtn.disabled = false;
           submitBtn.textContent = 'Sign In to Dashboard →';

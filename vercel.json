@@ -3,6 +3,7 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/services", "destination": "/services.html" },
@@ -31,6 +32,10 @@
     { "source": "/collective/activate", "destination": "/collective-activate.html" },
     { "source": "/collective/forgot-password", "destination": "/collective-forgot-password.html" },
     { "source": "/collective/dashboard", "destination": "/collective-dashboard.html" },
+    { "source": "/creator-login", "destination": "/collective-login.html" },
+    { "source": "/creator-activate", "destination": "/collective-activate.html" },
+    { "source": "/creator-forgot-password", "destination": "/collective-forgot-password.html" },
+    { "source": "/creator-dashboard", "destination": "/collective-dashboard.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/admin/:path*", "destination": "/admin.html" }
   ]
