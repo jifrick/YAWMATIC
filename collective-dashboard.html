@@ -828,6 +828,10 @@
       const { data: { session } } = await supabaseClient.auth.getSession();
       const token = session ? session.access_token : '';
 
+      if (!token) {
+        return { success: false, error: new Error('Session expired. Please sign in again.') };
+      }
+
       try {
         const res = await fetch('/api/creator-revisions', {
           method: 'POST',
@@ -844,20 +848,13 @@
         const json = await res.json().catch(() => ({}));
         if (res.ok && json.success) {
           return { success: true };
+        } else {
+          return { success: false, error: new Error(json.message || 'Failed to stage revision.') };
         }
       } catch (err) {
-        console.warn('[Dashboard Revision API fallback]:', err);
+        console.error('[Dashboard Revision Error]:', err);
+        return { success: false, error: err };
       }
-
-      // Safe fallback via direct Supabase client if API route unreachable
-      const existingProfileData = currentAppRecord.profile_data || {};
-      existingProfileData[`pending_${revisionType}_revision`] = payload;
-      const { error } = await supabaseClient
-        .from('creator_applications')
-        .update({ profile_data: existingProfileData })
-        .eq('id', currentAppRecord.id);
-
-      return { success: !error, error };
     }
 
     function setupProfileForm() {
@@ -1043,13 +1040,6 @@
           // Securely update password
           const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
           if (error) throw error;
-
-          // Record password change timestamp in profile_data for audit trail
-          if (currentAppRecord) {
-            const pData = currentAppRecord.profile_data || {};
-            pData.last_password_change_at = new Date().toISOString();
-            await supabaseClient.from('creator_applications').update({ profile_data: pData }).eq('id', currentAppRecord.id);
-          }
 
           alert('Password successfully updated.');
           form.reset();

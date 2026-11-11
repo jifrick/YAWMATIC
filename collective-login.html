@@ -260,68 +260,28 @@
           }
 
           // 1. Authenticate via secure serverless endpoint
-          let serverLoginSuccess = false;
-          try {
-            const apiRes = await fetch('/api/creator-login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                loginId: normalized,
-                password: password
-              })
-            });
-
-            const apiData = await apiRes.json().catch(() => ({}));
-            if (apiRes.ok && apiData.success && apiData.session) {
-              serverLoginSuccess = true;
-              if (supabaseClient) {
-                await supabaseClient.auth.setSession({
-                  access_token: apiData.session.access_token,
-                  refresh_token: apiData.session.refresh_token
-                });
-              }
-              window.location.replace('/creator-dashboard');
-              return;
-            } else if (!apiRes.ok && apiRes.status !== 404) {
-              throw new Error(apiData.message || 'Invalid Creator Login ID or password. Please verify your credentials.');
-            }
-          } catch (apiErr) {
-            if (serverLoginSuccess) return;
-            if (apiErr.message && !apiErr.message.includes('fetch')) {
-              throw apiErr;
-            }
-          }
-
-          // 2. Direct fallback lookup (if API endpoint is unreachable)
-          const { data: matchedRecord, error: lookupErr } = await supabaseClient
-            .from('creator_applications')
-            .select('id, email, status, profile_data')
-            .or(`profile_data->>creator_login_id.eq.${normalized},profile_data->>member_id.eq.${normalized}`)
-            .limit(1)
-            .maybeSingle();
-
-          if (lookupErr || !matchedRecord || !matchedRecord.email) {
-            throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
-          }
-
-          if (matchedRecord.status === 'suspended') {
-            throw new Error('This creator account has been suspended by administration. Please contact YAWMATIC.');
-          }
-
-          if (matchedRecord.status !== 'approved') {
-            throw new Error('This account is still under review or pending administrator approval.');
-          }
-
-          const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: matchedRecord.email,
-            password: password
+          const apiRes = await fetch('/api/creator-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              loginId: normalized,
+              password: password
+            })
           });
 
-          if (error) {
-            throw new Error('Invalid Creator Login ID or password. Please verify your credentials.');
+          const apiData = await apiRes.json().catch(() => ({}));
+          if (apiRes.ok && apiData.success && apiData.session) {
+            if (supabaseClient) {
+              await supabaseClient.auth.setSession({
+                access_token: apiData.session.access_token,
+                refresh_token: apiData.session.refresh_token
+              });
+            }
+            window.location.replace('/creator-dashboard');
+            return;
+          } else {
+            throw new Error(apiData.message || 'Invalid Creator Login ID or password. Please verify your credentials.');
           }
-
-          window.location.replace('/creator-dashboard');
         } catch (err) {
           errBox.textContent = err.message || 'Invalid Creator Login ID or password.';
           errBox.style.display = 'block';

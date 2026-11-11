@@ -1,15 +1,23 @@
 const https = require('https');
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://nopqslszbntoqewnemby.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function getServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY;
+}
 
 function supabaseFetch(path, options = {}) {
+  const serviceKey = getServiceRoleKey();
+  if (!serviceKey) {
+    return Promise.reject(new Error('SUPABASE_SERVICE_ROLE_KEY is required for privileged operations.'));
+  }
+
   return new Promise((resolve, reject) => {
     const url = new URL(SUPABASE_URL + path);
     const headers = {
-      'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'apikey': serviceKey,
+      'Authorization': `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
       ...(options.headers || {})
     };
@@ -45,9 +53,10 @@ function verifyUserSession(authHeader) {
     }
     const token = authHeader.replace('Bearer ', '').trim();
     const url = new URL(`${SUPABASE_URL}/auth/v1/user`);
+    const serviceKey = getServiceRoleKey() || '';
     const req = https.request(url, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': serviceKey,
         'Authorization': `Bearer ${token}`
       }
     }, res => {
@@ -78,6 +87,15 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method not allowed. Use POST.' });
   }
 
+  // Fail closed if service role key is not configured
+  if (!getServiceRoleKey()) {
+    return res.status(500).json({
+      success: false,
+      code: 'SERVER_MISCONFIGURED',
+      message: 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is required for privileged operations.'
+    });
+  }
+
   // 1. Authenticate user session
   const authUser = await verifyUserSession(req.headers.authorization);
   if (!authUser || !authUser.id) {
@@ -88,25 +106,44 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const { revisionType, data } = body || {};
 
-    if (!revisionType || !data) {
-      return res.status(400).json({ success: false, message: 'Missing revisionType or payload data.' });
+    const allowedRevisionTypes = ['profile', 'craft', 'rig', 'showcase'];
+    if (!revisionType || !allowedRevisionTypes.includes(revisionType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid revisionType. Allowed types: ${allowedRevisionTypes.join(', ')}.`
+      });
     }
 
-    // 2. Locate creator application belonging to this user
+    if (!data || typeof data !== 'object') {
+      return res.status(400).json({ success: false, message: 'Missing revision payload data.' });
+    }
+
+    // 2. Derive creator identity exclusively from verified session (Never trust client-supplied ID)
     const { data: records, ok: queryOk } = await supabaseFetch(
-      `/rest/v1/creator_applications?or=(auth_user_id.eq.${authUser.id},email.eq.${encodeURIComponent(authUser.email)})&select=id,profile_data,portfolio_links`
+      `/rest/v1/creator_applications?or=(email.eq.${encodeURIComponent(authUser.email)},profile_data->>auth_user_id.eq.${authUser.id})&select=id,full_name,email,status,profile_data,portfolio_links`
     );
 
     if (!queryOk || !records || records.length === 0) {
-      return res.status(404).json({ success: false, message: 'No creator application linked to this authenticated user.' });
+      return res.status(404).json({ success: false, message: 'No creator application found matching this authenticated user.' });
     }
 
     const appRecord = records[0];
-    const pData = appRecord.profile_data || {};
 
-    // 3. Process sanitized revision based on type
+    // 3. Require account to be approved and active
+    if (appRecord.status !== 'approved') {
+      return res.status(403).json({ success: false, message: 'Application is not approved.' });
+    }
+
+    const pData = appRecord.profile_data || {};
+    if (pData.account_status === 'suspended' || appRecord.status === 'suspended') {
+      return res.status(403).json({ success: false, message: 'This creator account is suspended.' });
+    }
+
+    // 4. Sanitize and validate based on explicit allowlist (Strip all privileged fields)
+    let sanitizedProposed = {};
+
     if (revisionType === 'profile') {
-      const sanitized = {
+      sanitizedProposed = {
         full_name: (data.full_name || '').slice(0, 100).trim(),
         city: (data.city || '').slice(0, 50).trim(),
         country: (data.country || '').slice(0, 50).trim(),
@@ -119,20 +156,20 @@ module.exports = async function handler(req, res) {
         linkedin: (data.linkedin || '').slice(0, 255).trim(),
         submitted_at: new Date().toISOString()
       };
-      pData.pending_profile_revision = sanitized;
+      pData.pending_profile_revision = sanitizedProposed;
 
     } else if (revisionType === 'craft') {
-      const sanitized = {
+      sanitizedProposed = {
         primary_specialization: (data.primary_specialization || '').slice(0, 80).trim(),
         additional_skills: Array.isArray(data.additional_skills)
           ? data.additional_skills.map(s => String(s).slice(0, 50).trim()).filter(Boolean)
           : [],
         submitted_at: new Date().toISOString()
       };
-      pData.pending_craft_revision = sanitized;
+      pData.pending_craft_revision = sanitizedProposed;
 
     } else if (revisionType === 'rig') {
-      const sanitized = {
+      sanitizedProposed = {
         years_experience: Math.min(Math.max(parseInt(data.years_experience, 10) || 1, 0), 50),
         availability: ['available', 'limited', 'booked'].includes(data.availability) ? data.availability : 'available',
         equipment: Array.isArray(data.equipment)
@@ -143,7 +180,7 @@ module.exports = async function handler(req, res) {
           : [],
         submitted_at: new Date().toISOString()
       };
-      pData.pending_rig_revision = sanitized;
+      pData.pending_rig_revision = sanitizedProposed;
 
     } else if (revisionType === 'showcase') {
       let showcaseItems = [];
@@ -162,26 +199,40 @@ module.exports = async function handler(req, res) {
       };
 
       showcaseItems.push(newItem);
+      sanitizedProposed = newItem;
 
       await supabaseFetch(`/rest/v1/creator_applications?id=eq.${appRecord.id}`, {
         method: 'PATCH',
         headers: { 'Prefer': 'return=minimal' },
         body: { portfolio_links: showcaseItems }
       });
-
-      return res.status(200).json({ success: true, message: 'Showcase item staged for admin moderation.' });
-    } else {
-      return res.status(400).json({ success: false, message: 'Invalid revisionType.' });
     }
 
-    // Update profile_data with the staged revision
+    // 5. Insert revision entry into dedicated creator_revisions table
+    await supabaseFetch(`/rest/v1/creator_revisions`, {
+      method: 'POST',
+      headers: { 'Prefer': 'return=minimal' },
+      body: {
+        application_id: appRecord.id,
+        user_id: authUser.id,
+        revision_type: revisionType,
+        proposed_data: sanitizedProposed,
+        status: 'pending'
+      }
+    }).catch(() => null);
+
+    // 6. Stage revision within profile_data for dashboard & admin visibility
     await supabaseFetch(`/rest/v1/creator_applications?id=eq.${appRecord.id}`, {
       method: 'PATCH',
       headers: { 'Prefer': 'return=minimal' },
       body: { profile_data: pData }
     });
 
-    return res.status(200).json({ success: true, message: 'Revision staged for administrator review.' });
+    return res.status(200).json({
+      success: true,
+      message: 'Revision successfully staged for administrator moderation.',
+      revisionType
+    });
 
   } catch (err) {
     console.error('[API creator-revisions] Unexpected error:', err);

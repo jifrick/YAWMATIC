@@ -3,15 +3,23 @@ const https = require('https');
 const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.TRANSACTIONAL_EMAIL_KEY;
 const FROM_EMAIL = process.env.CREATOR_PORTAL_FROM_EMAIL || 'YAWMATIC Collective <collective@yawmatic.online>';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://nopqslszbntoqewnemby.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vcHFzbHN6Ym50b3Fld25lbWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MzI4ODEsImV4cCI6MjA5OTUwODg4MX0.cYeWIUVNQ85rWuj811UpAflUXHAixDR8C0_qSxlD4C4';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function getServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY;
+}
 
 function supabaseFetch(path, options = {}) {
+  const serviceKey = getServiceRoleKey();
+  if (!serviceKey) {
+    return Promise.reject(new Error('SUPABASE_SERVICE_ROLE_KEY is required for privileged operations.'));
+  }
+
   return new Promise((resolve, reject) => {
     const url = new URL(SUPABASE_URL + path);
     const headers = {
-      'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'apikey': serviceKey,
+      'Authorization': `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
       ...(options.headers || {})
     };
@@ -40,16 +48,24 @@ function supabaseFetch(path, options = {}) {
   });
 }
 
-function verifyAdminSession(authHeader) {
-  return new Promise((resolve) => {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return resolve(null);
-    }
-    const token = authHeader.replace('Bearer ', '').trim();
+// Strictly verify administrator session & role from token
+async function verifyAdminSessionAndRole(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { ok: false, error: 'Authorization header missing or malformed.' };
+  }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return { ok: false, configError: true, error: 'Server configuration missing SUPABASE_SERVICE_ROLE_KEY.' };
+  }
+
+  const token = authHeader.replace('Bearer ', '').trim();
+
+  // 1. Authenticate user identity with Supabase Auth
+  const user = await new Promise((resolve) => {
     const url = new URL(`${SUPABASE_URL}/auth/v1/user`);
     const req = https.request(url, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
         'Authorization': `Bearer ${token}`
       }
     }, res => {
@@ -57,12 +73,9 @@ function verifyAdminSession(authHeader) {
       res.on('data', c => b += c);
       res.on('end', () => {
         try {
-          const user = JSON.parse(b);
-          if (res.statusCode === 200 && user && user.id) {
-            resolve(user);
-          } else {
-            resolve(null);
-          }
+          const u = JSON.parse(b);
+          if (res.statusCode === 200 && u && u.id) resolve(u);
+          else resolve(null);
         } catch (e) {
           resolve(null);
         }
@@ -71,6 +84,28 @@ function verifyAdminSession(authHeader) {
     req.on('error', () => resolve(null));
     req.end();
   });
+
+  if (!user) {
+    return { ok: false, error: 'Invalid or expired user session.' };
+  }
+
+  // 2. Query public.profiles to verify administrator role
+  try {
+    const { data: profile, ok } = await supabaseFetch(`/rest/v1/profiles?id=eq.${user.id}&select=id,role`);
+    if (!ok || !profile || !profile[0]) {
+      return { ok: false, error: 'No profile record found for user.' };
+    }
+
+    const role = profile[0].role;
+    const allowedAdminRoles = ['super_admin', 'admin', 'project_manager', 'manager'];
+    if (!allowedAdminRoles.includes(role)) {
+      return { ok: false, error: `Access denied. Caller role '${role}' is not authorized as administrator.` };
+    }
+
+    return { ok: true, user, role };
+  } catch (err) {
+    return { ok: false, error: 'Error validating administrator permissions.' };
+  }
 }
 
 function sendViaResend(to, subject, text) {
@@ -115,10 +150,22 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method not allowed. Use POST.' });
   }
 
-  // 1. Verify administrator session
-  const adminUser = await verifyAdminSession(req.headers.authorization);
-  if (!adminUser) {
-    return res.status(401).json({ success: false, message: 'Unauthorized. Admin session required.' });
+  // 1. Fail closed if SUPABASE_SERVICE_ROLE_KEY is unconfigured
+  if (!getServiceRoleKey()) {
+    return res.status(500).json({
+      success: false,
+      code: 'SERVER_MISCONFIGURED',
+      message: 'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is required for privileged operations.'
+    });
+  }
+
+  // 2. Strict administrator session and role verification
+  const adminCheck = await verifyAdminSessionAndRole(req.headers.authorization);
+  if (!adminCheck.ok) {
+    return res.status(403).json({
+      success: false,
+      message: adminCheck.error || 'Access denied: Valid administrator credentials required.'
+    });
   }
 
   try {
@@ -126,10 +173,10 @@ module.exports = async function handler(req, res) {
     const { appId, activationUrl } = body || {};
 
     if (!appId) {
-      return res.status(400).json({ success: false, message: 'Application ID is required.' });
+      return res.status(400).json({ success: false, message: 'Application ID (appId) is required.' });
     }
 
-    // 2. Fetch application record
+    // 3. Fetch application record using privileged client
     const { data: apps, ok: appOk } = await supabaseFetch(
       `/rest/v1/creator_applications?id=eq.${encodeURIComponent(appId)}&select=id,full_name,email,status,profile_data`
     );
@@ -139,75 +186,94 @@ module.exports = async function handler(req, res) {
     }
 
     const app = apps[0];
-    const pData = app.profile_data || {};
-    const creatorLoginId = pData.creator_login_id || `YAW-CRE-${String(app.id).padStart(4, '0')}`;
 
-    // Verify email credentials exist
+    // 4. Require approved application status
+    if (app.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot send activation email. Application status is '${app.status}'. Applications must be approved first.`
+      });
+    }
+
+    const pData = app.profile_data || {};
+    const creatorLoginId = pData.creator_login_id || pData.member_id || `YAW-CRE-${String(app.id).padStart(4, '0')}`;
+    const targetEmail = app.email;
+
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Target creator has no valid email address on file.' });
+    }
+
+    // 5. Verify / sanitize activation URL
+    let safeUrl = activationUrl;
+    if (!safeUrl || !safeUrl.includes('/creator-activate')) {
+      const token = pData.activation_token_hash || '';
+      safeUrl = `https://yawmatic.online/creator-activate?email=${encodeURIComponent(targetEmail)}&cid=${encodeURIComponent(creatorLoginId)}&token=${encodeURIComponent(token)}`;
+    }
+
+    // 6. Check if transactional email provider key is configured
     if (!RESEND_API_KEY) {
       return res.status(200).json({
         success: false,
         missingConfig: true,
-        message: 'RESEND_API_KEY is not configured in server environment variables. Automated email delivery skipped. Provide activation URL directly to candidate.'
+        message: 'RESEND_API_KEY is not configured in server environment. Activation link generated for manual delivery.',
+        manualUrl: safeUrl,
+        creatorLoginId,
+        recipient: targetEmail
       });
     }
 
-    // 3. Compose email
-    const subject = 'YAWMATIC Collective — Your Creator Account Is Approved';
-    const textBody = `Hello ${app.full_name},
+    // 7. Dispatch activation email
+    const emailSubject = `Welcome to YAWMATIC Collective — Activate Your Account (${creatorLoginId})`;
+    const emailBody = `Hello ${app.full_name},
 
-Your application to join YAWMATIC Collective has been approved.
+Congratulations! Your application to join the YAWMATIC Collective has been approved by our curatorial team.
 
-Welcome to the YAWMATIC creative network.
+Your Creator Account Details:
+- Creator Login ID: ${creatorLoginId}
+- Associated Email: ${targetEmail}
 
-Your Creator Login ID:
-${creatorLoginId}
+Please click the secure activation link below to set your password and access your Creator Dashboard:
+${safeUrl}
 
-Activate your account using the secure link below:
-${activationUrl}
-
-After opening the activation link:
-1. Verify your account.
-2. Create your own password.
-3. Confirm your password.
-4. Complete your creator profile.
-5. Log in using your Creator ID and password.
-
-Login Page:
+Important Notes:
+1. This activation link is unique to your application and can only be used once.
+2. The link will expire in 7 days.
+3. Once activated, sign in to your Creator Dashboard using your Creator Login ID (${creatorLoginId}) and password at:
 https://yawmatic.online/creator-login
 
-Your account gives you access to your private Creator Dashboard, where you can update your professional bio, skills, portfolio links, equipment details, and other permitted profile information.
+Welcome to the collective!
 
-Your profile changes will be reviewed and approved by YAWMATIC administrators before appearing publicly.
+Best regards,
+YAWMATIC Collective Team
+https://yawmatic.online`;
 
-Thank you,
-YAWMATIC Team`;
+    const resendResult = await sendViaResend(targetEmail, emailSubject, emailBody);
 
-    // 4. Dispatch via Resend
-    const result = await sendViaResend(app.email, subject, textBody);
-
-    if (result.ok) {
-      // Record acceptance
-      pData.invitation_email_status = 'accepted';
-      pData.invitation_email_id = (result.data && result.data.id) || null;
-      pData.invitation_sent_at = new Date().toISOString();
-
-      await supabaseFetch(`/rest/v1/creator_applications?id=eq.${app.id}`, {
-        method: 'PATCH',
-        headers: { 'Prefer': 'return=minimal' },
-        body: { profile_data: pData }
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Activation email accepted by provider and dispatched to applicant.',
-        emailId: (result.data && result.data.id) || null
-      });
-    } else {
+    if (!resendResult.ok) {
+      console.error('[send-activation-email] Resend API error:', resendResult.data);
       return res.status(502).json({
         success: false,
-        message: (result.data && result.data.message) || 'Email provider rejected delivery request.'
+        message: 'Email service provider rejected the delivery request.',
+        details: resendResult.data
       });
     }
+
+    // 8. Record audit timestamp on application profile_data
+    pData.invitation_sent_at = new Date().toISOString();
+    pData.email_dispatch_id = resendResult.data && resendResult.data.id ? resendResult.data.id : null;
+
+    await supabaseFetch(`/rest/v1/creator_applications?id=eq.${app.id}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: { profile_data: pData }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Activation email successfully dispatched to ${targetEmail}.`,
+      dispatchId: pData.email_dispatch_id,
+      creatorLoginId
+    });
 
   } catch (err) {
     console.error('[API send-activation-email] Unexpected error:', err);

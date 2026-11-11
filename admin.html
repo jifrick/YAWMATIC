@@ -2050,30 +2050,35 @@
       return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Helper: Server-side atomic Creator Login ID retrieval (sequence fallback to highest existing)
-    async function generateNextCreatorLoginId() {
+    // Helper: Server-side atomic Creator Login ID allocation via protected endpoint or DB sequence
+    async function allocateCreatorLoginId(appId) {
       try {
-        const { data } = await supabaseClient
-          .from('creator_applications')
-          .select('id, profile_data')
-          .not('profile_data', 'is', null);
-
-        let maxNum = 0;
-        if (data && data.length) {
-          data.forEach(row => {
-            const pd = row.profile_data || {};
-            const cid = pd.creator_login_id || '';
-            const match = cid.match(/YAW-CRE-(\d+)/i);
-            if (match) {
-              const num = parseInt(match[1], 10);
-              if (num > maxNum) maxNum = num;
-            }
-          });
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const token = session ? session.access_token : '';
+        const res = await fetch('/api/creator-allocate-id', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ appId })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok && json.success && json.creatorLoginId) {
+          return json.creatorLoginId;
         }
-        return `YAW-CRE-${String(maxNum + 1).padStart(4, '0')}`;
       } catch (e) {
-        return `YAW-CRE-${String(Date.now()).slice(-4)}`;
+        console.warn('[allocateCreatorLoginId] Endpoint fallback:', e);
       }
+
+      // DB-side atomic function call fallback
+      try {
+        const { data: dbId, error: rpcErr } = await supabaseClient.rpc('generate_next_creator_login_id');
+        if (!rpcErr && dbId) return dbId;
+      } catch (e) {}
+
+      // Resilient fallback based on application ID
+      return `YAW-CRE-${String(appId).padStart(4, '0')}`;
     }
 
     async function approveApplication(id) {
@@ -2084,10 +2089,10 @@
 
       const existingProfileData = appRecord.profile_data || {};
 
-      // Idempotency: Check if already assigned a Creator Login ID
+      // Idempotency: Allocate or reuse Creator Login ID via atomic server-side generator
       let creatorLoginId = existingProfileData.creator_login_id;
       if (!creatorLoginId) {
-        creatorLoginId = await generateNextCreatorLoginId();
+        creatorLoginId = await allocateCreatorLoginId(id);
         existingProfileData.creator_login_id = creatorLoginId;
       }
 
